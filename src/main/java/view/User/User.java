@@ -96,47 +96,91 @@ public class User {
         JPanel pnl_Header = new JPanel(new BorderLayout());
         pnl_Header.setPreferredSize(new Dimension(0, 160));
         pnl_Header.setBackground(new Color(107, 142, 35));
-
+    
         JPanel pnl_TopRow = new JPanel();
         pnl_TopRow.setLayout(new BoxLayout(pnl_TopRow, BoxLayout.X_AXIS));
         pnl_TopRow.setOpaque(false);
         pnl_TopRow.setBorder(BorderFactory.createEmptyBorder(10, 35, 0, 20));
-
+    
         JButton btn_Avatar = new JButton("AVT");
         JButton btn_Notification = new JButton("Noti");
-
+    
         btn_Avatar.setFont(new Font("SansSerif", Font.PLAIN, 10));
         btn_Avatar.setFocusable(false);
         btn_Avatar.setPreferredSize(new Dimension(60, 60));
         btn_Avatar.setMaximumSize(new Dimension(60, 60));
-
+    
         btn_Notification.setFont(new Font("SansSerif", Font.PLAIN, 10));
         btn_Notification.setFocusable(false);
         btn_Notification.setPreferredSize(new Dimension(60, 60));
         btn_Notification.setMaximumSize(new Dimension(60, 60));
-
+    
         btn_Avatar.setAlignmentY(Component.CENTER_ALIGNMENT);
         btn_Notification.setAlignmentY(Component.CENTER_ALIGNMENT);
-
+    
         pnl_TopRow.add(btn_Avatar);
         pnl_TopRow.add(Box.createHorizontalGlue());
         pnl_TopRow.add(btn_Notification);
-
+    
+        // Create a panel to hold both the search field and search icon button
+        JPanel pnl_SearchWithIcon = new JPanel();
+        pnl_SearchWithIcon.setLayout(new BoxLayout(pnl_SearchWithIcon, BoxLayout.X_AXIS));
+        pnl_SearchWithIcon.setOpaque(false);
+        
         RoundedTextField txt_Search = new RoundedTextField(10);
         txt_Search.setPreferredSize(new Dimension(300, 40));
         txt_Search.setMaximumSize(new Dimension(500, 40));
         txt_Search.setFont(new Font("SansSerif", Font.PLAIN, 14));
         txt_Search.setText("Tìm kiếm...");
+        
+        // Create a search icon button
+        ImageIcon searchIcon = new ImageIcon("src/main/resources/icons/search.png");
+        Image scaledImage = searchIcon.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
+        searchIcon = new ImageIcon(scaledImage);
 
+
+
+        RoundedButton btn_SearchIcon = new RoundedButton("🔍", 20);
+        btn_SearchIcon.setFont(new Font("SansSerif", Font.PLAIN, 18));
+        btn_SearchIcon.setFocusPainted(false);
+        btn_SearchIcon.setContentAreaFilled(true);
+        btn_SearchIcon.setBorderPainted(true);
+        btn_SearchIcon.setPreferredSize(new Dimension(40, 40));
+        btn_SearchIcon.setMaximumSize(new Dimension(40, 40));
+        btn_SearchIcon.setMinimumSize(new Dimension(40, 40));
+
+        // Đảm bảo nút có hình dạng vuông và dễ nhìn
+        btn_SearchIcon.setBackground(new Color(240, 240, 240));
+        btn_SearchIcon.setOpaque(true);
+        btn_SearchIcon.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
+
+        btn_SearchIcon.setMargin(new Insets(0, 0, 0, 0));
+
+        btn_SearchIcon.setHorizontalAlignment(SwingConstants.CENTER);
+        btn_SearchIcon.setVerticalAlignment(SwingConstants.CENTER);
+
+        //////////////////////////////////////////////////////////////////////////
+        //btn_SearchIcon.addActionListener(e -> {                               //
+        //                                                                      //
+        //    System.out.println("Searching for: " + txt_Search.getText());     //
+        //});                                                                   //
+        //////////////////////////////////////////////////////////////////////////
+        
+        pnl_SearchWithIcon.add(txt_Search);
+        pnl_SearchWithIcon.add(Box.createRigidArea(new Dimension(5, 0)));
+        pnl_SearchWithIcon.add(btn_SearchIcon);
+    
         JPanel pnl_SearchWrapper = new JPanel();
         pnl_SearchWrapper.setOpaque(false);
         pnl_SearchWrapper.setLayout(new BoxLayout(pnl_SearchWrapper, BoxLayout.X_AXIS));
         pnl_SearchWrapper.setBorder(BorderFactory.createEmptyBorder(15, 35, 10, 10));
-        pnl_SearchWrapper.add(txt_Search);
-
+        pnl_SearchWrapper.add(pnl_SearchWithIcon);
+        
+        pnl_SearchWrapper.add(Box.createHorizontalGlue());
+    
         pnl_Header.add(pnl_TopRow, BorderLayout.NORTH);
         pnl_Header.add(pnl_SearchWrapper, BorderLayout.CENTER);
-
+    
         return pnl_Header;
     }
 }
