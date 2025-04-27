@@ -173,6 +173,26 @@ public class Dashboard extends JFrame {
         txt_Search.setMaximumSize(new Dimension(500, 40));
         txt_Search.setFont(new Font("SansSerif", Font.PLAIN, 14));
         txt_Search.setText("Tìm kiếm...");
+        txt_Search.setForeground(Color.GRAY);
+
+        txt_Search.addFocusListener(new java.awt.event.FocusAdapter() {
+            @Override
+            public void focusGained(java.awt.event.FocusEvent e) {
+                if (txt_Search.getText().equals("Tìm kiếm...")) {
+                    txt_Search.setText("");
+                    txt_Search.setForeground(Color.BLACK);
+                }
+            }
+
+            @Override
+            public void focusLost(java.awt.event.FocusEvent e) {
+                if (txt_Search.getText().isEmpty()) {
+                    txt_Search.setText("Tìm kiếm...");
+                    txt_Search.setForeground(Color.GRAY);
+                }
+            }
+        });
+
 
         RoundedButton btn_SearchIcon = new RoundedButton("🔍", 20);
         btn_SearchIcon.setFont(new Font("SansSerif", Font.PLAIN, 18));
