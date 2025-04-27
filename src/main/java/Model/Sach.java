@@ -1,15 +1,23 @@
 package Model;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class Sach {
+	@Override
+	public String toString() {
+		return "Sach [maSach=" + maSach + ", tenSach=" + tenSach + ", nXB=" + nXB + ", namXB=" + namXB + ", gia=" + gia
+				+ ", anh=" + anh + ", dsTheLoai=" + dsTheLoai + "]";
+	}
+
 	private String maSach;
 	private String tenSach;
 	private String nXB;
 	private int namXB;
 	private double gia;
+
 	private String anh;
-	private ArrayList<TheLoai> dsTheLoai = new ArrayList<TheLoai>();
+	private List<TheLoai> dsTheLoai;
 
 	public Sach() {
 		super();
@@ -23,6 +31,14 @@ public class Sach {
 		this.namXB = namXB;
 		this.gia = gia;
 		this.anh = anh;
+	}
+
+	public List<TheLoai> getDsTheLoai() {
+		return dsTheLoai;
+	}
+
+	public void setDsTheLoai(List<TheLoai> dsTheLoai) {
+		this.dsTheLoai = dsTheLoai;
 	}
 
 	public String getMaSach() {
