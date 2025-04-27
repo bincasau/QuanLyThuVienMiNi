@@ -1,3 +1,5 @@
+package Controller;
+
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -6,7 +8,7 @@ import java.sql.SQLException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
-public class LoginController {
+public class Login {
     private static final String mysql = "com.mysql.jdbc.Driver";
     private static final String URL = "jdbc:mysql://localhost:3306/IS216";
 	 private static final String USER = "root";
@@ -53,9 +55,6 @@ public class LoginController {
             e.printStackTrace();
         } catch (SQLException e) {
             callBack.onError("Lỗi kết nối database: " + e.getMessage());
-            e.printStackTrace();
-        } catch (NoSuchAlgorithmException e) {
-            callBack.onError("Thuật toán băm không hỗ trợ: " + e.getMessage());
             e.printStackTrace();
         } finally {
             try {

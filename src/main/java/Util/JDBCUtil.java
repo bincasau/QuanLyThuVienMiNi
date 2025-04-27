@@ -11,7 +11,6 @@ public class JDBCUtil {
 	 private static Connection c = null;
 	 public static Connection connect() {
 		 try {
-			System.out.println("helo util");
 			Class.forName("com.mysql.cj.jdbc.Driver");
 			c = DriverManager.getConnection(URL, USER, PASSWORD);
 		} catch (Exception e) {

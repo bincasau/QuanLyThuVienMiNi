@@ -69,7 +69,7 @@ public class Login extends JFrame {
         // Đọc hình ảnh từ file
         ImageIcon avatarIcon;
         try {
-            avatarIcon = new ImageIcon("avatar.png");
+            avatarIcon = new ImageIcon("Pictures/avatar.png");
             if (avatarIcon.getIconWidth() == -1) {
                 throw new Exception("Hình ảnh không tải được");
             }

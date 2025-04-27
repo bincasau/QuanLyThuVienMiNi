@@ -2,8 +2,6 @@ package View.User;
 
 import javax.swing.*;
 import java.awt.*;
-import View.User.RoundedButton;
-import View.User.RoundedTextField;
 
 public class User {
 	public static void main(String[] args) {

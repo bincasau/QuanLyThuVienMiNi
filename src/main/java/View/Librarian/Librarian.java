@@ -82,7 +82,7 @@ public class Librarian {
 		pnl_Header.setPreferredSize(new Dimension(0, 100));
 		pnl_Header.setBackground(new Color(106, 85, 85));
 
-		ImageIcon icon_Book = new ImageIcon("src/main/java/view/Librarian/book.png");
+		ImageIcon icon_Book = new ImageIcon("Pictures/book.png");
 		Image scaledImage = icon_Book.getImage().getScaledInstance(100, 100, Image.SCALE_SMOOTH);
 		icon_Book = new ImageIcon(scaledImage);
 
@@ -105,7 +105,7 @@ public class Librarian {
 
 		Dimension size = new Dimension(50, 50);
 
-		ImageIcon icon_Bell = new ImageIcon("src/main/java/view/Librarian/bell.png");
+		ImageIcon icon_Bell = new ImageIcon("Pictures/bell.png");
 		scaledImage = icon_Bell.getImage().getScaledInstance(30, 30, Image.SCALE_SMOOTH);
 		icon_Bell = new ImageIcon(scaledImage);
 		JButton btn_Notification = new JButton(icon_Bell);
@@ -115,7 +115,7 @@ public class Librarian {
 		btn_Notification.setMinimumSize(size);
 		pnl_Header.add(btn_Notification);
 
-		ImageIcon icon_Profile = new ImageIcon("src/main/java/view/Librarian/profile.png");
+		ImageIcon icon_Profile = new ImageIcon("Pictures/profile.png");
 		scaledImage = icon_Profile.getImage().getScaledInstance(30, 30, Image.SCALE_SMOOTH);
 		icon_Profile = new ImageIcon(scaledImage);
 		JButton btn_Profile = new JButton(icon_Profile);
