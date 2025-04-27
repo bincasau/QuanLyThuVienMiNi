@@ -4,13 +4,24 @@ import javax.swing.*;
 import java.awt.*;
 
 public class User {
+	private String username;
+    private JFrame frame;
+
+    // Constructor mới nhận username
+    public User(String username) {
+        this.username = username;
+    }
+
+	public User() {
+        this.username = "Người dùng";
+    }
 	public static void main(String[] args) {
 		SwingUtilities.invokeLater(() -> {
 			new User().showUI();
 		});
 	}
 
-	private void showUI() {
+	public void showUI() {
 		JFrame frame = new JFrame("Thư viện mini");
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.setSize(1000, 600);

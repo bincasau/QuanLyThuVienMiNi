@@ -1,13 +1,13 @@
 package Controller;
 
+import java.security.NoSuchAlgorithmException;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import main.java.Util.JDBCUtil; 
+import Util.JDBCUtil; 
 
-public class Login {
+public class LoginController {
     public interface LoginCallBack {
         void onSuccess(String username, boolean isAdmin);
         void onFailure(String message);
@@ -43,6 +43,8 @@ public class Login {
             } else {
                 callBack.onFailure("Tên đăng nhập hoặc mật khẩu không đúng");
             }
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
         } catch (SQLException e) {
             callBack.onError("Lỗi kết nối database: " + e.getMessage());
             e.printStackTrace();

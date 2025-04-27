@@ -32,7 +32,7 @@ public class JDBCUtil {
 		}
 	}
 
-	public String hashPasswordSHA1(String password) throws NoSuchAlgorithmException {
+	public static String hashPasswordSHA1(String password) throws NoSuchAlgorithmException {
 		MessageDigest md = MessageDigest.getInstance("SHA-1");
 		byte[] hashBytes = md.digest(password.getBytes());
 		StringBuilder sb =  new StringBuilder();

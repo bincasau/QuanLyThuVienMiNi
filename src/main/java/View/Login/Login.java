@@ -1,4 +1,9 @@
 package View.Login;
+
+import Controller.LoginController; // Thêm Controller Login
+import View.Librarian.Librarian;
+import View.User.User;
+
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
@@ -9,6 +14,7 @@ public class Login extends JFrame {
 
     private boolean isTaiKhoanPlaceholderActive = true;
     private boolean isMatKhauPlaceholderActive = true;
+    private LoginController loginController;
 
     // Phương thức cập nhật trạng thái placeholder cho ô "Tài Khoản"
     private void updateTaiKhoanPlaceholder(JTextField textField, boolean forcePlaceholder) {
@@ -46,6 +52,8 @@ public class Login extends JFrame {
     }
 
     public Login() {
+        loginController = new LoginController();
+
         setTitle("Thư Viện MINI - Đăng Nhập");
         setSize(350, 400);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -303,7 +311,49 @@ public class Login extends JFrame {
         btn_DangNhap.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                JOptionPane.showMessageDialog(null, "Đăng nhập thành công!");
+                // Lấy thông tin đăng nhập từ form
+                String username = isTaiKhoanPlaceholderActive ? "" : txt_TaiKhoan.getText();
+                String password = isMatKhauPlaceholderActive ? "" : new String(txt_MatKhau.getPassword());
+                
+                // Gọi phương thức đăng nhập từ Controller
+                loginController.login(username, password, new LoginController.LoginCallBack() {
+                    @Override
+                    public void onSuccess(String username, boolean isAdmin) {
+                        // Ẩn form đăng nhập
+                        dispose();
+                        
+                        // Điều hướng dựa vào vai trò người dùng
+                        if (isAdmin) {
+                            SwingUtilities.invokeLater(() -> {
+                                new Librarian(username).showUI();
+                            });
+                        } else {
+                            SwingUtilities.invokeLater(() -> {
+                                new User(username).showUI();
+                            });
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(String message) {
+                        JOptionPane.showMessageDialog(
+                            Login.this, 
+                            message, 
+                            "Lỗi đăng nhập", 
+                            JOptionPane.ERROR_MESSAGE
+                        );
+                    }
+
+                    @Override
+                    public void onError(String errorMessage) {
+                        JOptionPane.showMessageDialog(
+                            Login.this, 
+                            errorMessage, 
+                            "Lỗi hệ thống", 
+                            JOptionPane.ERROR_MESSAGE
+                        );
+                    }
+                });
             }
         });
 
