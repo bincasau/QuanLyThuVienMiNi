@@ -1,4 +1,4 @@
-package view.librarian;
+package View.Librarian;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
