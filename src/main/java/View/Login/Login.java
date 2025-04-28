@@ -1,4 +1,9 @@
 package View.Login;
+
+import Controller.LoginController; 
+import View.Librarian.Librarian;
+import View.User.User;
+
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
@@ -9,6 +14,7 @@ public class Login extends JFrame {
 
     private boolean isTaiKhoanPlaceholderActive = true;
     private boolean isMatKhauPlaceholderActive = true;
+    private LoginController loginController;
 
     // Phương thức cập nhật trạng thái placeholder cho ô "Tài Khoản"
     private void updateTaiKhoanPlaceholder(JTextField textField, boolean forcePlaceholder) {
@@ -46,6 +52,8 @@ public class Login extends JFrame {
     }
 
     public Login() {
+        loginController = new LoginController();
+
         setTitle("Thư Viện MINI - Đăng Nhập");
         setSize(350, 400);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -69,7 +77,7 @@ public class Login extends JFrame {
         // Đọc hình ảnh từ file
         ImageIcon avatarIcon;
         try {
-            avatarIcon = new ImageIcon("avatar.png");
+            avatarIcon = new ImageIcon("Pictures/avatar.png");
             if (avatarIcon.getIconWidth() == -1) {
                 throw new Exception("Hình ảnh không tải được");
             }
@@ -253,6 +261,8 @@ public class Login extends JFrame {
             }
         });
 
+        
+
         // Thêm DocumentListener để kiểm tra khi xóa nội dung (cho ô "Mật Khẩu")
         txt_MatKhau.getDocument().addDocumentListener(new DocumentListener() {
             @Override
@@ -303,7 +313,70 @@ public class Login extends JFrame {
         btn_DangNhap.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                JOptionPane.showMessageDialog(null, "Đăng nhập thành công!");
+                // Lấy thông tin đăng nhập từ form
+                String username = isTaiKhoanPlaceholderActive ? "" : txt_TaiKhoan.getText();
+                String password = isMatKhauPlaceholderActive ? "" : new String(txt_MatKhau.getPassword());
+                
+                // Gọi phương thức đăng nhập từ Controller
+                loginController.login(username, password, new LoginController.LoginCallBack() {
+                    @Override
+                    public void onSuccess(String username, boolean isAdmin) {
+                        // Ẩn form đăng nhập
+                        dispose();
+                        
+                        // Điều hướng dựa vào vai trò người dùng
+                        if (isAdmin) {
+                            SwingUtilities.invokeLater(() -> {
+                                new Librarian(username).showUI();
+                            });
+                        } else {
+                            SwingUtilities.invokeLater(() -> {
+                                new User(username).showUI();
+                            });
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(String message) {
+                        JOptionPane.showMessageDialog(
+                            Login.this, 
+                            message, 
+                            "Lỗi đăng nhập", 
+                            JOptionPane.ERROR_MESSAGE
+                        );
+                    }
+
+                    @Override
+                    public void onError(String errorMessage) {
+                        JOptionPane.showMessageDialog(
+                            Login.this, 
+                            errorMessage, 
+                            "Lỗi hệ thống", 
+                            JOptionPane.ERROR_MESSAGE
+                        );
+                    }
+                });
+            }
+        });
+
+        // Thêm KeyListener cho txt_MatKhau để xử lý sự kiện nhấn Enter
+        txt_MatKhau.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyPressed(KeyEvent e) {
+                // Kiểm tra xem phím nhấn có phải là Enter không
+                if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+                    // Gọi sự kiện giống như khi nhấn nút đăng nhập
+                    btn_DangNhap.doClick();
+                }
+                
+                // Giữ nguyên code xử lý placeholder nếu có
+                if (isMatKhauPlaceholderActive) {
+                    if (e.getKeyCode() == KeyEvent.VK_LEFT || e.getKeyCode() == KeyEvent.VK_RIGHT ||
+                        e.getKeyCode() == KeyEvent.VK_HOME || e.getKeyCode() == KeyEvent.VK_END) {
+                        e.consume();
+                        txt_MatKhau.setCaretPosition(0);
+                    }
+                }
             }
         });
 
