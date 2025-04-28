@@ -1,4 +1,4 @@
-package view.User;
+package View.User;
 
 import java.awt.BorderLayout;
 import java.awt.Color;

@@ -60,11 +60,33 @@ public class SachDao implements InterfaceDao<Sach>{
 		}
 		return ds;
 	}
-
+// Lay theo ma
 	@Override
 	public List<Sach> layDanhSachTheoDK(String dk) {
-		// TODO Auto-generated method stub
-		return null;
+		List<Sach> ds = new ArrayList<Sach>();
+		Connection conn = JDBCUtil.connect();
+		String sql = "select * from sach where maSach = ?";
+		if(conn != null) {
+			try {
+				PreparedStatement stmt = conn.prepareStatement(sql);
+				stmt.setString(1, dk);
+				ResultSet rs = stmt.executeQuery();
+				while(rs.next()) {
+					Sach s = new Sach(rs.getString("maSach"),
+									rs.getString("tenSach"), 
+									rs.getString("nhaXB"), 
+									rs.getInt("namXB"), 
+									rs.getDouble("gia"), 
+									rs.getString("anh"));
+					s.setDsTheLoai(TheLoaiDao.getInstance().layDanhSachTheoDK(rs.getString("maSach")));
+					ds.add(s);
+				}
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+			JDBCUtil.closeConnection();
+		}
+		return ds;
 	}
 
 }

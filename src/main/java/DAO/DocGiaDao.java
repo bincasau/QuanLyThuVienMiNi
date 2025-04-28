@@ -18,7 +18,11 @@ public class DocGiaDao implements InterfaceDao<DocGia> {
     private Connection getConnection() throws SQLException {
         return DriverManager.getConnection(DB_URL, DB_USER, DB_PASS);
     }
-
+    
+    public static DocGiaDao getInstance() {
+		return new DocGiaDao();
+	}
+    
     @Override
     public int themDoiTuong(DocGia t) {
         String sql = "INSERT INTO DocGia (maNguoiDung, taiKhoan, matKhau, email, soDienThoai, tenNguoiDung, ngayTao) VALUES (?, ?, ?, ?, ?, ?, ?)";
@@ -112,6 +116,33 @@ public class DocGiaDao implements InterfaceDao<DocGia> {
             String keyword = "%" + dk + "%";
             stmt.setString(1, keyword);
             stmt.setString(2, keyword);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    DocGia docGia = new DocGia(
+                        rs.getString("maNguoiDung"),
+                        rs.getString("taiKhoan"),
+                        rs.getString("matKhau"),
+                        rs.getString("email"),
+                        rs.getString("soDienThoai"),
+                        rs.getString("tenNguoiDung"),
+                        rs.getDate("ngayTao")
+                    );
+                    list.add(docGia);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+    public List<DocGia> layDanhSachTheoMa(String dk){
+        List<DocGia> list = new ArrayList<>();
+        String sql = "SELECT * FROM DocGia WHERE maNguoiDung LIKE ?";
+        try (Connection conn = getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, dk);
 
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {

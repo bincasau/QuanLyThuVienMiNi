@@ -7,22 +7,22 @@ public class LichSuMuonSach {
 	private Date ngayMuon;
 	private Date ngayTra;
 	private String trangThai;
-	private String maDocGia;
-	private String maThuThu;
 	private String maSach;
+	private String maThuThu;
+	private String maDocGia;
 	public LichSuMuonSach() {
 		super();
 	}
-	public LichSuMuonSach(String maLichSu, Date ngayMuon, Date ngayTra, String trangThai, String maDocGia,
-			String maThuThu, String maSach) {
+	public LichSuMuonSach(String maLichSu, Date ngayMuon, Date ngayTra, String trangThai, String maSach,
+			String maThuThu, String maDocGia) {
 		super();
 		this.maLichSu = maLichSu;
 		this.ngayMuon = ngayMuon;
 		this.ngayTra = ngayTra;
 		this.trangThai = trangThai;
-		this.maDocGia = maDocGia;
-		this.maThuThu = maThuThu;
 		this.maSach = maSach;
+		this.maThuThu = maThuThu;
+		this.maDocGia = maDocGia;
 	}
 	public String getMaLichSu() {
 		return maLichSu;
@@ -48,11 +48,11 @@ public class LichSuMuonSach {
 	public void setTrangThai(String trangThai) {
 		this.trangThai = trangThai;
 	}
-	public String getMaDocGia() {
-		return maDocGia;
+	public String getMaSach() {
+		return maSach;
 	}
-	public void setMaDocGia(String maDocGia) {
-		this.maDocGia = maDocGia;
+	public void setMaSach(String maSach) {
+		this.maSach = maSach;
 	}
 	public String getMaThuThu() {
 		return maThuThu;
@@ -60,11 +60,18 @@ public class LichSuMuonSach {
 	public void setMaThuThu(String maThuThu) {
 		this.maThuThu = maThuThu;
 	}
-	public String getMaSach() {
-		return maSach;
+	public String getMaDocGia() {
+		return maDocGia;
 	}
-	public void setMaSach(String maSach) {
-		this.maSach = maSach;
+	public void setMaDocGia(String maDocGia) {
+		this.maDocGia = maDocGia;
 	}
+	@Override
+	public String toString() {
+		return "LichSuMuonSach [maLichSu=" + maLichSu + ", ngayMuon=" + ngayMuon + ", ngayTra=" + ngayTra
+				+ ", trangThai=" + trangThai + ", maSach=" + maSach + ", maThuThu=" + maThuThu + ", maDocGia="
+				+ maDocGia + "]";
+	}
+	
 	
 }

@@ -22,5 +22,6 @@ public class DocGia extends NguoiSuDung {
 	public void setNgayTao(Date ngayTao) {
 		this.ngayTao = ngayTao;
 	}
+	
 
 }

@@ -1,8 +1,17 @@
-package view.Librarian;
+package View.Librarian;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import DAO.DocGiaDao;
+import DAO.LichSuMuonSachDao;
+import DAO.Ls_Dg_sachDao;
+import DAO.SachDao;
+import Model.DocGia;
+import Model.LichSuMuonSach;
+import Model.Ls_Dg_sach;
+import Model.Sach;
 import java.awt.*;
+import java.util.List;
 
 public class MuonSach extends JFrame {
     private JPanel pnl_Content;
@@ -164,35 +173,48 @@ public class MuonSach extends JFrame {
         pnl_MainContent.setLayout(new BoxLayout(pnl_MainContent, BoxLayout.Y_AXIS));
         pnl_MainContent.setBackground(Color.WHITE);
 
+        // Tạo JScrollPane với chiều cao động
         JScrollPane scrollPane = new JScrollPane(pnl_MainContent);
         scrollPane.setBorder(null);
         scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-        scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);  // Đảm bảo thanh cuộn luôn hiển thị
 
-        panelMain.add(scrollPane, BorderLayout.CENTER);
+        // Điều chỉnh chiều cao cho JScrollPane sao cho phù hợp với không gian có sẵn
+        scrollPane.setPreferredSize(new Dimension(900, 500));
 
-        // Thêm sách mẫu
-        for (int i = 0; i < 10; i++) {
-            pnl_MainContent.add(createBookItem());
-            pnl_MainContent.add(Box.createVerticalStrut(10));
+        // Thêm các item vào pnl_MainConten
+        List<Ls_Dg_sach> ds = Ls_Dg_sachDao.getInstance().layDanhSach();
+        for (int i = 0; i < ds.size(); i++) {
+        	Ls_Dg_sach ls = ds.get(i);
+            pnl_MainContent.add(createBookItem(ls));
+            pnl_MainContent.add(Box.createVerticalStrut(10));  // Tạo khoảng cách giữa các item
         }
+
+        // Cập nhật lại chiều cao của scrollPane sau khi thêm tất cả các item vào pnl_MainContent
+        pnl_MainContent.revalidate();
+        pnl_MainContent.repaint();
+
+        // Thêm JScrollPane vào panel chính
+        panelMain.add(scrollPane, BorderLayout.CENTER);
 
         return panelMain;
     }
 
-    private JPanel createBookItem() {
+    private JPanel createBookItem(Ls_Dg_sach ls) {
         RoundedPanel itemPanel = new RoundedPanel(20);
-        itemPanel.setLayout(new BorderLayout(10, 10));
+        itemPanel.setLayout(new BorderLayout());
         itemPanel.setBackground(new Color(182, 162, 162));
-        itemPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 130));
+        itemPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 120)); // Giảm chiều cao để gọn
         itemPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        itemPanel.setBorder(new EmptyBorder(10, 20, 10, 20));
+        itemPanel.setBorder(new EmptyBorder(8, 15, 8, 15)); // Giảm padding tổng
 
+        // LEFT: Ảnh và tên sách
         JPanel leftPanel = new JPanel();
         leftPanel.setLayout(new BoxLayout(leftPanel, BoxLayout.Y_AXIS));
         leftPanel.setOpaque(false);
+        leftPanel.setPreferredSize(new Dimension(150, 100));  // Tăng chiều rộng tại đây!
 
-        ImageIcon bookIcon = new ImageIcon("Pictures/book.png");
+        ImageIcon bookIcon = new ImageIcon("Pictures/" + ls.getAnh()); // Đảm bảo tên hình ảnh đúng với tên sách
         if (bookIcon.getIconWidth() != -1) {
             Image scaledBook = bookIcon.getImage().getScaledInstance(60, 60, Image.SCALE_SMOOTH);
             JLabel lblBook = new JLabel(new ImageIcon(scaledBook));
@@ -200,39 +222,55 @@ public class MuonSach extends JFrame {
             leftPanel.add(lblBook);
         }
 
-        JLabel lblBookName = new JLabel("Tên sách: JAVA 101");
-        lblBookName.setFont(new Font("Arial", Font.BOLD, 12));
+        String bookName = "<html><div style='text-align: center; width: 120px;'>" + ls.getTenSach() + "</div></html>";
+        JLabel lblBookName = new JLabel(bookName);
+        lblBookName.setFont(new Font("Segoe UI", Font.BOLD, 13));
         lblBookName.setAlignmentX(Component.CENTER_ALIGNMENT);
+        lblBookName.setForeground(Color.BLACK);
 
         leftPanel.add(Box.createVerticalStrut(5));
         leftPanel.add(lblBookName);
 
         itemPanel.add(leftPanel, BorderLayout.WEST);
 
-        JPanel infoPanel = new JPanel(new GridLayout(3, 2, 10, 5));
-        infoPanel.setOpaque(false);
+        // RIGHT: Các thông tin
+        JPanel rightPanel = new JPanel();
+        rightPanel.setLayout(new GridBagLayout());
+        rightPanel.setOpaque(false);
 
-        infoPanel.add(createInfoRow("Tên:", "Huỳnh Tuấn Phi"));
-        infoPanel.add(createInfoRow("Mã KH:", "1111"));
-        infoPanel.add(createInfoRow("Ngày mượn:", "1/1/111"));
-        infoPanel.add(createInfoRow("Ngày trả:", "1/1/1111"));
-        infoPanel.add(createStatusRow("Trạng thái:", "Chưa trả"));
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(2, 5, 2, 5); // Giảm khoảng cách dòng nhỏ lại
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.weightx = 1;
 
-        itemPanel.add(infoPanel, BorderLayout.CENTER);
+        rightPanel.add(createInfoRow("Tên:", ls.getTenNguoiDung()), gbc); // Thêm tên người dùng
+        gbc.gridy++;
+        rightPanel.add(createInfoRow("Mã KH:", ls.getMaNguoiDung()), gbc); // Mã khách hàng
+        gbc.gridy++;
+        rightPanel.add(createInfoRow("Ngày mượn:", ls.getNgayMuon().toString()), gbc); // Ngày mượn
+        gbc.gridy++;
+        rightPanel.add(createInfoRow("Ngày trả:", ls.getNgayTra() == null ? "Chưa có" : ls.getNgayTra().toString()), gbc); // Ngày trả
+        gbc.gridy++;
+        rightPanel.add(createStatusRow("Trạng thái:", ls.getTrangThai()), gbc); // Trạng thái
+
+        itemPanel.add(rightPanel, BorderLayout.CENTER);
 
         return itemPanel;
     }
 
     private JPanel createInfoRow(String label, String value) {
-        JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
+        JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 3, 0));
         panel.setOpaque(false);
 
         JLabel lblLabel = new JLabel(label);
-        lblLabel.setFont(new Font("Arial", Font.BOLD, 14));
+        lblLabel.setFont(new Font("Segoe UI", Font.BOLD, 13));
         lblLabel.setForeground(Color.BLACK);
 
         JLabel lblValue = new JLabel(value);
-        lblValue.setFont(new Font("Arial", Font.PLAIN, 14));
+        lblValue.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         lblValue.setForeground(Color.BLACK);
 
         panel.add(lblLabel);
@@ -241,16 +279,16 @@ public class MuonSach extends JFrame {
     }
 
     private JPanel createStatusRow(String label, String status) {
-        JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
+        JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 3, 0));
         panel.setOpaque(false);
 
         JLabel lblLabel = new JLabel(label);
-        lblLabel.setFont(new Font("Arial", Font.BOLD, 14));
+        lblLabel.setFont(new Font("Segoe UI", Font.BOLD, 13));
         lblLabel.setForeground(Color.BLACK);
 
         JLabel lblStatus = new JLabel(status);
-        lblStatus.setFont(new Font("Arial", Font.PLAIN, 14));
-        lblStatus.setForeground(Color.RED);
+        lblStatus.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        lblStatus.setForeground(status.equals("Chưa trả") ? Color.RED : Color.GREEN);
 
         panel.add(lblLabel);
         panel.add(lblStatus);
