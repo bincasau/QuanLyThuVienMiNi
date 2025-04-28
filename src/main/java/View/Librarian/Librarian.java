@@ -1,7 +1,20 @@
-package View.Librarian;
+package view.librarian;
 
-import javax.swing.*;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.Image;
+
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 
 public class Librarian {
 	public static void main(String[] args) {
@@ -10,6 +23,8 @@ public class Librarian {
 		});
 	}
 
+	private ReaderController readerController = new ReaderController(); // <- thêm Controller độc giả
+	private JPanel pnl_Main;
 	public void showUI() {
 		JFrame frame = new JFrame("Thư viện mini");
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -21,7 +36,7 @@ public class Librarian {
 		JPanel pnl_Sidebar = createSidebar();
 		frame.add(pnl_Sidebar, BorderLayout.WEST);
 
-		JPanel pnl_Main = new JPanel();
+		JPanel pnl_Main = new JPanel(new BorderLayout());// <- sửa thành BorderLayout cho dễ add
 		pnl_Main.setBackground(Color.WHITE);
 		frame.add(pnl_Main);
 
@@ -46,6 +61,9 @@ public class Librarian {
 		btn_User.setMaximumSize(new Dimension(200, 50));
 		btn_User.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 		pnl_Sidebar.add(btn_User);
+		btn_User.addActionListener(e -> {
+            showReaderPanel(); // <- thêm sự kiện cho nút Độc giả
+        });
 
 		JButton btn_Borrow = new JButton("Mượn sách");
 		btn_Borrow.setPreferredSize(new Dimension(200, 50));
@@ -127,5 +145,15 @@ public class Librarian {
 
 		return pnl_Header;
 	}
-
+	private void showReaderPanel() {
+		pnl_Main.removeAll();
+		JPanel readerPanel = readerController.getReaderPanel();
+		if (readerPanel != null) {
+			pnl_Main.add(readerPanel);
+		} else {
+			pnl_Main.add(new JLabel("Không thể tải giao diện độc giả"));
+		}
+		pnl_Main.revalidate();
+		pnl_Main.repaint();
+	}
 }
