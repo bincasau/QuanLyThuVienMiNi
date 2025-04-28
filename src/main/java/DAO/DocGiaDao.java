@@ -109,13 +109,11 @@ public class DocGiaDao implements InterfaceDao<DocGia> {
     @Override
     public List<DocGia> layDanhSachTheoDK(String dk) {
         List<DocGia> list = new ArrayList<>();
-        String sql = "SELECT * FROM DocGia WHERE maNguoiDung LIKE ? OR tenNguoiDung LIKE ?";
+        String sql = "SELECT * FROM DocGia WHERE maNguoiDung = ?";
         try (Connection conn = getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
-
-            String keyword = "%" + dk + "%";
-            stmt.setString(1, keyword);
-            stmt.setString(2, keyword);
+        	
+            stmt.setString(1, dk);
 
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {

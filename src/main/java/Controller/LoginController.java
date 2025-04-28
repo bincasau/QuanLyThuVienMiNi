@@ -5,6 +5,11 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+
+import DAO.DocGiaDao;
+import DAO.ThuThuDao;
+import Model.DocGia;
+import Model.ThuThu;
 import Util.JDBCUtil; 
 
 public class LoginController {
@@ -24,13 +29,14 @@ public class LoginController {
         Connection conn = null;
         PreparedStatement stmt = null;
         ResultSet rs = null;
-
+        
         try {
+            // callBack.onSuccess(username, false);
             String hashedPassword = JDBCUtil.hashPasswordSHA1(password);
-
+            System.out.println(username + " " + hashedPassword);
             conn = JDBCUtil.connect();
 
-            String sql = "SELECT * FROM DocGia WHERE taiKhoan = ? AND matKhau = ?";
+            String sql = "SELECT * FROM thuthu WHERE taiKhoan = ? AND matKhau = ?";
             stmt = conn.prepareStatement(sql);
             stmt.setString(1, username);
             stmt.setString(2, hashedPassword);
@@ -38,10 +44,19 @@ public class LoginController {
             rs = stmt.executeQuery();
 
             if (rs.next()) {
-                boolean isAdmin = "admin".equals(username);
-                callBack.onSuccess(username, isAdmin);
+                callBack.onSuccess(username, true);
             } else {
-                callBack.onFailure("Tên đăng nhập hoặc mật khẩu không đúng");
+                sql = "SELECT * FROM docgia WHERE taiKhoan = ? AND matKhau = ?";
+                stmt = conn.prepareStatement(sql);
+                stmt.setString(1, username);
+                stmt.setString(2, hashedPassword);
+                
+                rs = stmt.executeQuery();
+                if (rs.next()) {
+                    callBack.onSuccess(username, false);
+                } else {
+                    callBack.onFailure("Tên đăng nhập hoặc mật khẩu không đúng");
+                }
             }
         } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
