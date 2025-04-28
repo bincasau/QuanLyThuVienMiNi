@@ -91,6 +91,27 @@ public class User {
 		btn_Logout.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
 		btn_Logout.setAlignmentX(Component.LEFT_ALIGNMENT);
 		btn_Logout.setHorizontalAlignment(SwingConstants.LEFT);
+
+		btn_Logout.addActionListener(e -> {
+            Window window = SwingUtilities.getWindowAncestor(btn_Logout);
+            int confirm = JOptionPane.showConfirmDialog(window, 
+                "Bạn có chắc chắn muốn đăng xuất?", 
+                "Xác nhận đăng xuất", 
+                JOptionPane.YES_NO_OPTION);
+        
+            if (confirm == JOptionPane.YES_OPTION) {
+                // Lấy ra cái Window chứa nút btn_Logout rồi đóng nó
+                
+                if (window != null) {
+                    window.dispose();
+                }
+                
+                // Gọi lại giao diện Login
+                View.Login.Login loginForm = new View.Login.Login();
+                loginForm.setVisible(true);
+            }
+        });
+
 		pnl_ButtonGroup.add(Box.createRigidArea(new Dimension(0, 10)));
 		pnl_ButtonGroup.add(btn_Logout);
 

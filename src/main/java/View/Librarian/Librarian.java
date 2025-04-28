@@ -13,8 +13,14 @@ import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
+import javax.swing.WindowConstants;
+import java.awt.Window;
+
+
+import View.Login.Login;
 
 public class Librarian {
     private String username;
@@ -93,16 +99,30 @@ public class Librarian {
         btn_Logout.setPreferredSize(new Dimension(200, 50));
         btn_Logout.setMaximumSize(new Dimension(200, 50));
         btn_Logout.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        btn_Logout.setFocusable(false);
         pnl_Sidebar.add(btn_Logout);
         
         // Thêm xử lý sự kiện đăng xuất
         btn_Logout.addActionListener(e -> {
-            frame.dispose();
-            SwingUtilities.invokeLater(() -> {
+            Window window = SwingUtilities.getWindowAncestor(btn_Logout);
+            int confirm = JOptionPane.showConfirmDialog(window, 
+                "Bạn có chắc chắn muốn đăng xuất?", 
+                "Xác nhận đăng xuất", 
+                JOptionPane.YES_NO_OPTION);
+        
+            if (confirm == JOptionPane.YES_OPTION) {
+                // Lấy ra cái Window chứa nút btn_Logout rồi đóng nó
+                
+                if (window != null) {
+                    window.dispose();
+                }
+                
+                // Gọi lại giao diện Login
                 View.Login.Login loginForm = new View.Login.Login();
                 loginForm.setVisible(true);
-            });
+            }
         });
+        
 
         return pnl_Sidebar;
     }
