@@ -1,8 +1,8 @@
 package View.Login;
 
-import Controller.LoginController; 
-import View.Librarian.Librarian;
-import View.User.User;
+import Controller.LoginController;
+import View.Librarian.Book; // Import Book
+import View.User.Dashboard; // Import Dashboard
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -261,8 +261,6 @@ public class Login extends JFrame {
             }
         });
 
-        
-
         // Thêm DocumentListener để kiểm tra khi xóa nội dung (cho ô "Mật Khẩu")
         txt_MatKhau.getDocument().addDocumentListener(new DocumentListener() {
             @Override
@@ -327,11 +325,11 @@ public class Login extends JFrame {
                         // Điều hướng dựa vào vai trò người dùng
                         if (isAdmin) {
                             SwingUtilities.invokeLater(() -> {
-                                new Librarian(username).showUI();
+                                new Book(username).setVisible(true); // Gọi Book cho Thủ thư
                             });
                         } else {
                             SwingUtilities.invokeLater(() -> {
-                                new User(username).showUI();
+                                new Dashboard(username).setVisible(true); // Gọi Dashboard cho Độc giả
                             });
                         }
                     }

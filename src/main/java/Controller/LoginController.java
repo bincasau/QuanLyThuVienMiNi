@@ -5,6 +5,11 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+
+import DAO.DocGiaDao;
+import DAO.ThuThuDao;
+import Model.DocGia;
+import Model.ThuThu;
 import Util.JDBCUtil; 
 
 public class LoginController {
@@ -28,10 +33,10 @@ public class LoginController {
         try {
             // callBack.onSuccess(username, false);
             String hashedPassword = JDBCUtil.hashPasswordSHA1(password);
-
+            System.out.println(username + " " + hashedPassword);
             conn = JDBCUtil.connect();
 
-            String sql = "SELECT * FROM ThuThu WHERE taiKhoan = ? AND matKhau = ?";
+            String sql = "SELECT * FROM thuthu WHERE taiKhoan = ? AND matKhau = ?";
             stmt = conn.prepareStatement(sql);
             stmt.setString(1, username);
             stmt.setString(2, hashedPassword);
@@ -41,10 +46,12 @@ public class LoginController {
             if (rs.next()) {
                 callBack.onSuccess(username, true);
             } else {
-                sql = "SELECT * FROM DocGia WHERE taiKhoan = ? AND matKhau = ?";
+                sql = "SELECT * FROM docgia WHERE taiKhoan = ? AND matKhau = ?";
                 stmt = conn.prepareStatement(sql);
                 stmt.setString(1, username);
                 stmt.setString(2, hashedPassword);
+                
+                rs = stmt.executeQuery();
                 if (rs.next()) {
                     callBack.onSuccess(username, false);
                 } else {

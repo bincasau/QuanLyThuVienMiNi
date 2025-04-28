@@ -1,4 +1,4 @@
-package view.User;
+package View.User;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -11,41 +11,32 @@ import java.awt.Insets;
 import java.awt.GridLayout;
 import java.util.List;
 
-import javax.swing.BorderFactory;
-import javax.swing.Box;
-import javax.swing.BoxLayout;
-import javax.swing.ImageIcon;
-import javax.swing.JButton;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.SwingConstants;
+import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 
 import DAO.SachDao;
 import Model.Sach;
 import Model.TheLoai;
+import View.Login.Login; // Import Login để quay lại khi đăng xuất
 
 public class Dashboard extends JFrame {
 
     private static final long serialVersionUID = 1L;
     private JPanel contentPane;
+    private String username; // Lưu username
 
-    public static void main(String[] args) {
-        EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                try {
-                    Dashboard frame = new Dashboard();
-                    frame.setVisible(true);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        });
+    // Constructor nhận username
+    public Dashboard(String username) {
+        this.username = username;
+        initializeUI();
     }
 
     public Dashboard() {
+        this.username = "Guest"; // Giá trị mặc định nếu không có username
+        initializeUI();
+    }
+
+    private void initializeUI() {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setTitle("Thư viện mini");
         setSize(1000, 600);
@@ -70,8 +61,6 @@ public class Dashboard extends JFrame {
         pnl_Main.add(scrollPane, BorderLayout.CENTER);
 
         contentPane.add(pnl_Main, BorderLayout.CENTER);
-
-        setVisible(true);
     }
 
     private JPanel createSidebar() {
@@ -90,7 +79,7 @@ public class Dashboard extends JFrame {
         pnl_ButtonGroup.setBackground(new Color(240, 233, 222));
         pnl_ButtonGroup.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 10));
 
-        RoundedButton btn_Home = new RoundedButton("Trang chủ", 20);
+        JButton btn_Home = new JButton("Trang chủ"); // Thay RoundedButton bằng JButton
         btn_Home.setBackground(new Color(252, 215, 194));
         btn_Home.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
         btn_Home.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
@@ -99,7 +88,7 @@ public class Dashboard extends JFrame {
         pnl_ButtonGroup.add(Box.createRigidArea(new Dimension(0, 10)));
         pnl_ButtonGroup.add(btn_Home);
 
-        RoundedButton btn_History = new RoundedButton("Lịch sử", 20);
+        JButton btn_History = new JButton("Lịch sử");
         btn_History.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
         btn_History.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
         btn_History.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -107,7 +96,7 @@ public class Dashboard extends JFrame {
         pnl_ButtonGroup.add(Box.createRigidArea(new Dimension(0, 10)));
         pnl_ButtonGroup.add(btn_History);
 
-        RoundedButton btn_Penalty = new RoundedButton("Phiếu phạt", 20);
+        JButton btn_Penalty = new JButton("Phiếu phạt");
         btn_Penalty.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
         btn_Penalty.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
         btn_Penalty.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -115,11 +104,17 @@ public class Dashboard extends JFrame {
         pnl_ButtonGroup.add(Box.createRigidArea(new Dimension(0, 10)));
         pnl_ButtonGroup.add(btn_Penalty);
 
-        RoundedButton btn_Logout = new RoundedButton("Đăng xuất", 20);
+        JButton btn_Logout = new JButton("Đăng xuất");
         btn_Logout.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
         btn_Logout.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
         btn_Logout.setAlignmentX(Component.LEFT_ALIGNMENT);
         btn_Logout.setHorizontalAlignment(SwingConstants.LEFT);
+        btn_Logout.addActionListener(e -> {
+            dispose();
+            SwingUtilities.invokeLater(() -> {
+                new Login().setVisible(true);
+            });
+        });
         pnl_ButtonGroup.add(Box.createRigidArea(new Dimension(0, 10)));
         pnl_ButtonGroup.add(btn_Logout);
 
@@ -138,7 +133,7 @@ public class Dashboard extends JFrame {
         pnl_TopRow.setBorder(BorderFactory.createEmptyBorder(10, 35, 0, 20));
 
         JButton btn_Avatar = new JButton("AVT");
-        JLabel lbl_UserName = new JLabel("Nguyễn Văn A");
+        JLabel lbl_UserName = new JLabel(username); // Hiển thị username
         lbl_UserName.setFont(new Font("SansSerif", Font.PLAIN, 14));
         lbl_UserName.setForeground(Color.WHITE);
 
@@ -168,11 +163,10 @@ public class Dashboard extends JFrame {
         pnl_SearchWithIcon.setLayout(new BoxLayout(pnl_SearchWithIcon, BoxLayout.X_AXIS));
         pnl_SearchWithIcon.setOpaque(false);
 
-        RoundedTextField txt_Search = new RoundedTextField(10);
+        JTextField txt_Search = new JTextField("Tìm kiếm..."); // Thay RoundedTextField
         txt_Search.setPreferredSize(new Dimension(300, 40));
         txt_Search.setMaximumSize(new Dimension(500, 40));
         txt_Search.setFont(new Font("SansSerif", Font.PLAIN, 14));
-        txt_Search.setText("Tìm kiếm...");
         txt_Search.setForeground(Color.GRAY);
 
         txt_Search.addFocusListener(new java.awt.event.FocusAdapter() {
@@ -193,8 +187,7 @@ public class Dashboard extends JFrame {
             }
         });
 
-
-        RoundedButton btn_SearchIcon = new RoundedButton("🔍", 20);
+        JButton btn_SearchIcon = new JButton("🔍");
         btn_SearchIcon.setFont(new Font("SansSerif", Font.PLAIN, 18));
         btn_SearchIcon.setFocusPainted(false);
         btn_SearchIcon.setContentAreaFilled(true);
@@ -209,7 +202,7 @@ public class Dashboard extends JFrame {
         btn_SearchIcon.setHorizontalAlignment(SwingConstants.CENTER);
         btn_SearchIcon.setVerticalAlignment(SwingConstants.CENTER);
 
-        RoundedButton btn_FilterByCategory = new RoundedButton("Tìm theo thể loại", 20);
+        JButton btn_FilterByCategory = new JButton("Tìm theo thể loại");
         btn_FilterByCategory.setFont(new Font("SansSerif", Font.PLAIN, 14));
         btn_FilterByCategory.setBackground(new Color(240, 240, 240));
         btn_FilterByCategory.setOpaque(true);
@@ -239,7 +232,7 @@ public class Dashboard extends JFrame {
     private JPanel createContentPanel() {
         JPanel pnl_Content = new JPanel();
         pnl_Content.setBackground(Color.WHITE);
-        pnl_Content.setLayout(new GridLayout(0, 4, 10, 10)); // 4 cards per row
+        pnl_Content.setLayout(new GridLayout(0, 4, 10, 10));
         pnl_Content.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
         SachDao sachDao = SachDao.getInstance();
@@ -292,7 +285,6 @@ public class Dashboard extends JFrame {
         lblYear.setAlignmentX(Component.LEFT_ALIGNMENT);
         detailsPanel.add(lblYear);
 
-        // Genres
         StringBuilder genres = new StringBuilder("Thể loại: ");
         List<TheLoai> genreList = book.getDsTheLoai();
         if (genreList != null && !genreList.isEmpty()) {
@@ -314,5 +306,16 @@ public class Dashboard extends JFrame {
         card.add(detailsPanel, BorderLayout.CENTER);
 
         return card;
+    }
+
+    public static void main(String[] args) {
+        EventQueue.invokeLater(() -> {
+            try {
+                Dashboard frame = new Dashboard();
+                frame.setVisible(true);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
     }
 }

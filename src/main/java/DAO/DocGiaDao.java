@@ -19,6 +19,10 @@ public class DocGiaDao implements InterfaceDao<DocGia> {
         return DriverManager.getConnection(DB_URL, DB_USER, DB_PASS);
     }
 
+    public static DocGiaDao getInstance() {
+    	return new DocGiaDao();
+    }
+    
     @Override
     public int themDoiTuong(DocGia t) {
         String sql = "INSERT INTO DocGia (maNguoiDung, taiKhoan, matKhau, email, soDienThoai, tenNguoiDung, ngayTao) VALUES (?, ?, ?, ?, ?, ?, ?)";
@@ -105,13 +109,11 @@ public class DocGiaDao implements InterfaceDao<DocGia> {
     @Override
     public List<DocGia> layDanhSachTheoDK(String dk) {
         List<DocGia> list = new ArrayList<>();
-        String sql = "SELECT * FROM DocGia WHERE maNguoiDung LIKE ? OR tenNguoiDung LIKE ?";
+        String sql = "SELECT * FROM DocGia WHERE maNguoiDung = ?";
         try (Connection conn = getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
-
-            String keyword = "%" + dk + "%";
-            stmt.setString(1, keyword);
-            stmt.setString(2, keyword);
+        	
+            stmt.setString(1, dk);
 
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
