@@ -1,6 +1,6 @@
 package View.Login;
 
-import Controller.LoginController; // Thêm Controller Login
+import Controller.LoginController; 
 import View.Librarian.Librarian;
 import View.User.User;
 
@@ -261,6 +261,8 @@ public class Login extends JFrame {
             }
         });
 
+        
+
         // Thêm DocumentListener để kiểm tra khi xóa nội dung (cho ô "Mật Khẩu")
         txt_MatKhau.getDocument().addDocumentListener(new DocumentListener() {
             @Override
@@ -354,6 +356,27 @@ public class Login extends JFrame {
                         );
                     }
                 });
+            }
+        });
+
+        // Thêm KeyListener cho txt_MatKhau để xử lý sự kiện nhấn Enter
+        txt_MatKhau.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyPressed(KeyEvent e) {
+                // Kiểm tra xem phím nhấn có phải là Enter không
+                if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+                    // Gọi sự kiện giống như khi nhấn nút đăng nhập
+                    btn_DangNhap.doClick();
+                }
+                
+                // Giữ nguyên code xử lý placeholder nếu có
+                if (isMatKhauPlaceholderActive) {
+                    if (e.getKeyCode() == KeyEvent.VK_LEFT || e.getKeyCode() == KeyEvent.VK_RIGHT ||
+                        e.getKeyCode() == KeyEvent.VK_HOME || e.getKeyCode() == KeyEvent.VK_END) {
+                        e.consume();
+                        txt_MatKhau.setCaretPosition(0);
+                    }
+                }
             }
         });
 

@@ -68,7 +68,7 @@ public class LoginController {
             Class.forName("com.mysql.jdbc.Driver");
             conn = Util.JDBCUtil.connect();
 
-            String sql = "SELECT * FROM users WHERE username = ?";
+            String sql = "SELECT * FROM DocGia WHERE taiKhoan = ?";
             stmt = conn.prepareStatement(sql);
             stmt.setString(1, username);
 
