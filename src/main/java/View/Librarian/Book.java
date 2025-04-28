@@ -1,4 +1,4 @@
-package view.Librarian;
+package View.Librarian;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
