@@ -10,29 +10,33 @@ import java.awt.Image;
 import java.awt.Insets;
 import java.awt.GridLayout;
 import java.util.List;
-
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import java.awt.event.AdjustmentEvent;
+import java.awt.event.AdjustmentListener;
 
 import DAO.SachDao;
 import Model.Sach;
 import Model.TheLoai;
-import View.Login.Login; // Import Login để quay lại khi đăng xuất
+import View.Login.Login;
 
 public class Dashboard extends JFrame {
 
     private static final long serialVersionUID = 1L;
     private JPanel contentPane;
-    private String username; // Lưu username
+    private String username;
+    private List<Sach> bookList;
+    private int currentBookIndex = 0;
+    private static final int BATCH_SIZE = 20;
+    private JPanel pnl_Content;
 
-    // Constructor nhận username
     public Dashboard(String username) {
         this.username = username;
         initializeUI();
     }
 
     public Dashboard() {
-        this.username = "Guest"; // Giá trị mặc định nếu không có username
+        this.username = "Guest";
         initializeUI();
     }
 
@@ -54,12 +58,27 @@ public class Dashboard extends JFrame {
         JPanel pnl_Header = createHeader();
         pnl_Main.add(pnl_Header, BorderLayout.NORTH);
 
-        JPanel pnl_Content = createContentPanel();
+        pnl_Content = createContentPanel();
         JScrollPane scrollPane = new JScrollPane(pnl_Content);
         scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
         scrollPane.setBorder(null);
-        pnl_Main.add(scrollPane, BorderLayout.CENTER);
 
+        // Add scroll listener for lazy loading
+        scrollPane.getVerticalScrollBar().addAdjustmentListener(new AdjustmentListener() {
+            @Override
+            public void adjustmentValueChanged(AdjustmentEvent e) {
+                JScrollBar scrollBar = (JScrollBar) e.getSource();
+                int extent = scrollBar.getModel().getExtent();
+                int maximum = scrollBar.getModel().getMaximum();
+                int value = scrollBar.getValue();
+                // Check if user has scrolled to the bottom
+                if (value + extent >= maximum - 10 && currentBookIndex < bookList.size()) {
+                    loadMoreBooks();
+                }
+            }
+        });
+
+        pnl_Main.add(scrollPane, BorderLayout.CENTER);
         contentPane.add(pnl_Main, BorderLayout.CENTER);
     }
 
@@ -79,7 +98,7 @@ public class Dashboard extends JFrame {
         pnl_ButtonGroup.setBackground(new Color(240, 233, 222));
         pnl_ButtonGroup.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 10));
 
-        JButton btn_Home = new JButton("Trang chủ"); // Thay RoundedButton bằng JButton
+        JButton btn_Home = new JButton("Trang chủ");
         btn_Home.setBackground(new Color(252, 215, 194));
         btn_Home.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
         btn_Home.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
@@ -133,7 +152,7 @@ public class Dashboard extends JFrame {
         pnl_TopRow.setBorder(BorderFactory.createEmptyBorder(10, 35, 0, 20));
 
         JButton btn_Avatar = new JButton("AVT");
-        JLabel lbl_UserName = new JLabel(username); // Hiển thị username
+        JLabel lbl_UserName = new JLabel(username);
         lbl_UserName.setFont(new Font("SansSerif", Font.PLAIN, 14));
         lbl_UserName.setForeground(Color.WHITE);
 
@@ -163,7 +182,7 @@ public class Dashboard extends JFrame {
         pnl_SearchWithIcon.setLayout(new BoxLayout(pnl_SearchWithIcon, BoxLayout.X_AXIS));
         pnl_SearchWithIcon.setOpaque(false);
 
-        JTextField txt_Search = new JTextField("Tìm kiếm..."); // Thay RoundedTextField
+        JTextField txt_Search = new JTextField("Tìm kiếm...");
         txt_Search.setPreferredSize(new Dimension(300, 40));
         txt_Search.setMaximumSize(new Dimension(500, 40));
         txt_Search.setFont(new Font("SansSerif", Font.PLAIN, 14));
@@ -230,20 +249,32 @@ public class Dashboard extends JFrame {
     }
 
     private JPanel createContentPanel() {
-        JPanel pnl_Content = new JPanel();
+        pnl_Content = new JPanel();
         pnl_Content.setBackground(Color.WHITE);
         pnl_Content.setLayout(new GridLayout(0, 4, 10, 10));
         pnl_Content.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
         SachDao sachDao = SachDao.getInstance();
-        List<Sach> bookList = sachDao.layDanhSach();
+        bookList = sachDao.layDanhSach();
 
-        for (Sach book : bookList) {
+        // Load initial batch of books
+        loadMoreBooks();
+
+        return pnl_Content;
+    }
+
+    private void loadMoreBooks() {
+        int endIndex = Math.min(currentBookIndex + BATCH_SIZE, bookList.size());
+        for (int i = currentBookIndex; i < endIndex; i++) {
+            Sach book = bookList.get(i);
             JPanel card = createBookCard(book);
             pnl_Content.add(card);
         }
+        currentBookIndex = endIndex;
 
-        return pnl_Content;
+        // Update the layout and revalidate
+        pnl_Content.revalidate();
+        pnl_Content.repaint();
     }
 
     private JPanel createBookCard(Sach book) {

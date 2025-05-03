@@ -13,11 +13,9 @@ import Model.Sach;
 
 public class test {
 	public static void main(String[] args) {
-		 List<LichSuMuonSach> ds = LichSuMuonSachDao.getInstance().layDanhSach(); 
-	        for (int i = 0; i < ds.size(); i++) {
-	            LichSuMuonSach ls = ds.get(i);
-	            System.out.println(" " + ls.getMaSach());
-	        }
-
+		List<Sach> bookList = SachDao.getInstance().layDanhSach();
+		for(Sach s : bookList) {
+			System.out.println(s);
+		}
 	}
 }

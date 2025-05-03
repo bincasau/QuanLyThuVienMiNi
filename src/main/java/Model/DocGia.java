@@ -28,16 +28,13 @@ public class DocGia {
         return maNguoiDung;
     }
 
-<<<<<<< HEAD
 	public void setNgayTao(Date ngayTao) {
 		this.ngayTao = ngayTao;
 	}
 	
-=======
     public String getTenNguoiDung() {
         return tenNguoiDung;
     }
->>>>>>> branch 'main' of https://github.com/NguyenVu3105/DoAnIS216.git
 
     public String getTaiKhoan() {
         return taiKhoan;
