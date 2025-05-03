@@ -214,13 +214,6 @@ public class MuonSach extends JFrame {
         btn_add.addActionListener(e -> showAddForm());
         pnl_top.add(btn_add);
 
-        JButton btn_delete = new JButton("Xóa");
-        btn_delete.setPreferredSize(new Dimension(80, 40));
-        btn_delete.setMaximumSize(new Dimension(80, 40));
-        btn_delete.setMinimumSize(new Dimension(80, 40));
-        btn_delete.addActionListener(e -> JOptionPane.showMessageDialog(this, "Vui lòng chọn bản ghi để xóa bằng nút Xóa trong danh sách!"));
-        pnl_top.add(btn_delete);
-
         JButton btn_filter = new JButton("Lọc");
         btn_filter.setPreferredSize(new Dimension(80, 40));
         btn_filter.setMaximumSize(new Dimension(80, 40));
@@ -280,7 +273,7 @@ public class MuonSach extends JFrame {
         scrollPane.setBorder(null);
         scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-        scrollPane.setPreferredSize(new Dimension(900, 550)); // Tăng chiều cao
+        scrollPane.setPreferredSize(new Dimension(900, 550));
 
         ds = Ls_Dg_sachDao.getInstance().layDanhSach();
         filteredDs = new ArrayList<>(ds);
@@ -477,6 +470,165 @@ public class MuonSach extends JFrame {
         pnl_Content.repaint();
     }
 
+    private void showEditForm(Ls_Dg_sach lsDg) {
+        // Lấy LichSuMuonSach từ maLichSu
+        LichSuMuonSach ls = LichSuMuonSachDao.getInstance().getByMaLichSu(lsDg.getMaLichSu());
+
+        if (ls == null) {
+            JOptionPane.showMessageDialog(this, "Không tìm thấy bản ghi lịch sử mượn sách!");
+            return;
+        }
+
+        JPanel editPanel = new JPanel();
+        editPanel.setLayout(new GridBagLayout());
+        editPanel.setBackground(Color.WHITE);
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(10, 10, 10, 10);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+
+        JLabel lblTitle = new JLabel("Sửa Lịch Sử Mượn Sách");
+        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        gbc.gridwidth = 2;
+        gbc.anchor = GridBagConstraints.CENTER;
+        editPanel.add(lblTitle, gbc);
+
+        gbc.gridwidth = 1;
+        gbc.gridy++;
+        gbc.anchor = GridBagConstraints.WEST;
+        editPanel.add(new JLabel("Mã lịch sử:"), gbc);
+        gbc.gridx = 1;
+        JTextField txtMaLichSu = new JTextField(ls.getMaLichSu(), 20);
+        txtMaLichSu.setEditable(false);
+        editPanel.add(txtMaLichSu, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy++;
+        editPanel.add(new JLabel("Mã sách:"), gbc);
+        gbc.gridx = 1;
+        JTextField txtMaSach = new JTextField(ls.getMaSach(), 20);
+        editPanel.add(txtMaSach, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy++;
+        editPanel.add(new JLabel("Mã thủ thư:"), gbc);
+        gbc.gridx = 1;
+        JTextField txtMaThuThu = new JTextField(ls.getMaThuThu(), 20);
+        editPanel.add(txtMaThuThu, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy++;
+        editPanel.add(new JLabel("Mã độc giả:"), gbc);
+        gbc.gridx = 1;
+        JTextField txtMaDocGia = new JTextField(ls.getMaDocGia(), 20);
+        editPanel.add(txtMaDocGia, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy++;
+        editPanel.add(new JLabel("Ngày mượn (yyyy-MM-dd):"), gbc);
+        gbc.gridx = 1;
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        JTextField txtNgayMuon = new JTextField(sdf.format(ls.getNgayMuon()), 20);
+        editPanel.add(txtNgayMuon, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy++;
+        editPanel.add(new JLabel("Ngày trả (yyyy-MM-dd, để trống nếu chưa trả):"), gbc);
+        gbc.gridx = 1;
+        JTextField txtNgayTra = new JTextField(ls.getNgayTra() != null ? sdf.format(ls.getNgayTra()) : "", 20);
+        editPanel.add(txtNgayTra, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy++;
+        editPanel.add(new JLabel("Trạng thái:"), gbc);
+        gbc.gridx = 1;
+        JTextField txtTrangThai = new JTextField(ls.getTrangThai(), 20);
+        txtTrangThai.setEditable(false);
+        editPanel.add(txtTrangThai, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy++;
+        gbc.gridwidth = 1;
+        JButton btnSave = new JButton("Lưu");
+        btnSave.addActionListener(e -> {
+            try {
+                String maSach = txtMaSach.getText().trim();
+                String maThuThu = txtMaThuThu.getText().trim();
+                String maDocGia = txtMaDocGia.getText().trim();
+                String ngayMuonStr = txtNgayMuon.getText().trim();
+                String ngayTraStr = txtNgayTra.getText().trim();
+                String trangThai = txtTrangThai.getText().trim();
+
+                if (maSach.isEmpty() || maThuThu.isEmpty() || maDocGia.isEmpty() || ngayMuonStr.isEmpty()) {
+                    JOptionPane.showMessageDialog(this, "Vui lòng nhập đầy đủ mã sách, mã thủ thư, mã độc giả và ngày mượn!");
+                    return;
+                }
+
+                SimpleDateFormat sdfUpdate = new SimpleDateFormat("yyyy-MM-dd");
+                java.sql.Date ngayMuon;
+                try {
+                    ngayMuon = new java.sql.Date(sdfUpdate.parse(ngayMuonStr).getTime());
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(this, "Ngày mượn không đúng định dạng (yyyy-MM-dd)!");
+                    return;
+                }
+                java.sql.Date ngayTra = null;
+                if (!ngayTraStr.isEmpty()) {
+                    try {
+                        ngayTra = new java.sql.Date(sdfUpdate.parse(ngayTraStr).getTime());
+                    } catch (Exception ex) {
+                        JOptionPane.showMessageDialog(this, "Ngày trả không đúng định dạng (yyyy-MM-dd)!");
+                        return;
+                    }
+                }
+
+                LichSuMuonSach lsUpdated = new LichSuMuonSach(
+                    ls.getMaLichSu(), ngayMuon, ngayTra, trangThai, maSach, maThuThu, maDocGia
+                );
+
+                int result = LichSuMuonSachDao.getInstance().capNhatDoiTuong(lsUpdated);
+                if (result > 0) {
+                    JOptionPane.showMessageDialog(this, "Cập nhật lịch sử mượn sách thành công!");
+                    ds = Ls_Dg_sachDao.getInstance().layDanhSach();
+                    filteredDs = new ArrayList<>(ds);
+                    currentPage = 1;
+                    pnl_Content.removeAll();
+                    pnl_Content.add(createSidebar(), BorderLayout.WEST);
+                    pnl_Content.add(createHeader(), BorderLayout.NORTH);
+                    pnl_Content.add(pnl_ListContent, BorderLayout.CENTER);
+                    pnl_Content.revalidate();
+                    pnl_Content.repaint();
+                    updatePageContent();
+                } else {
+                    JOptionPane.showMessageDialog(this, "Cập nhật thất bại! Vui lòng kiểm tra lại dữ liệu.");
+                }
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this, "Lỗi: " + ex.getMessage());
+            }
+        });
+        editPanel.add(btnSave, gbc);
+
+        gbc.gridx = 1;
+        JButton btnCancel = new JButton("Hủy");
+        btnCancel.addActionListener(e -> {
+            pnl_Content.removeAll();
+            pnl_Content.add(createSidebar(), BorderLayout.WEST);
+            pnl_Content.add(createHeader(), BorderLayout.NORTH);
+            pnl_Content.add(pnl_ListContent, BorderLayout.CENTER);
+            pnl_Content.revalidate();
+            pnl_Content.repaint();
+        });
+        editPanel.add(btnCancel, gbc);
+
+        pnl_Content.removeAll();
+        pnl_Content.add(createSidebar(), BorderLayout.WEST);
+        pnl_Content.add(createHeader(), BorderLayout.NORTH);
+        pnl_Content.add(editPanel, BorderLayout.CENTER);
+        pnl_Content.revalidate();
+        pnl_Content.repaint();
+    }
+
     private void updatePageContent() {
         pnl_MainContent.removeAll();
 
@@ -489,11 +641,10 @@ public class MuonSach extends JFrame {
             pnl_MainContent.add(Box.createVerticalStrut(10));
         }
 
-        // Tính toán chiều cao cho pnl_MainContent
-        int itemHeight = 145; // Tăng để chứa nút Xóa ngang
-        int gapHeight = 10; // Khoảng cách giữa các item
+        int itemHeight = 165;
+        int gapHeight = 10;
         int itemCount = endIndex - startIndex;
-        int totalHeight = (itemCount * itemHeight) + ((itemCount - 1) * gapHeight) + (itemCount > 0 ? 120 : 0); // Tăng đệm
+        int totalHeight = (itemCount * itemHeight) + ((itemCount - 1) * gapHeight) + (itemCount > 0 ? 120 : 0);
         if (itemCount == 0) {
             totalHeight = 0;
         }
@@ -516,21 +667,20 @@ public class MuonSach extends JFrame {
         RoundedPanel itemPanel = new RoundedPanel(20);
         itemPanel.setLayout(new BorderLayout());
         itemPanel.setBackground(new Color(182, 162, 162));
-        itemPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 145)); // Tăng để chứa nút Xóa
+        itemPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 165));
         itemPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        itemPanel.setBorder(new EmptyBorder(5, 10, 5, 15)); // Lề phải tránh thanh cuộn
+        itemPanel.setBorder(new EmptyBorder(5, 10, 5, 15));
 
         JPanel leftPanel = new JPanel();
         leftPanel.setLayout(new BoxLayout(leftPanel, BoxLayout.Y_AXIS));
         leftPanel.setOpaque(false);
-        leftPanel.setPreferredSize(new Dimension(150, 80)); // Chiều cao đủ chứa
+        leftPanel.setPreferredSize(new Dimension(150, 120));
 
-        // Thêm khoảng cách phía trên để thụt xuống
-        leftPanel.add(Box.createVerticalStrut(5));
+        leftPanel.add(Box.createVerticalStrut(10));
 
         ImageIcon bookIcon = new ImageIcon("Pictures/" + ls.getAnh());
         if (bookIcon.getIconWidth() != -1) {
-            Image scaledBook = bookIcon.getImage().getScaledInstance(60, 60, Image.SCALE_SMOOTH);
+            Image scaledBook = bookIcon.getImage().getScaledInstance(60, 80, Image.SCALE_SMOOTH);
             JLabel lblBook = new JLabel(new ImageIcon(scaledBook));
             lblBook.setAlignmentX(Component.CENTER_ALIGNMENT);
             leftPanel.add(lblBook);
@@ -542,8 +692,10 @@ public class MuonSach extends JFrame {
         lblBookName.setAlignmentX(Component.CENTER_ALIGNMENT);
         lblBookName.setForeground(Color.BLACK);
 
-        leftPanel.add(Box.createVerticalStrut(2)); // Khoảng cách giữa hình và tên
+        leftPanel.add(Box.createVerticalStrut(5));
         leftPanel.add(lblBookName);
+
+        leftPanel.add(Box.createVerticalStrut(10));
 
         itemPanel.add(leftPanel, BorderLayout.WEST);
 
@@ -552,7 +704,7 @@ public class MuonSach extends JFrame {
         rightPanel.setOpaque(false);
 
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(1, 5, 1, 5); // Khoảng cách gọn
+        gbc.insets = new Insets(1, 5, 1, 5);
         gbc.anchor = GridBagConstraints.WEST;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.gridx = 0;
@@ -569,13 +721,23 @@ public class MuonSach extends JFrame {
         gbc.gridy++;
         rightPanel.add(createStatusRow("Trạng thái:", ls.getTrangThai()), gbc);
 
-        itemPanel.add(rightPanel, BorderLayout.CENTER);
+        // Thêm panel chứa nút Sửa và Xóa
+        gbc.gridy++;
+        gbc.insets = new Insets(5, 5, 1, 5);
+        JPanel actionPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
+        actionPanel.setOpaque(false);
 
-        // Thêm nút Xóa trải dài ngang item
-        JPanel deletePanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
-        deletePanel.setOpaque(false);
+        JButton btnEdit = new JButton("Sửa");
+        btnEdit.setPreferredSize(new Dimension(60, 25));
+        btnEdit.setFont(new Font("Segoe UI", Font.BOLD, 11));
+        btnEdit.setBackground(new Color(204, 204, 204));
+        btnEdit.setOpaque(true);
+        btnEdit.setBorderPainted(true);
+        btnEdit.addActionListener(e -> showEditForm(ls));
+        actionPanel.add(btnEdit);
+
         JButton btnDelete = new JButton("Xóa");
-        btnDelete.setMaximumSize(new Dimension(Integer.MAX_VALUE, 25));
+        btnDelete.setPreferredSize(new Dimension(60, 25));
         btnDelete.setFont(new Font("Segoe UI", Font.BOLD, 11));
         btnDelete.setBackground(new Color(204, 204, 204));
         btnDelete.setOpaque(true);
@@ -609,8 +771,11 @@ public class MuonSach extends JFrame {
                 }
             }
         });
-        deletePanel.add(btnDelete);
-        itemPanel.add(deletePanel, BorderLayout.SOUTH);
+        actionPanel.add(btnDelete);
+
+        rightPanel.add(actionPanel, gbc);
+
+        itemPanel.add(rightPanel, BorderLayout.CENTER);
 
         return itemPanel;
     }

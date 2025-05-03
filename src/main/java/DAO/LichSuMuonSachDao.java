@@ -50,8 +50,21 @@ public class LichSuMuonSachDao implements InterfaceDao<LichSuMuonSach> {
 
     @Override
     public int capNhatDoiTuong(LichSuMuonSach t) {
-        // TODO: Implement if needed
-        return 0;
+        String sql = "UPDATE lichsumuonsach SET ngayMuon = ?, ngayTra = ?, trangThai = ?, maSach = ?, maThuThu = ?, maDocGia = ? WHERE maLichSu = ?";
+        try (Connection conn = JDBCUtil.connect();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setDate(1, t.getNgayMuon());
+            stmt.setDate(2, t.getNgayTra());
+            stmt.setString(3, t.getTrangThai());
+            stmt.setString(4, t.getMaSach());
+            stmt.setString(5, t.getMaThuThu());
+            stmt.setString(6, t.getMaDocGia());
+            stmt.setString(7, t.getMaLichSu());
+            return stmt.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return 0;
+        }
     }
 
     @Override
@@ -83,6 +96,30 @@ public class LichSuMuonSachDao implements InterfaceDao<LichSuMuonSach> {
     @Override
     public List<LichSuMuonSach> layDanhSachTheoDK(String dk) {
         // TODO: Implement if needed
+        return null;
+    }
+
+    public LichSuMuonSach getByMaLichSu(String maLichSu) {
+        String sql = "SELECT * FROM lichsumuonsach WHERE maLichSu = ?";
+        try (Connection conn = JDBCUtil.connect();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, maLichSu);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return new LichSuMuonSach(
+                        rs.getString("maLichSu"),
+                        rs.getDate("ngayMuon"),
+                        rs.getDate("ngayTra"),
+                        rs.getString("trangThai"),
+                        rs.getString("maSach"),
+                        rs.getString("maThuThu"),
+                        rs.getString("maDocGia")
+                    );
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
         return null;
     }
 
