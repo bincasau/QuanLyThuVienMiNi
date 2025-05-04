@@ -50,7 +50,7 @@ public class User extends JFrame {
 
     public User() {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(1200, 600); // Tăng chiều rộng để chứa thêm cột
+        setSize(1200, 600);
         setTitle("Thư viện mini - Quản lý độc giả");
         setLocationRelativeTo(null);
 
@@ -225,17 +225,13 @@ public class User extends JFrame {
         btn_add.setMaximumSize(new Dimension(80, 40));
         btn_add.setMinimumSize(new Dimension(80, 40));
         btn_add.addActionListener(e -> {
-            JTextField maNguoiDungField = new JTextField(10);
             JTextField tenNguoiDungField = new JTextField(10);
             JTextField taiKhoanField = new JTextField(10);
             JTextField matKhauField = new JTextField(10);
             JTextField emailField = new JTextField(10);
             JTextField soDienThoaiField = new JTextField(10);
-            JTextField ngayTaoField = new JTextField(10);
 
-            JPanel panel = new JPanel(new GridLayout(7, 2));
-            panel.add(new JLabel("Mã Người Dùng:"));
-            panel.add(maNguoiDungField);
+            JPanel panel = new JPanel(new GridLayout(5, 2));
             panel.add(new JLabel("Tên Người Dùng:"));
             panel.add(tenNguoiDungField);
             panel.add(new JLabel("Tài Khoản:"));
@@ -246,30 +242,26 @@ public class User extends JFrame {
             panel.add(emailField);
             panel.add(new JLabel("Số Điện Thoại:"));
             panel.add(soDienThoaiField);
-            panel.add(new JLabel("Ngày Tạo (yyyy-MM-dd):"));
-            panel.add(ngayTaoField);
 
             int result = JOptionPane.showConfirmDialog(this, panel, "Thêm Độc Giả", JOptionPane.OK_CANCEL_OPTION);
             if (result == JOptionPane.OK_OPTION) {
-                String maNguoiDung = maNguoiDungField.getText();
                 String tenNguoiDung = tenNguoiDungField.getText();
                 String taiKhoan = taiKhoanField.getText();
                 String matKhau = matKhauField.getText();
                 String email = emailField.getText();
                 String soDienThoai = soDienThoaiField.getText();
-                String ngayTaoStr = ngayTaoField.getText();
 
-                if (maNguoiDung.isEmpty() || tenNguoiDung.isEmpty() || taiKhoan.isEmpty() || matKhau.isEmpty()) {
-                    JOptionPane.showMessageDialog(this, "Mã, tên, tài khoản và mật khẩu không được để trống!");
+                if (tenNguoiDung.isEmpty() || taiKhoan.isEmpty() || matKhau.isEmpty()) {
+                    JOptionPane.showMessageDialog(this, "Tên, tài khoản và mật khẩu không được để trống!");
                     return;
                 }
 
                 try {
-                    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-                    Date ngayTao = sdf.parse(ngayTaoStr);
+                    DocGiaDao docGiaDao = DocGiaDao.getInstance();
+                    String maNguoiDung = docGiaDao.layMaNguoiDungMoiNhat(); // Lấy mã mới nhất
+                    Date ngayTao = new Date(); // Lấy thời gian hiện tại
 
                     DocGia docGia = new DocGia(maNguoiDung, tenNguoiDung, taiKhoan, matKhau, email, soDienThoai, ngayTao);
-                    DocGiaDao docGiaDao = new DocGiaDao();
                     int rowsAffected = docGiaDao.themDoiTuong(docGia);
                     if (rowsAffected > 0) {
                         JOptionPane.showMessageDialog(this, "Thêm độc giả thành công!");
@@ -278,7 +270,7 @@ public class User extends JFrame {
                         JOptionPane.showMessageDialog(this, "Thêm độc giả thất bại!");
                     }
                 } catch (Exception ex) {
-                    JOptionPane.showMessageDialog(this, "Ngày tạo không hợp lệ! Vui lòng nhập theo định dạng yyyy-MM-dd.");
+                    JOptionPane.showMessageDialog(this, "Lỗi khi thêm độc giả: " + ex.getMessage());
                 }
             }
         });
@@ -294,7 +286,7 @@ public class User extends JFrame {
                 String maNguoiDung = (String) tableModel.getValueAt(selectedRow, 0);
                 int confirm = JOptionPane.showConfirmDialog(this, "Xóa độc giả " + maNguoiDung + "?", "Xác nhận", JOptionPane.YES_NO_OPTION);
                 if (confirm == JOptionPane.YES_OPTION) {
-                    DocGiaDao docGiaDao = new DocGiaDao();
+                    DocGiaDao docGiaDao = DocGiaDao.getInstance();
                     int rowsAffected = docGiaDao.xoaDoiTuong(maNguoiDung);
                     if (rowsAffected > 0) {
                         JOptionPane.showMessageDialog(this, "Xóa độc giả thành công!");
@@ -326,8 +318,8 @@ public class User extends JFrame {
 
     private void loadTableData(String keyword) {
         tableModel.setRowCount(0); // Xóa dữ liệu cũ
-        DocGiaDao docGiaDao = new DocGiaDao();
-        List<DocGia> docGiaList;
+        DocGiaDao docGiaDao = DocGiaDao.getInstance();
+        List<DocGia> docGiaList; 
         if (keyword.isEmpty()) {
             docGiaList = docGiaDao.layDanhSach();
         } else {

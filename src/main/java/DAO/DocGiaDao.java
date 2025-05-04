@@ -22,19 +22,36 @@ public class DocGiaDao implements InterfaceDao<DocGia>{
         String sql = "INSERT INTO DocGia (maNguoiDung, taiKhoan, matKhau, email, soDienThoai, tenNguoiDung, ngayTao) VALUES (?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = JDBCUtil.connect();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
-
             stmt.setString(1, t.getMaNguoiDung());
             stmt.setString(2, t.getTaiKhoan());
             stmt.setString(3, t.getMatKhau());
             stmt.setString(4, t.getEmail());
             stmt.setString(5, t.getSoDienThoai());
             stmt.setString(6, t.getTenNguoiDung());
-            stmt.setDate(7, (Date) t.getNgayTao());
-            JDBCUtil.closeConnection();
+            stmt.setDate(7, new Date(t.getNgayTao().getTime()));
             return stmt.executeUpdate(); 
         } catch (SQLException e) {
             e.printStackTrace();
             return 0; 
+        }
+    }
+
+    public String layMaNguoiDungMoiNhat() {
+        String sql = "SELECT maNguoiDung FROM DocGia ORDER BY maNguoiDung DESC LIMIT 1";
+        try (Connection conn = JDBCUtil.connect();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+            if (rs.next()) {
+                String lastMa = rs.getString("maNguoiDung");
+                if (lastMa != null && lastMa.startsWith("DG") && lastMa.substring(2).matches("\\d+")) {
+                    int number = Integer.parseInt(lastMa.replace("DG", "")) + 1;
+                    return String.format("DG%03d", number);
+                }
+            }
+            return "DG001"; // Mặc định nếu bảng rỗng hoặc mã không hợp lệ
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return "DG001";
         }
     }
 
