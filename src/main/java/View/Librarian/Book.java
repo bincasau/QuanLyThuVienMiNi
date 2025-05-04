@@ -3,6 +3,9 @@ package View.Librarian;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.awt.event.AdjustmentEvent;
+import java.awt.event.AdjustmentListener;
+import java.util.ArrayList;
 import java.util.List;
 
 import DAO.SachDao;
@@ -12,6 +15,10 @@ public class Book extends JFrame {
     private static final long serialVersionUID = 1L;
     private JPanel pnl_content;
     private String username; // Lưu username
+    private List<Sach> fullBookList; // Danh sách đầy đủ sách
+    private List<Sach> displayedBooks; // Danh sách sách đã hiển thị
+    private JPanel pnl_center; // Để cập nhật giao diện
+    private static final int BOOKS_PER_LOAD = 20; // Số sách tải mỗi lần
 
     // Constructor nhận username
     public Book(String username) {
@@ -200,21 +207,60 @@ public class Book extends JFrame {
         btn_delete.setMinimumSize(new Dimension(80, 40));
         pnl_top.add(btn_delete);
 
-        JPanel pnl_center = new JPanel(new GridLayout(0, 5, 10, 10));
+        pnl_center = new JPanel(new GridLayout(0, 5, 10, 10));
         pnl_center.setBackground(Color.WHITE);
         pnl_center.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+        // Khởi tạo danh sách sách
         SachDao sachDao = SachDao.getInstance();
-        List<Sach> bookList = sachDao.layDanhSach();
-        for (Sach book : bookList) {
-            JPanel pnl_card = createCard(book);
-            pnl_center.add(pnl_card);
-        }
+        fullBookList = sachDao.layDanhSach();
+        displayedBooks = new ArrayList<>();
+
+        // Hiển thị 20 cuốn sách đầu tiên (nếu có)
+        loadMoreBooks();
+
         JScrollPane scrollPane = new JScrollPane(pnl_center);
+        // Thêm lắng nghe sự kiện cuộn
+        scrollPane.getVerticalScrollBar().addAdjustmentListener(new AdjustmentListener() {
+            @Override
+            public void adjustmentValueChanged(AdjustmentEvent e) {
+                JScrollBar scrollBar = (JScrollBar) e.getSource();
+                int extent = scrollBar.getModel().getExtent();
+                int maximum = scrollBar.getModel().getMaximum();
+                int value = scrollBar.getModel().getValue();
+                // Kiểm tra nếu cuộn đến gần cuối
+                if (value + extent >= maximum - 10) { // -10 để phát hiện sớm hơn
+                    loadMoreBooks();
+                }
+            }
+        });
 
         pnl_Main.add(pnl_top, BorderLayout.NORTH);
         pnl_Main.add(scrollPane, BorderLayout.CENTER);
 
         return pnl_Main;
+    }
+
+    private void loadMoreBooks() {
+        // Tính số sách sẽ tải thêm
+        int currentSize = displayedBooks.size();
+        int booksToLoad = Math.min(fullBookList.size() - currentSize, BOOKS_PER_LOAD);
+
+        if (booksToLoad > 0) {
+            // Lấy danh sách sách mới
+            List<Sach> newBooks = fullBookList.subList(currentSize, currentSize + booksToLoad);
+            displayedBooks.addAll(newBooks);
+
+            // Thêm các card mới vào pnl_center
+            for (Sach book : newBooks) {
+                JPanel pnl_card = createCard(book);
+                pnl_center.add(pnl_card);
+            }
+
+            // Cập nhật giao diện
+            pnl_center.revalidate();
+            pnl_center.repaint();
+        }
     }
 
     private JPanel createCard(Sach book) {
