@@ -35,8 +35,23 @@ public class TheLoaiDao implements InterfaceDao<TheLoai>{
 
 	@Override
 	public List<TheLoai> layDanhSach() {
-		// TODO Auto-generated method stub
-		return null;
+		List<TheLoai> ds = new ArrayList<TheLoai>();
+		String sql = "SELECT * FROM theloai";
+		Connection conn = JDBCUtil.connect();
+		if (conn != null) {
+			try {
+				PreparedStatement stmt = conn.prepareStatement(sql);
+				ResultSet rs = stmt.executeQuery();
+				while (rs.next()) {
+					TheLoai tl = new TheLoai(rs.getString("maTheLoai"), rs.getString("tenTheLoai"));
+					ds.add(tl);
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			JDBCUtil.closeConnection();
+		}
+		return ds;
 	}
 
 	@Override

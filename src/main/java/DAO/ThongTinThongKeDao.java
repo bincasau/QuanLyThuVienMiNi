@@ -30,7 +30,7 @@ public class ThongTinThongKeDao {
         sql.append("    SELECT").append("\n");
         sql.append("        MONTH(ngayTao) AS thang,").append("\n");
         sql.append("        COUNT(*) AS soDocGiaDangKyMoi").append("\n");
-        sql.append("    FROM docgia").append("\n");
+        sql.append("    FROM DocGia").append("\n");
         sql.append("    WHERE YEAR(ngayTao) = ?").append("\n");
         sql.append("    AND ngayTao <= CASE").append("\n");
         sql.append("        WHEN ? = ").append(currentYear).append(" THEN CURDATE()").append("\n");

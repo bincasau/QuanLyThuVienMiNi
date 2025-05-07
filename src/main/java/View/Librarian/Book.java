@@ -2,14 +2,28 @@ package View.Librarian;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
+
+
 import java.awt.*;
 import java.awt.event.AdjustmentEvent;
 import java.awt.event.AdjustmentListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import javax.swing.JCheckBoxMenuItem;
+import javax.swing.JPopupMenu;
+
 import java.util.ArrayList;
 import java.util.List;
 
 import DAO.SachDao;
 import Model.Sach;
+import DAO.TheLoaiDao;
+import Model.TheLoai;
 
 public class Book extends JFrame {
     private static final long serialVersionUID = 1L;
@@ -19,6 +33,8 @@ public class Book extends JFrame {
     private List<Sach> displayedBooks; // Danh sách sách đã hiển thị
     private JPanel pnl_center; // Để cập nhật giao diện
     private static final int BOOKS_PER_LOAD = 20; // Số sách tải mỗi lần
+    private boolean isFiltering = false; //Chế độ tìm kiếm
+    private JPanel pnl_Main;
 
     // Constructor nhận username
     public Book(String username) {
@@ -44,7 +60,7 @@ public class Book extends JFrame {
         JPanel pnl_Sidebar = createSidebar();
         pnl_content.add(pnl_Sidebar, BorderLayout.WEST);
 
-        JPanel pnl_Main = createMain();
+        pnl_Main = createMain();
         pnl_Main.setBackground(Color.WHITE);
         pnl_content.add(pnl_Main, BorderLayout.CENTER);
 
@@ -180,34 +196,97 @@ public class Book extends JFrame {
     }
 
     private JPanel createMain() {
-        JPanel pnl_Main = new JPanel(new BorderLayout());
-
+        pnl_Main = new JPanel(new BorderLayout());
+        isFiltering=false;
+        
         JPanel pnl_top = new JPanel(new FlowLayout(FlowLayout.LEFT));
         pnl_top.setBackground(Color.WHITE);
         JTextField txt_search = new JTextField(25);
         txt_search.setPreferredSize(new Dimension(0, 40));
         txt_search.setMaximumSize(new Dimension(300, 40));
+        JPopupMenu suggestionsPopup = new JPopupMenu();
         pnl_top.add(txt_search);
+        pnl_top.add(suggestionsPopup);
 
+        JList<String> suggestionList = new JList<>();
+        suggestionList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        suggestionsPopup.setFocusable(false);
+        suggestionsPopup.setBorder(BorderFactory.createLineBorder(Color.GRAY));
+        suggestionsPopup.add(new JScrollPane(suggestionList));
+
+        txt_search.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+            public void insertUpdate(javax.swing.event.DocumentEvent e) { showSuggestions(); }
+            public void removeUpdate(javax.swing.event.DocumentEvent e) { showSuggestions(); }
+            public void changedUpdate(javax.swing.event.DocumentEvent e) { showSuggestions(); }
+
+            private void showSuggestions() {
+                String input = txt_search.getText().trim().toLowerCase();
+                if (input.isEmpty()) {
+                    suggestionsPopup.setVisible(false);
+                    return;
+                }
+
+                List<String> matches = new ArrayList<>();
+                for (Sach sach : fullBookList) {
+                    if (sach.getTenSach().toLowerCase().contains(input)) {
+                        matches.add(sach.getTenSach());
+                    }
+                }
+
+                if (matches.isEmpty()) {
+                    suggestionsPopup.setVisible(false);
+                    return;
+                }
+
+                suggestionList.setListData(matches.toArray(new String[0]));
+                suggestionList.setSelectedIndex(0);
+
+                // Vị trí popup
+                suggestionsPopup.setPopupSize(txt_search.getWidth(), 150);
+                suggestionsPopup.show(txt_search, 0, txt_search.getHeight());
+            }
+        });
+
+        txt_search.addKeyListener(new java.awt.event.KeyAdapter() {
+            @Override
+            public void keyPressed(java.awt.event.KeyEvent e) {
+                if (e.getKeyCode() == java.awt.event.KeyEvent.VK_ENTER && suggestionsPopup.isVisible()) {
+                    String selected = suggestionList.getSelectedValue();
+                    if (selected != null) {
+                        txt_search.setText(selected);
+                        suggestionsPopup.setVisible(false);
+                        updateDisplayedBooksByKeyword(selected);
+                    }
+                }
+            }
+        });
+        
         JButton btn_search = new JButton("🔍");
         btn_search.setPreferredSize(new Dimension(40, 40));
         btn_search.setMaximumSize(new Dimension(40, 40));
         btn_search.setMinimumSize(new Dimension(40, 40));
+        btn_search.addActionListener(e -> {
+            String keyword = txt_search.getText().trim();
+            if (keyword.isEmpty()) {
+                isFiltering = false;
+                pnl_center.removeAll();
+                displayedBooks.clear();
+                loadMoreBooks(); // Hiển thị lại danh sách mặc định
+            } else {
+                updateDisplayedBooksByKeyword(keyword); // Gọi hàm tìm kiếm
+            }
+        });
         pnl_top.add(btn_search);
 
         JButton btn_add = new JButton("Thêm");
         btn_add.setPreferredSize(new Dimension(80, 40));
         btn_add.setMaximumSize(new Dimension(80, 40));
         btn_add.setMinimumSize(new Dimension(80, 40));
+        btn_add.addActionListener(e -> showAddBookForm());
         pnl_top.add(btn_add);
-
-        JButton btn_delete = new JButton("Xóa");
-        btn_delete.setPreferredSize(new Dimension(80, 40));
-        btn_delete.setMaximumSize(new Dimension(80, 40));
-        btn_delete.setMinimumSize(new Dimension(80, 40));
-        pnl_top.add(btn_delete);
-
-        pnl_center = new JPanel(new GridLayout(0, 5, 10, 10));
+        
+        pnl_center = new JPanel();
+        pnl_center.setLayout(new BoxLayout(pnl_center, BoxLayout.Y_AXIS));
         pnl_center.setBackground(Color.WHITE);
         pnl_center.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
@@ -242,34 +321,85 @@ public class Book extends JFrame {
     }
 
     private void loadMoreBooks() {
-        // Tính số sách sẽ tải thêm
-        int currentSize = displayedBooks.size();
-        int booksToLoad = Math.min(fullBookList.size() - currentSize, BOOKS_PER_LOAD);
+    if (isFiltering) return;
 
-        if (booksToLoad > 0) {
-            // Lấy danh sách sách mới
-            List<Sach> newBooks = fullBookList.subList(currentSize, currentSize + booksToLoad);
-            displayedBooks.addAll(newBooks);
+    int currentSize = displayedBooks.size();
+    int booksToLoad = Math.min(fullBookList.size() - currentSize, BOOKS_PER_LOAD);
 
-            // Thêm các card mới vào pnl_center
-            for (Sach book : newBooks) {
-                JPanel pnl_card = createCard(book);
-                pnl_center.add(pnl_card);
-            }
+    if (booksToLoad > 0) {
+        List<Sach> newBooks = fullBookList.subList(currentSize, currentSize + booksToLoad);
+        displayedBooks.addAll(newBooks);
 
-            // Cập nhật giao diện
-            pnl_center.revalidate();
-            pnl_center.repaint();
+        JPanel rowPanel = new JPanel(new GridBagLayout());
+        rowPanel.setBackground(Color.WHITE);
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(10, 10, 10, 10);
+        gbc.anchor = GridBagConstraints.WEST; // Canh trái
+
+        int count = 0;
+        for (Sach book : newBooks) {
+            gbc.gridx = count % 5;
+            gbc.gridy = count / 5;
+
+            JPanel pnl_card = createCard(book);
+            rowPanel.add(pnl_card, gbc);
+
+            count++;
         }
+
+        pnl_center.add(rowPanel);
+        pnl_center.revalidate();
+        pnl_center.repaint();
+    }
+}
+
+    
+    private void updateDisplayedBooksByKeyword(String keyword) {
+        isFiltering = true;
+        displayedBooks.clear();   // Dọn danh sách hiển thị
+        pnl_center.removeAll();   // Xóa toàn bộ card đang hiển thị
+
+        JPanel rowPanel = null;
+        int count = 0;
+
+        for (Sach sach : fullBookList) {
+            if (sach.getTenSach().toLowerCase().contains(keyword.toLowerCase())) {
+                // Tạo hàng mới nếu bắt đầu nhóm 5 cuốn
+                if (count % 5 == 0) {
+                    rowPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 20, 20));  // Canh trái
+                    rowPanel.setBackground(Color.WHITE);
+                    pnl_center.add(rowPanel);
+                }
+
+                JPanel pnl_card = createCard(sach);
+                rowPanel.add(pnl_card);
+                displayedBooks.add(sach);
+
+                count++;
+            }
+        }
+
+        pnl_center.revalidate();  // Refresh layout
+        pnl_center.repaint();     // Vẽ lại giao diện
     }
 
+    
     private JPanel createCard(Sach book) {
         JPanel pnl_card = new JPanel();
         pnl_card.setLayout(new BorderLayout());
         pnl_card.setBackground(Color.WHITE);
         pnl_card.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
         pnl_card.setPreferredSize(new Dimension(120, 180));
-
+        pnl_card.setMaximumSize(new Dimension(120,180));
+        pnl_card.setMinimumSize(new Dimension(120,180));
+        
+        pnl_card.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                showEditBookForm(book); // mở form cập nhật
+            }
+        });
+        
         JLabel lbl_image = new JLabel();
         try {
             ImageIcon icon = new ImageIcon("pictures/" + book.getAnh());
@@ -292,6 +422,413 @@ public class Book extends JFrame {
         return pnl_card;
     }
 
+    private void showAddBookForm() {
+        List<TheLoai> categories = TheLoaiDao.getInstance().layDanhSach();
+        List<String> selectedCategories = new ArrayList<>();
+        final String[] selectedImagePath = {null};
+
+        // Khung preview ảnh (click để chọn ảnh)
+        JLabel imagePreview = new JLabel();
+        imagePreview.setPreferredSize(new Dimension(120, 150));
+        imagePreview.setMaximumSize(new Dimension(120,150));
+        imagePreview.setMinimumSize(new Dimension(120,150));
+        imagePreview.setBorder(BorderFactory.createLineBorder(Color.GRAY));
+        imagePreview.setHorizontalAlignment(SwingConstants.CENTER);
+        imagePreview.setVerticalAlignment(SwingConstants.CENTER);
+        imagePreview.setText("Chọn ảnh");
+
+        imagePreview.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                JFileChooser fileChooser = new JFileChooser();
+                int result = fileChooser.showOpenDialog(null);
+                if (result == JFileChooser.APPROVE_OPTION) {
+                    selectedImagePath[0] = fileChooser.getSelectedFile().getAbsolutePath();
+                    ImageIcon icon = new ImageIcon(selectedImagePath[0]);
+                    Image scaled = icon.getImage().getScaledInstance(
+                        imagePreview.getPreferredSize().width, 
+                        imagePreview.getPreferredSize().height, 
+                        Image.SCALE_SMOOTH
+                    );
+                    imagePreview.setIcon(new ImageIcon(scaled));
+                    imagePreview.setText(""); // Ẩn text "Chọn ảnh"
+                    pnl_Main.revalidate(); // Cập nhật lại panel
+                    pnl_Main.repaint();
+                }
+            }
+        });
+
+
+        // Panel chứa form nhập
+        JPanel addBookPanel = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(5, 5, 5, 5);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+
+        JLabel lblBookName = new JLabel("Tên sách");
+        JTextField txtBookName = new JTextField(20);
+
+        JLabel lblAuthor = new JLabel("Tác giả");
+        JTextField txtAuthor = new JTextField(20);
+
+        JLabel lblCategory = new JLabel("Thể loại");
+        JTextField txtCategory = new JTextField();
+        txtCategory.setEditable(false);
+
+        JLabel lblPublisher = new JLabel("Nhà xuất bản");
+        JTextField txtPublisher = new JTextField(20);
+
+        JLabel lblYear = new JLabel("Năm xuất bản");
+        JTextField txtYear = new JTextField(20);
+
+        JLabel lblPrice = new JLabel("Giá");
+        JTextField txtPrice = new JTextField(20);
+
+        JButton btnAdd = new JButton("Thêm");
+        JButton btnCancel = new JButton("Hủy");
+
+        // ============ Bố cục nhập liệu ============
+        int row = 0;
+        gbc.weightx = 0;
+        gbc.anchor = GridBagConstraints.EAST;
+
+        gbc.gridx = 0; gbc.gridy = row;
+        addBookPanel.add(lblBookName, gbc);
+        gbc.gridx = 1; gbc.weightx = 1.0;
+        addBookPanel.add(txtBookName, gbc);
+
+        gbc.gridy = ++row; gbc.gridx = 0; gbc.weightx = 0;
+        addBookPanel.add(lblAuthor, gbc);
+        gbc.gridx = 1; gbc.weightx = 1.0;
+        addBookPanel.add(txtAuthor, gbc);
+
+        gbc.gridy = ++row; gbc.gridx = 0; gbc.weightx = 0;
+        addBookPanel.add(lblCategory, gbc);
+        gbc.gridx = 1; gbc.weightx = 1.0;
+        addBookPanel.add(txtCategory, gbc);
+
+        gbc.gridy = ++row; gbc.gridx = 0; gbc.weightx = 0;
+        addBookPanel.add(lblPublisher, gbc);
+        gbc.gridx = 1; gbc.weightx = 1.0;
+        addBookPanel.add(txtPublisher, gbc);
+
+        gbc.gridy = ++row; gbc.gridx = 0; gbc.weightx = 0;
+        addBookPanel.add(lblYear, gbc);
+        gbc.gridx = 1; gbc.weightx = 1.0;
+        addBookPanel.add(txtYear, gbc);
+
+        gbc.gridy = ++row; gbc.gridx = 0; gbc.weightx = 0;
+        addBookPanel.add(lblPrice, gbc);
+        gbc.gridx = 1; gbc.weightx = 1.0;
+        addBookPanel.add(txtPrice, gbc);
+
+        JPanel panelBtn = new JPanel();
+        panelBtn.add(btnCancel);
+        panelBtn.add(btnAdd);
+        gbc.gridx = 0; gbc.gridy = ++row; gbc.gridwidth = 2;
+        gbc.anchor = GridBagConstraints.CENTER;
+        addBookPanel.add(panelBtn, gbc);
+
+        // ============ Panel ảnh ============
+        JPanel imagePanel = new JPanel(new GridBagLayout());
+        imagePanel.setPreferredSize(new Dimension(140, 200));
+        imagePanel.add(imagePreview);
+
+        JPanel leftPanel = new JPanel(new BorderLayout());
+        leftPanel.setPreferredSize(new Dimension(160, 240));
+        leftPanel.add(imagePanel, BorderLayout.CENTER);
+
+        // ============ Render tổng thể ============
+        pnl_Main.removeAll();
+        pnl_Main.setLayout(new BorderLayout());
+        pnl_Main.add(leftPanel, BorderLayout.WEST);
+        pnl_Main.add(addBookPanel, BorderLayout.CENTER);
+        pnl_Main.revalidate();
+        pnl_Main.repaint();
+
+        // ============ Menu đa chọn thể loại ============
+        JPopupMenu popupMenu = new JPopupMenu();
+        List<JCheckBoxMenuItem> categoryItems = new ArrayList<>();
+
+        for (TheLoai tl : categories) {
+            JCheckBoxMenuItem item = new JCheckBoxMenuItem(tl.getTenTheLoai());
+            item.addActionListener(ev -> {
+                selectedCategories.clear();
+                for (JCheckBoxMenuItem it : categoryItems) {
+                    if (it.isSelected()) {
+                        selectedCategories.add(it.getText());
+                    }
+                }
+                txtCategory.setText(String.join(", ", selectedCategories));
+            });
+            categoryItems.add(item);
+            popupMenu.add(item);
+        }
+
+        // Mở popup khi click vào ô txtCategory
+        txtCategory.addMouseListener(new MouseAdapter() {
+            public void mousePressed(MouseEvent e) {
+                popupMenu.show(txtCategory, 0, txtCategory.getHeight());
+            }
+        });
+
+        // ============ Hủy ============
+        btnCancel.addActionListener(e -> {
+            pnl_content.remove(pnl_Main);        // Gỡ panel cũ ra khỏi content
+            pnl_Main = createMain();             // Tạo lại panel chính
+            pnl_content.add(pnl_Main, BorderLayout.CENTER); // Thêm vào lại
+            pnl_content.revalidate();
+            pnl_content.repaint();
+        });
+
+        // ============ Thêm ============
+        btnAdd.addActionListener(e -> {
+            if (txtBookName.getText().isEmpty() || txtAuthor.getText().isEmpty() ||
+                selectedCategories.isEmpty() || txtPublisher.getText().isEmpty() ||
+                txtYear.getText().isEmpty() || txtPrice.getText().isEmpty()) {
+                JOptionPane.showMessageDialog(null, "Vui lòng điền đầy đủ thông tin!");
+                return;
+            }
+
+            String maSach = generateBookCode();
+            Sach newBook = new Sach();
+            newBook.setMaSach(maSach);
+            newBook.setTenSach(txtBookName.getText());
+            newBook.setnXB(txtAuthor.getText());
+            newBook.setNamXB(Integer.parseInt(txtYear.getText()));
+            newBook.setGia(Double.parseDouble(txtPrice.getText()));
+            newBook.setAnh(maSach + ".png");
+
+            List<TheLoai> selectedTL = new ArrayList<>();
+            for (String name : selectedCategories) {
+                for (TheLoai tl : categories) {
+                    if (tl.getTenTheLoai().equals(name)) {
+                        selectedTL.add(tl); break;
+                    }
+                }
+            }
+            newBook.setDsTheLoai(selectedTL);
+            // Lưu ảnh
+            if (selectedImagePath[0] != null) {
+                File src = new File(selectedImagePath[0]);
+                File dest = new File("Pictures/" + maSach + ".png");
+                try {
+                    Files.copy(src.toPath(), dest.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                } catch (IOException ex) {
+                    ex.printStackTrace();
+                }
+            }
+            SachDao.getInstance().addCategoriesToBook(maSach, selectedTL);
+            SachDao.getInstance().themDoiTuong(newBook);
+            JOptionPane.showMessageDialog(null, "Thêm sách thành công!");
+            pnl_content.remove(pnl_Main);        // Gỡ panel cũ ra khỏi content
+            pnl_Main = createMain();             // Tạo lại panel chính
+            pnl_content.add(pnl_Main, BorderLayout.CENTER); // Thêm vào lại
+            pnl_content.revalidate();
+            pnl_content.repaint();
+        });
+    }
+
+    private String generateBookCode() {
+        // Lấy mã sách mới nhất từ cơ sở dữ liệu và cộng thêm 1
+        String lastBookCode = SachDao.getInstance().getLastBookCode(); // Cần viết phương thức getLastBookCode() trong SachDao
+        int nextCode = Integer.parseInt(lastBookCode.substring(1)) + 1;
+        return "S" + String.format("%04d", nextCode); // Đảm bảo mã sách có dạng S0000
+    }
+    private void showEditBookForm(Sach book) {
+    List<TheLoai> categories = TheLoaiDao.getInstance().layDanhSach();
+    List<String> selectedCategories = new ArrayList<>();
+    final String[] selectedImagePath = {null};
+
+    // Ảnh preview
+    JLabel imagePreview = new JLabel();
+    imagePreview.setPreferredSize(new Dimension(120, 160));
+    imagePreview.setBorder(BorderFactory.createLineBorder(Color.GRAY));
+    imagePreview.setHorizontalAlignment(SwingConstants.CENTER);
+    imagePreview.setVerticalAlignment(SwingConstants.CENTER);
+    try {
+        ImageIcon icon = new ImageIcon("Pictures/" + book.getAnh());
+        Image scaled = icon.getImage().getScaledInstance(120, 160, Image.SCALE_SMOOTH);
+        imagePreview.setIcon(new ImageIcon(scaled));
+    } catch (Exception ex) {
+        imagePreview.setText("Chọn ảnh");
+    }
+
+    imagePreview.addMouseListener(new MouseAdapter() {
+        public void mouseClicked(MouseEvent e) {
+            JFileChooser chooser = new JFileChooser();
+            int result = chooser.showOpenDialog(null);
+            if (result == JFileChooser.APPROVE_OPTION) {
+                selectedImagePath[0] = chooser.getSelectedFile().getAbsolutePath();
+                ImageIcon newIcon = new ImageIcon(selectedImagePath[0]);
+                Image scaled = newIcon.getImage().getScaledInstance(120, 160, Image.SCALE_SMOOTH);
+                imagePreview.setIcon(new ImageIcon(scaled));
+            }
+        }
+    });
+
+    // Các input
+    JTextField txtBookName = new JTextField(book.getTenSach(), 20);
+    JTextField txtAuthor = new JTextField(book.getnXB(), 20);
+    JTextField txtPublisher = new JTextField(book.getnXB(), 20);
+    JTextField txtYear = new JTextField(String.valueOf(book.getNamXB()), 20);
+    JTextField txtPrice = new JTextField(String.valueOf(book.getGia()), 20);
+    JTextField txtCategory = new JTextField();
+    txtCategory.setEditable(false);
+
+    // Lưu thể loại hiện tại
+    for (TheLoai tl : book.getDsTheLoai()) {
+        selectedCategories.add(tl.getTenTheLoai());
+    }
+    txtCategory.setText(String.join(", ", selectedCategories));
+
+    // Tạo menu thể loại
+    JPopupMenu popupMenu = new JPopupMenu();
+    List<JCheckBoxMenuItem> categoryItems = new ArrayList<>();
+    for (TheLoai tl : categories) {
+        JCheckBoxMenuItem item = new JCheckBoxMenuItem(tl.getTenTheLoai());
+        if (selectedCategories.contains(tl.getTenTheLoai())) item.setSelected(true);
+        item.addActionListener(ev -> {
+            selectedCategories.clear();
+            for (JCheckBoxMenuItem it : categoryItems) {
+                if (it.isSelected()) {
+                    selectedCategories.add(it.getText());
+                }
+            }
+            txtCategory.setText(String.join(", ", selectedCategories));
+        });
+        categoryItems.add(item);
+        popupMenu.add(item);
+    }
+    txtCategory.addMouseListener(new MouseAdapter() {
+        public void mousePressed(MouseEvent e) {
+            popupMenu.show(txtCategory, 0, txtCategory.getHeight());
+        }
+    });
+
+    // Form layout
+    JPanel formPanel = new JPanel(new GridBagLayout());
+    GridBagConstraints gbc = new GridBagConstraints();
+    gbc.insets = new Insets(5, 5, 5, 5);
+    gbc.fill = GridBagConstraints.HORIZONTAL;
+    gbc.weightx = 1.0;
+
+    int row = 0;
+    gbc.gridx = 0; gbc.gridy = row; formPanel.add(new JLabel("Tên sách"), gbc);
+    gbc.gridx = 1; formPanel.add(txtBookName, gbc);
+
+    gbc.gridx = 0; gbc.gridy = ++row; formPanel.add(new JLabel("Tác giả"), gbc);
+    gbc.gridx = 1; formPanel.add(txtAuthor, gbc);
+
+    gbc.gridx = 0; gbc.gridy = ++row; formPanel.add(new JLabel("Thể loại"), gbc);
+    gbc.gridx = 1; formPanel.add(txtCategory, gbc);
+
+    gbc.gridx = 0; gbc.gridy = ++row; formPanel.add(new JLabel("Nhà XB"), gbc);
+    gbc.gridx = 1; formPanel.add(txtPublisher, gbc);
+
+    gbc.gridx = 0; gbc.gridy = ++row; formPanel.add(new JLabel("Năm XB"), gbc);
+    gbc.gridx = 1; formPanel.add(txtYear, gbc);
+
+    gbc.gridx = 0; gbc.gridy = ++row; formPanel.add(new JLabel("Giá"), gbc);
+    gbc.gridx = 1; formPanel.add(txtPrice, gbc);
+
+    // Nút
+    JButton btnUpdate = new JButton("Cập nhật");
+    JButton btnDelete = new JButton("Xóa");
+    JButton btnCancel = new JButton("Hủy");
+    JPanel panelBtn = new JPanel();
+    panelBtn.add(btnUpdate);
+    panelBtn.add(btnDelete);
+    panelBtn.add(btnCancel);
+    gbc.gridx = 0; gbc.gridy = ++row; gbc.gridwidth = 2; gbc.anchor = GridBagConstraints.CENTER;
+    formPanel.add(panelBtn, gbc);
+
+    // Panel trái ảnh
+    JPanel leftPanel = new JPanel(new GridBagLayout());
+    leftPanel.setPreferredSize(new Dimension(160, 240));
+    GridBagConstraints imgGbc = new GridBagConstraints();
+    imgGbc.gridx = 0;
+    imgGbc.gridy = 0;
+    imgGbc.anchor = GridBagConstraints.CENTER;
+    leftPanel.add(imagePreview, imgGbc);
+
+    // Cập nhật UI
+    pnl_Main.removeAll();
+    pnl_Main.setLayout(new BorderLayout());
+    pnl_Main.add(leftPanel, BorderLayout.WEST);
+    pnl_Main.add(formPanel, BorderLayout.CENTER);
+    pnl_Main.revalidate();
+    pnl_Main.repaint();
+
+    // ====== Xử lý nút ======
+    btnCancel.addActionListener(e -> {
+        pnl_content.remove(pnl_Main);
+        pnl_Main = createMain();
+        pnl_content.add(pnl_Main, BorderLayout.CENTER);
+        pnl_content.revalidate();
+        pnl_content.repaint();
+    });
+
+    btnUpdate.addActionListener(e -> {
+        if (txtBookName.getText().isEmpty() || txtAuthor.getText().isEmpty() ||
+            selectedCategories.isEmpty() || txtPublisher.getText().isEmpty() ||
+            txtYear.getText().isEmpty() || txtPrice.getText().isEmpty()) {
+            JOptionPane.showMessageDialog(null, "Vui lòng nhập đầy đủ thông tin!");
+            return;
+        }
+
+        book.setTenSach(txtBookName.getText());
+        book.setnXB(txtAuthor.getText());
+        book.setNamXB(Integer.parseInt(txtYear.getText()));
+        book.setGia(Double.parseDouble(txtPrice.getText()));
+        book.setAnh(book.getMaSach() + ".png");
+
+        List<TheLoai> selectedTL = new ArrayList<>();
+        for (String name : selectedCategories) {
+            for (TheLoai tl : categories) {
+                if (tl.getTenTheLoai().equals(name)) {
+                    selectedTL.add(tl); break;
+                }
+            }
+        }
+        book.setDsTheLoai(selectedTL);
+
+        if (selectedImagePath[0] != null) {
+            try {
+                Files.copy(new File(selectedImagePath[0]).toPath(),
+                        new File("Pictures/" + book.getMaSach() + ".png").toPath(),
+                        StandardCopyOption.REPLACE_EXISTING);
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
+        }
+
+        SachDao.getInstance().updateBookAndCategories(book);
+        JOptionPane.showMessageDialog(null, "Cập nhật thành công!");
+
+        pnl_content.remove(pnl_Main);     
+        pnl_Main = createMain();            
+        pnl_content.add(pnl_Main, BorderLayout.CENTER);
+        pnl_content.revalidate();
+        pnl_content.repaint();
+    });
+
+    btnDelete.addActionListener(e -> {
+        int confirm = JOptionPane.showConfirmDialog(null, "Bạn có chắc chắn muốn xóa sách này?",
+                "Xác nhận", JOptionPane.YES_NO_OPTION);
+        if (confirm == JOptionPane.YES_OPTION) {
+            SachDao.getInstance().xoaDoiTuong(book);
+            JOptionPane.showMessageDialog(null, "Đã xóa sách.");
+            pnl_content.remove(pnl_Main);
+            pnl_Main = createMain();
+            pnl_content.add(pnl_Main, BorderLayout.CENTER);
+            pnl_content.revalidate();
+            pnl_content.repaint();
+        }
+    });
+}
+
+    
     public static void main(String[] args) {
         EventQueue.invokeLater(() -> {
             try {
@@ -302,4 +839,5 @@ public class Book extends JFrame {
             }
         });
     }
+
 }
