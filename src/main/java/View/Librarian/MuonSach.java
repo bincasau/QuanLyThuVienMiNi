@@ -11,6 +11,7 @@ import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 public class MuonSach extends JFrame {
@@ -228,25 +229,23 @@ public class MuonSach extends JFrame {
         filterMenu.add(itemTatCa);
 
         itemChuaTra.addActionListener(e -> {
-            List<Ls_Dg_sach> tempList = new ArrayList<>();
-            for (Ls_Dg_sach ls : filteredDs) {
+            filteredDs = new ArrayList<>();
+            for (Ls_Dg_sach ls : ds) {
                 if (ls.getTrangThai().equals("Chưa trả")) {
-                    tempList.add(ls);
+                    filteredDs.add(ls);
                 }
             }
-            filteredDs = tempList;
             currentPage = 1;
             updatePageContent();
         });
 
         itemDaTra.addActionListener(e -> {
-            List<Ls_Dg_sach> tempList = new ArrayList<>();
-            for (Ls_Dg_sach ls : filteredDs) {
-                if (!ls.getTrangThai().equals("Chưa trả")) {
-                    tempList.add(ls);
+            filteredDs = new ArrayList<>();
+            for (Ls_Dg_sach ls : ds) {
+                if (ls.getTrangThai().equals("Đã trả")) {
+                    filteredDs.add(ls);
                 }
             }
-            filteredDs = tempList;
             currentPage = 1;
             updatePageContent();
         });
@@ -276,7 +275,7 @@ public class MuonSach extends JFrame {
         scrollPane.setPreferredSize(new Dimension(900, 550));
 
         ds = Ls_Dg_sachDao.getInstance().layDanhSach();
-        filteredDs = new ArrayList<>(ds);
+        filteredDs = ds != null ? new ArrayList<>(ds) : new ArrayList<>();
         updatePageContent();
 
         panelMain.add(scrollPane, BorderLayout.CENTER);
@@ -285,7 +284,7 @@ public class MuonSach extends JFrame {
         pnl_pagination.setBackground(Color.WHITE);
         pnl_pagination.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
-        btn_prev = new JButton("Prev");
+        btn_prev = new JButton("Trước");
         btn_prev.setPreferredSize(new Dimension(80, 40));
         btn_prev.setMaximumSize(new Dimension(80, 40));
         btn_prev.setMinimumSize(new Dimension(80, 40));
@@ -298,11 +297,11 @@ public class MuonSach extends JFrame {
         });
         pnl_pagination.add(btn_prev);
 
-        btn_next = new JButton("Next");
+        btn_next = new JButton("Sau");
         btn_next.setPreferredSize(new Dimension(80, 40));
         btn_next.setMaximumSize(new Dimension(80, 40));
         btn_next.setMinimumSize(new Dimension(80, 40));
-        btn_next.setVisible(ds.size() > ITEMS_PER_PAGE);
+        btn_next.setVisible(ds != null && ds.size() > ITEMS_PER_PAGE);
         btn_next.addActionListener(e -> {
             if ((currentPage * ITEMS_PER_PAGE) < filteredDs.size()) {
                 currentPage++;
@@ -367,7 +366,8 @@ public class MuonSach extends JFrame {
         gbc.gridy++;
         addPanel.add(new JLabel("Ngày mượn (yyyy-MM-dd):"), gbc);
         gbc.gridx = 1;
-        JTextField txtNgayMuon = new JTextField(20);
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        JTextField txtNgayMuon = new JTextField(sdf.format(new Date()), 20);
         addPanel.add(txtNgayMuon, gbc);
 
         gbc.gridx = 0;
@@ -408,10 +408,10 @@ public class MuonSach extends JFrame {
                     return;
                 }
 
-                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+                SimpleDateFormat sdfParse = new SimpleDateFormat("yyyy-MM-dd");
                 java.sql.Date ngayMuon;
                 try {
-                    ngayMuon = new java.sql.Date(sdf.parse(ngayMuonStr).getTime());
+                    ngayMuon = new java.sql.Date(sdfParse.parse(ngayMuonStr).getTime());
                 } catch (Exception ex) {
                     JOptionPane.showMessageDialog(this, "Ngày mượn không đúng định dạng (yyyy-MM-dd)!");
                     return;
@@ -419,7 +419,7 @@ public class MuonSach extends JFrame {
                 java.sql.Date ngayTra = null;
                 if (!ngayTraStr.isEmpty()) {
                     try {
-                        ngayTra = new java.sql.Date(sdf.parse(ngayTraStr).getTime());
+                        ngayTra = new java.sql.Date(sdfParse.parse(ngayTraStr).getTime());
                     } catch (Exception ex) {
                         JOptionPane.showMessageDialog(this, "Ngày trả không đúng định dạng (yyyy-MM-dd)!");
                         return;
@@ -432,7 +432,7 @@ public class MuonSach extends JFrame {
                 if (result > 0) {
                     JOptionPane.showMessageDialog(this, "Thêm lịch sử mượn sách thành công!");
                     ds = Ls_Dg_sachDao.getInstance().layDanhSach();
-                    filteredDs = new ArrayList<>(ds);
+                    filteredDs = ds != null ? new ArrayList<>(ds) : new ArrayList<>();
                     currentPage = 1;
                     pnl_Content.removeAll();
                     pnl_Content.add(createSidebar(), BorderLayout.WEST);
@@ -471,7 +471,6 @@ public class MuonSach extends JFrame {
     }
 
     private void showEditForm(Ls_Dg_sach lsDg) {
-        // Lấy LichSuMuonSach từ maLichSu
         LichSuMuonSach ls = LichSuMuonSachDao.getInstance().getByMaLichSu(lsDg.getMaLichSu());
 
         if (ls == null) {
@@ -543,9 +542,11 @@ public class MuonSach extends JFrame {
         gbc.gridy++;
         editPanel.add(new JLabel("Trạng thái:"), gbc);
         gbc.gridx = 1;
-        JTextField txtTrangThai = new JTextField(ls.getTrangThai(), 20);
-        txtTrangThai.setEditable(false);
-        editPanel.add(txtTrangThai, gbc);
+        String[] trangThaiOptions = {"Chưa trả", "Đã trả"};
+        JComboBox<String> cbTrangThai = new JComboBox<>(trangThaiOptions);
+        cbTrangThai.setSelectedItem(ls.getTrangThai());
+        cbTrangThai.setPreferredSize(new Dimension(200, 25));
+        editPanel.add(cbTrangThai, gbc);
 
         gbc.gridx = 0;
         gbc.gridy++;
@@ -558,7 +559,7 @@ public class MuonSach extends JFrame {
                 String maDocGia = txtMaDocGia.getText().trim();
                 String ngayMuonStr = txtNgayMuon.getText().trim();
                 String ngayTraStr = txtNgayTra.getText().trim();
-                String trangThai = txtTrangThai.getText().trim();
+                String trangThai = (String) cbTrangThai.getSelectedItem();
 
                 if (maSach.isEmpty() || maThuThu.isEmpty() || maDocGia.isEmpty() || ngayMuonStr.isEmpty()) {
                     JOptionPane.showMessageDialog(this, "Vui lòng nhập đầy đủ mã sách, mã thủ thư, mã độc giả và ngày mượn!");
@@ -591,7 +592,7 @@ public class MuonSach extends JFrame {
                 if (result > 0) {
                     JOptionPane.showMessageDialog(this, "Cập nhật lịch sử mượn sách thành công!");
                     ds = Ls_Dg_sachDao.getInstance().layDanhSach();
-                    filteredDs = new ArrayList<>(ds);
+                    filteredDs = ds != null ? new ArrayList<>(ds) : new ArrayList<>();
                     currentPage = 1;
                     pnl_Content.removeAll();
                     pnl_Content.add(createSidebar(), BorderLayout.WEST);
@@ -635,13 +636,16 @@ public class MuonSach extends JFrame {
         int startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
         int endIndex = Math.min(startIndex + ITEMS_PER_PAGE, filteredDs.size());
 
+        Font itemFont = new Font("Segoe UI", Font.PLAIN, 14);
+        Font itemBoldFont = new Font("Segoe UI", Font.BOLD, 14);
+
         for (int i = startIndex; i < endIndex; i++) {
             Ls_Dg_sach ls = filteredDs.get(i);
-            pnl_MainContent.add(createBookItem(ls));
+            pnl_MainContent.add(createBookItem(ls, itemFont, itemBoldFont));
             pnl_MainContent.add(Box.createVerticalStrut(10));
         }
 
-        int itemHeight = 165;
+        int itemHeight = 180;
         int gapHeight = 10;
         int itemCount = endIndex - startIndex;
         int totalHeight = (itemCount * itemHeight) + ((itemCount - 1) * gapHeight) + (itemCount > 0 ? 120 : 0);
@@ -663,32 +667,32 @@ public class MuonSach extends JFrame {
         }
     }
 
-    private JPanel createBookItem(Ls_Dg_sach ls) {
+    private JPanel createBookItem(Ls_Dg_sach ls, Font itemFont, Font itemBoldFont) {
         RoundedPanel itemPanel = new RoundedPanel(20);
         itemPanel.setLayout(new BorderLayout());
         itemPanel.setBackground(new Color(182, 162, 162));
-        itemPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 165));
+        itemPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 180));
         itemPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
         itemPanel.setBorder(new EmptyBorder(5, 10, 5, 15));
 
         JPanel leftPanel = new JPanel();
         leftPanel.setLayout(new BoxLayout(leftPanel, BoxLayout.Y_AXIS));
         leftPanel.setOpaque(false);
-        leftPanel.setPreferredSize(new Dimension(150, 120));
+        leftPanel.setPreferredSize(new Dimension(150, 140));
 
         leftPanel.add(Box.createVerticalStrut(10));
 
         ImageIcon bookIcon = new ImageIcon("Pictures/" + ls.getAnh());
         if (bookIcon.getIconWidth() != -1) {
-            Image scaledBook = bookIcon.getImage().getScaledInstance(60, 80, Image.SCALE_SMOOTH);
+            Image scaledBook = bookIcon.getImage().getScaledInstance(80, 100, Image.SCALE_SMOOTH);
             JLabel lblBook = new JLabel(new ImageIcon(scaledBook));
             lblBook.setAlignmentX(Component.CENTER_ALIGNMENT);
             leftPanel.add(lblBook);
         }
 
-        String bookName = "<html><div style='text-align: center; width: 120px;'>" + ls.getTenSach() + "</div></html>";
+        String bookName = "<html><div style='text-align: center; width: 140px;'>" + ls.getTenSach() + "</div></html>";
         JLabel lblBookName = new JLabel(bookName);
-        lblBookName.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        lblBookName.setFont(itemBoldFont);
         lblBookName.setAlignmentX(Component.CENTER_ALIGNMENT);
         lblBookName.setForeground(Color.BLACK);
 
@@ -711,25 +715,24 @@ public class MuonSach extends JFrame {
         gbc.gridy = 0;
         gbc.weightx = 1;
 
-        rightPanel.add(createInfoRow("Tên:", ls.getTenNguoiDung()), gbc);
+        rightPanel.add(createInfoRow("Tên:", ls.getTenNguoiDung(), itemFont, itemBoldFont), gbc);
         gbc.gridy++;
-        rightPanel.add(createInfoRow("Mã KH:", ls.getMaNguoiDung()), gbc);
+        rightPanel.add(createInfoRow("Mã KH:", ls.getMaNguoiDung(), itemFont, itemBoldFont), gbc);
         gbc.gridy++;
-        rightPanel.add(createInfoRow("Ngày mượn:", ls.getNgayMuon().toString()), gbc);
+        rightPanel.add(createInfoRow("Ngày mượn:", ls.getNgayMuon().toString(), itemFont, itemBoldFont), gbc);
         gbc.gridy++;
-        rightPanel.add(createInfoRow("Ngày trả:", ls.getNgayTra() == null ? "Chưa có" : ls.getNgayTra().toString()), gbc);
+        rightPanel.add(createInfoRow("Ngày trả:", ls.getNgayTra() == null ? "Chưa có" : ls.getNgayTra().toString(), itemFont, itemBoldFont), gbc);
         gbc.gridy++;
-        rightPanel.add(createStatusRow("Trạng thái:", ls.getTrangThai()), gbc);
+        rightPanel.add(createStatusRow("Trạng thái:", ls.getTrangThai(), itemFont, itemBoldFont), gbc);
 
-        // Thêm panel chứa nút Sửa và Xóa
         gbc.gridy++;
         gbc.insets = new Insets(5, 5, 1, 5);
         JPanel actionPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
         actionPanel.setOpaque(false);
 
         JButton btnEdit = new JButton("Sửa");
-        btnEdit.setPreferredSize(new Dimension(60, 25));
-        btnEdit.setFont(new Font("Segoe UI", Font.BOLD, 11));
+        btnEdit.setPreferredSize(new Dimension(70, 30));
+        btnEdit.setFont(new Font("Segoe UI", Font.BOLD, 12));
         btnEdit.setBackground(new Color(204, 204, 204));
         btnEdit.setOpaque(true);
         btnEdit.setBorderPainted(true);
@@ -737,8 +740,8 @@ public class MuonSach extends JFrame {
         actionPanel.add(btnEdit);
 
         JButton btnDelete = new JButton("Xóa");
-        btnDelete.setPreferredSize(new Dimension(60, 25));
-        btnDelete.setFont(new Font("Segoe UI", Font.BOLD, 11));
+        btnDelete.setPreferredSize(new Dimension(70, 30));
+        btnDelete.setFont(new Font("Segoe UI", Font.BOLD, 12));
         btnDelete.setBackground(new Color(204, 204, 204));
         btnDelete.setOpaque(true);
         btnDelete.setBorderPainted(true);
@@ -763,7 +766,7 @@ public class MuonSach extends JFrame {
                 if (result > 0) {
                     JOptionPane.showMessageDialog(this, "Xóa lịch sử mượn sách thành công!");
                     ds = Ls_Dg_sachDao.getInstance().layDanhSach();
-                    filteredDs = new ArrayList<>(ds);
+                    filteredDs = ds != null ? new ArrayList<>(ds) : new ArrayList<>();
                     currentPage = Math.min(currentPage, (filteredDs.size() + ITEMS_PER_PAGE - 1) / ITEMS_PER_PAGE);
                     updatePageContent();
                 } else {
@@ -780,16 +783,16 @@ public class MuonSach extends JFrame {
         return itemPanel;
     }
 
-    private JPanel createInfoRow(String label, String value) {
+    private JPanel createInfoRow(String label, String value, Font itemFont, Font itemBoldFont) {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 3, 0));
         panel.setOpaque(false);
 
         JLabel lblLabel = new JLabel(label);
-        lblLabel.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        lblLabel.setFont(itemBoldFont);
         lblLabel.setForeground(Color.BLACK);
 
         JLabel lblValue = new JLabel(value);
-        lblValue.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        lblValue.setFont(itemFont);
         lblValue.setForeground(Color.BLACK);
 
         panel.add(lblLabel);
@@ -797,16 +800,16 @@ public class MuonSach extends JFrame {
         return panel;
     }
 
-    private JPanel createStatusRow(String label, String status) {
+    private JPanel createStatusRow(String label, String status, Font itemFont, Font itemBoldFont) {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 3, 0));
         panel.setOpaque(false);
 
         JLabel lblLabel = new JLabel(label);
-        lblLabel.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        lblLabel.setFont(itemBoldFont);
         lblLabel.setForeground(Color.BLACK);
 
         JLabel lblStatus = new JLabel(status);
-        lblStatus.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        lblStatus.setFont(itemBoldFont);
         lblStatus.setForeground(status.equals("Chưa trả") ? Color.RED : Color.GREEN);
 
         panel.add(lblLabel);

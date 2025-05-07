@@ -4,7 +4,9 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import Model.LichSuMuonSach;
@@ -125,19 +127,18 @@ public class LichSuMuonSachDao implements InterfaceDao<LichSuMuonSach> {
 
     public String generateMaLichSu() {
         String prefix = "LS";
-        int startNumber = 0; // Bắt đầu từ LS201 (200 bản ghi hiện có)
+        int startNumber = 1;
         String maLichSu;
 
         try (Connection conn = JDBCUtil.connect()) {
-            // Lặp để tìm mã chưa tồn tại
             for (int i = startNumber; i <= 999; i++) {
-                maLichSu = String.format("%s%03d", prefix, i); // Định dạng LSxxx (ví dụ: LS201)
+                maLichSu = String.format("%s%03d", prefix, i);
                 String sql = "SELECT COUNT(*) FROM lichsumuonsach WHERE maLichSu = ?";
                 try (PreparedStatement stmt = conn.prepareStatement(sql)) {
                     stmt.setString(1, maLichSu);
                     ResultSet rs = stmt.executeQuery();
                     if (rs.next() && rs.getInt(1) == 0) {
-                        return maLichSu; // Trả về mã chưa tồn tại
+                        return maLichSu;
                     }
                 }
             }
@@ -145,6 +146,16 @@ public class LichSuMuonSachDao implements InterfaceDao<LichSuMuonSach> {
             e.printStackTrace();
         }
 
-        return null; // Trả về null nếu không tìm được mã hợp lệ
+        return null;
+    }
+
+    public java.sql.Date getCurrentDate() {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        try {
+            return new java.sql.Date(sdf.parse(sdf.format(new Date())).getTime());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 }
