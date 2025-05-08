@@ -119,21 +119,29 @@ public class DocGiaDao implements InterfaceDao<DocGia>{
 
     public List<DocGia> timKiem(String keyword) {
         List<DocGia> list = new ArrayList<>();
-        String sql = "SELECT * FROM DocGia WHERE maNguoiDung = ?";
+        String sql = "SELECT * FROM DocGia WHERE " +
+                     "maNguoiDung LIKE ? OR " +
+                     "tenNguoiDung LIKE ? OR " +
+                     "taiKhoan LIKE ? OR " +
+                     "email LIKE ?";
+    
         try (Connection conn = JDBCUtil.connect();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
-        	
-            stmt.setString(1, keyword);
-
+    
+            String like = "%" + keyword + "%";
+            for (int i = 1; i <= 4; i++) {
+                stmt.setString(i, like);
+            }
+    
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
                     DocGia docGia = new DocGia(
                         rs.getString("maNguoiDung"),
+                        rs.getString("tenNguoiDung"),
                         rs.getString("taiKhoan"),
                         rs.getString("matKhau"),
                         rs.getString("email"),
                         rs.getString("soDienThoai"),
-                        rs.getString("tenNguoiDung"),
                         rs.getDate("ngayTao")
                     );
                     list.add(docGia);
@@ -145,6 +153,8 @@ public class DocGiaDao implements InterfaceDao<DocGia>{
         JDBCUtil.closeConnection();
         return list;
     }
+    
+
     public List<DocGia> layDanhSachTheoMa(String dk){
         List<DocGia> list = new ArrayList<>();
         String sql = "SELECT * FROM DocGia WHERE maNguoiDung LIKE ?";
