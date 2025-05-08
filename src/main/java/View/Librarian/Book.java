@@ -468,9 +468,6 @@ public class Book extends JFrame {
         JLabel lblBookName = new JLabel("Tên sách");
         JTextField txtBookName = new JTextField(20);
 
-        JLabel lblAuthor = new JLabel("Tác giả");
-        JTextField txtAuthor = new JTextField(20);
-
         JLabel lblCategory = new JLabel("Thể loại");
         JTextField txtCategory = new JTextField();
         txtCategory.setEditable(false);
@@ -496,11 +493,6 @@ public class Book extends JFrame {
         addBookPanel.add(lblBookName, gbc);
         gbc.gridx = 1; gbc.weightx = 1.0;
         addBookPanel.add(txtBookName, gbc);
-
-        gbc.gridy = ++row; gbc.gridx = 0; gbc.weightx = 0;
-        addBookPanel.add(lblAuthor, gbc);
-        gbc.gridx = 1; gbc.weightx = 1.0;
-        addBookPanel.add(txtAuthor, gbc);
 
         gbc.gridy = ++row; gbc.gridx = 0; gbc.weightx = 0;
         addBookPanel.add(lblCategory, gbc);
@@ -583,8 +575,7 @@ public class Book extends JFrame {
 
         // ============ Thêm ============
         btnAdd.addActionListener(e -> {
-            if (txtBookName.getText().isEmpty() || txtAuthor.getText().isEmpty() ||
-                selectedCategories.isEmpty() || txtPublisher.getText().isEmpty() ||
+            if (txtBookName.getText().isEmpty() || selectedCategories.isEmpty() || txtPublisher.getText().isEmpty() ||
                 txtYear.getText().isEmpty() || txtPrice.getText().isEmpty()) {
                 JOptionPane.showMessageDialog(null, "Vui lòng điền đầy đủ thông tin!");
                 return;
@@ -594,7 +585,7 @@ public class Book extends JFrame {
             Sach newBook = new Sach();
             newBook.setMaSach(maSach);
             newBook.setTenSach(txtBookName.getText());
-            newBook.setnXB(txtAuthor.getText());
+            newBook.setnXB(txtPublisher.getText());
             newBook.setNamXB(Integer.parseInt(txtYear.getText()));
             newBook.setGia(Double.parseDouble(txtPrice.getText()));
             newBook.setAnh(maSach + ".png");
@@ -666,16 +657,78 @@ public class Book extends JFrame {
             }
         }
     });
+    
+    // Panel chứa form chỉnh sửa
+    JPanel formPanel = new JPanel(new GridBagLayout());
+    GridBagConstraints gbc = new GridBagConstraints();
+    gbc.insets = new Insets(5, 5, 5, 5);
+    gbc.fill = GridBagConstraints.HORIZONTAL;
 
-    // Các input
-    JTextField txtBookName = new JTextField(book.getTenSach(), 20);
-    JTextField txtAuthor = new JTextField(book.getnXB(), 20);
-    JTextField txtPublisher = new JTextField(book.getnXB(), 20);
-    JTextField txtYear = new JTextField(String.valueOf(book.getNamXB()), 20);
-    JTextField txtPrice = new JTextField(String.valueOf(book.getGia()), 20);
+    JLabel lblBookName = new JLabel("Tên sách");
+    JTextField txtBookName = new JTextField(book.getTenSach(),20);
+
+    JLabel lblCategory = new JLabel("Thể loại");
     JTextField txtCategory = new JTextField();
     txtCategory.setEditable(false);
 
+    JLabel lblPublisher = new JLabel("Nhà xuất bản");
+    JTextField txtPublisher = new JTextField(book.getnXB(),20);
+
+    JLabel lblYear = new JLabel("Năm xuất bản");
+    JTextField txtYear = new JTextField(String.valueOf(book.getNamXB()),20);
+
+    JLabel lblPrice = new JLabel("Giá");
+    JTextField txtPrice = new JTextField(String.valueOf(book.getGia()),20);
+
+
+    // ============ Bố cục chỉnh sửa ============
+    int row = 0;
+    gbc.weightx = 0;
+    gbc.anchor = GridBagConstraints.EAST;
+
+    gbc.gridx = 0; gbc.gridy = row;
+    formPanel.add(lblBookName, gbc);
+    gbc.gridx = 1; gbc.weightx = 1.0;
+    formPanel.add(txtBookName, gbc);
+
+    gbc.gridy = ++row; gbc.gridx = 0; gbc.weightx = 0;
+    formPanel.add(lblCategory, gbc);
+    gbc.gridx = 1; gbc.weightx = 1.0;
+    formPanel.add(txtCategory, gbc);
+
+    gbc.gridy = ++row; gbc.gridx = 0; gbc.weightx = 0;
+    formPanel.add(lblPublisher, gbc);
+    gbc.gridx = 1; gbc.weightx = 1.0;
+    formPanel.add(txtPublisher, gbc);
+
+    gbc.gridy = ++row; gbc.gridx = 0; gbc.weightx = 0;
+    formPanel.add(lblYear, gbc);
+    gbc.gridx = 1; gbc.weightx = 1.0;
+    formPanel.add(txtYear, gbc);
+
+    gbc.gridy = ++row; gbc.gridx = 0; gbc.weightx = 0;
+    formPanel.add(lblPrice, gbc);
+    gbc.gridx = 1; gbc.weightx = 1.0;
+    formPanel.add(txtPrice, gbc);
+
+
+    // ============ Panel ảnh ============
+    JPanel imagePanel = new JPanel(new GridBagLayout());
+    imagePanel.setPreferredSize(new Dimension(140, 200));
+    imagePanel.add(imagePreview);
+
+    JPanel leftPanel = new JPanel(new BorderLayout());
+    leftPanel.setPreferredSize(new Dimension(160, 240));
+    leftPanel.add(imagePanel, BorderLayout.CENTER);
+
+    // ============ Render tổng thể ============
+    pnl_Main.removeAll();
+    pnl_Main.setLayout(new BorderLayout());
+    pnl_Main.add(leftPanel, BorderLayout.WEST);
+    pnl_Main.add(formPanel, BorderLayout.CENTER);
+    pnl_Main.revalidate();
+    pnl_Main.repaint();
+    
     // Lưu thể loại hiện tại
     for (TheLoai tl : book.getDsTheLoai()) {
         selectedCategories.add(tl.getTenTheLoai());
@@ -706,32 +759,6 @@ public class Book extends JFrame {
         }
     });
 
-    // Form layout
-    JPanel formPanel = new JPanel(new GridBagLayout());
-    GridBagConstraints gbc = new GridBagConstraints();
-    gbc.insets = new Insets(5, 5, 5, 5);
-    gbc.fill = GridBagConstraints.HORIZONTAL;
-    gbc.weightx = 1.0;
-
-    int row = 0;
-    gbc.gridx = 0; gbc.gridy = row; formPanel.add(new JLabel("Tên sách"), gbc);
-    gbc.gridx = 1; formPanel.add(txtBookName, gbc);
-
-    gbc.gridx = 0; gbc.gridy = ++row; formPanel.add(new JLabel("Tác giả"), gbc);
-    gbc.gridx = 1; formPanel.add(txtAuthor, gbc);
-
-    gbc.gridx = 0; gbc.gridy = ++row; formPanel.add(new JLabel("Thể loại"), gbc);
-    gbc.gridx = 1; formPanel.add(txtCategory, gbc);
-
-    gbc.gridx = 0; gbc.gridy = ++row; formPanel.add(new JLabel("Nhà XB"), gbc);
-    gbc.gridx = 1; formPanel.add(txtPublisher, gbc);
-
-    gbc.gridx = 0; gbc.gridy = ++row; formPanel.add(new JLabel("Năm XB"), gbc);
-    gbc.gridx = 1; formPanel.add(txtYear, gbc);
-
-    gbc.gridx = 0; gbc.gridy = ++row; formPanel.add(new JLabel("Giá"), gbc);
-    gbc.gridx = 1; formPanel.add(txtPrice, gbc);
-
     // Nút
     JButton btnUpdate = new JButton("Cập nhật");
     JButton btnDelete = new JButton("Xóa");
@@ -743,22 +770,6 @@ public class Book extends JFrame {
     gbc.gridx = 0; gbc.gridy = ++row; gbc.gridwidth = 2; gbc.anchor = GridBagConstraints.CENTER;
     formPanel.add(panelBtn, gbc);
 
-    // Panel trái ảnh
-    JPanel leftPanel = new JPanel(new GridBagLayout());
-    leftPanel.setPreferredSize(new Dimension(160, 240));
-    GridBagConstraints imgGbc = new GridBagConstraints();
-    imgGbc.gridx = 0;
-    imgGbc.gridy = 0;
-    imgGbc.anchor = GridBagConstraints.CENTER;
-    leftPanel.add(imagePreview, imgGbc);
-
-    // Cập nhật UI
-    pnl_Main.removeAll();
-    pnl_Main.setLayout(new BorderLayout());
-    pnl_Main.add(leftPanel, BorderLayout.WEST);
-    pnl_Main.add(formPanel, BorderLayout.CENTER);
-    pnl_Main.revalidate();
-    pnl_Main.repaint();
 
     // ====== Xử lý nút ======
     btnCancel.addActionListener(e -> {
@@ -770,15 +781,14 @@ public class Book extends JFrame {
     });
 
     btnUpdate.addActionListener(e -> {
-        if (txtBookName.getText().isEmpty() || txtAuthor.getText().isEmpty() ||
-            selectedCategories.isEmpty() || txtPublisher.getText().isEmpty() ||
+        if (txtBookName.getText().isEmpty() ||selectedCategories.isEmpty() || txtPublisher.getText().isEmpty() ||
             txtYear.getText().isEmpty() || txtPrice.getText().isEmpty()) {
             JOptionPane.showMessageDialog(null, "Vui lòng nhập đầy đủ thông tin!");
             return;
         }
 
         book.setTenSach(txtBookName.getText());
-        book.setnXB(txtAuthor.getText());
+        book.setnXB(txtPublisher.getText());
         book.setNamXB(Integer.parseInt(txtYear.getText()));
         book.setGia(Double.parseDouble(txtPrice.getText()));
         book.setAnh(book.getMaSach() + ".png");
