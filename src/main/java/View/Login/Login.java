@@ -3,6 +3,8 @@ package View.Login;
 import Controller.LoginController;
 import View.Librarian.Book;
 import View.User.Dashboard;
+import View.MainFrame;
+import Session.LoginSession;
 
 import javax.swing.*;
 import java.awt.*;
@@ -180,29 +182,63 @@ public class Login extends JFrame {
 
         // Xử lý nút Đăng nhập
         btn_DangNhap.addActionListener(e -> {
-            String username = isTaiKhoanPlaceholderActive ? "" : txt_TaiKhoan.getText();
-            String password = isMatKhauPlaceholderActive ? "" : new String(txt_MatKhau.getPassword());
+            System.out.println("Login button clicked");
+            
+            // Validate input
+            if (isTaiKhoanPlaceholderActive || txt_TaiKhoan.getText().trim().isEmpty()) {
+                JOptionPane.showMessageDialog(Login.this, 
+                    "Vui lòng nhập tên đăng nhập", 
+                    "Lỗi đăng nhập", 
+                    JOptionPane.ERROR_MESSAGE);
+                txt_TaiKhoan.requestFocus();
+                return;
+            }
+            
+            if (isMatKhauPlaceholderActive || txt_MatKhau.getPassword().length == 0) {
+                JOptionPane.showMessageDialog(Login.this, 
+                    "Vui lòng nhập mật khẩu", 
+                    "Lỗi đăng nhập", 
+                    JOptionPane.ERROR_MESSAGE);
+                txt_MatKhau.requestFocus();
+                return;
+            }
 
-            loginController.login(username, password, new LoginController.LoginCallBack() {
-                @Override
-                public void onSuccess(String username, boolean isAdmin) {
-                    dispose();
-                    SwingUtilities.invokeLater(() -> {
-                        if (isAdmin) new Book(username).setVisible(true);
-                        else new Dashboard(username).setVisible(true);
-                    });
-                }
+            String username = txt_TaiKhoan.getText().trim();
+            String password = new String(txt_MatKhau.getPassword());
+            
+            System.out.println("Attempting login with username: " + username);
 
-                @Override
-                public void onFailure(String message) {
-                    JOptionPane.showMessageDialog(Login.this, message, "Lỗi đăng nhập", JOptionPane.ERROR_MESSAGE);
-                }
+            try {
+                loginController.login(username, password, new LoginController.LoginCallBack() {
+                    @Override
+                    public void onSuccess(String username, boolean isAdmin) {
+                        LoginSession.getInstance().login(username, isAdmin);
+                        dispose();
+                        SwingUtilities.invokeLater(() -> {
+                            new MainFrame().setVisible(true);
+                        });
+                    }
 
-                @Override
-                public void onError(String errorMessage) {
-                    JOptionPane.showMessageDialog(Login.this, errorMessage, "Lỗi hệ thống", JOptionPane.ERROR_MESSAGE);
-                }
-            });
+                    @Override
+                    public void onFailure(String message) {
+                        System.out.println("Login failed: " + message);
+                        JOptionPane.showMessageDialog(Login.this, message, "Lỗi đăng nhập", JOptionPane.ERROR_MESSAGE);
+                    }
+
+                    @Override
+                    public void onError(String errorMessage) {
+                        System.out.println("System error: " + errorMessage);
+                        JOptionPane.showMessageDialog(Login.this, errorMessage, "Lỗi hệ thống", JOptionPane.ERROR_MESSAGE);
+                    }
+                });
+            } catch (Exception ex) {
+                System.err.println("Unexpected error during login: " + ex.getMessage());
+                ex.printStackTrace();
+                JOptionPane.showMessageDialog(Login.this, 
+                    "Đã xảy ra lỗi không mong muốn: " + ex.getMessage(), 
+                    "Lỗi hệ thống", 
+                    JOptionPane.ERROR_MESSAGE);
+            }
         });
 
         add(pnl_DangNhap);

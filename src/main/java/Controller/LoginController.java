@@ -20,8 +20,11 @@ public class LoginController {
     }
 
     public void login(String username, String password, LoginCallBack callBack) {
+        System.out.println("LoginController.login() called");
+        
         if (username == null || username.trim().isEmpty() ||
             password == null || password.trim().isEmpty()) {
+            System.out.println("Empty username or password");
             callBack.onFailure("Vui lòng nhập đầy đủ thông tin đăng nhập");
             return;
         }
@@ -31,21 +34,26 @@ public class LoginController {
         ResultSet rs = null;
         
         try {
-            // callBack.onSuccess(username, false);
+            System.out.println("Attempting to connect to database");
             String hashedPassword = JDBCUtil.hashPasswordSHA1(password);
-            System.out.println(username + " " + hashedPassword);
+            System.out.println("Password hashed successfully");
+            
             conn = JDBCUtil.connect();
+            System.out.println("Database connection established");
 
             String sql = "SELECT * FROM thuthu WHERE taiKhoan = ? AND matKhau = ?";
             stmt = conn.prepareStatement(sql);
             stmt.setString(1, username);
             stmt.setString(2, hashedPassword);
 
+            System.out.println("Checking thuthu table");
             rs = stmt.executeQuery();
 
             if (rs.next()) {
+                System.out.println("Found in ThuThu table");
                 callBack.onSuccess(username, true);
             } else {
+                System.out.println("Not found in thuthu table, checking docgia table");
                 sql = "SELECT * FROM docgia WHERE taiKhoan = ? AND matKhau = ?";
                 stmt = conn.prepareStatement(sql);
                 stmt.setString(1, username);
@@ -53,14 +61,19 @@ public class LoginController {
                 
                 rs = stmt.executeQuery();
                 if (rs.next()) {
+                    System.out.println("Found in docgia table");
                     callBack.onSuccess(username, false);
                 } else {
+                    System.out.println("Not found in either table");
                     callBack.onFailure("Tên đăng nhập hoặc mật khẩu không đúng");
+                    //callBack.onSuccess(username, false); // debug
                 }
             }
         } catch (NoSuchAlgorithmException e) {
+            System.out.println("Error hashing password: " + e.getMessage());
             e.printStackTrace();
         } catch (SQLException e) {
+            System.out.println("Database error: " + e.getMessage());
             callBack.onError("Lỗi kết nối database: " + e.getMessage());
             e.printStackTrace();
         } finally {
@@ -68,7 +81,9 @@ public class LoginController {
                 if (rs != null) rs.close();
                 if (stmt != null) stmt.close();
                 JDBCUtil.closeConnection();
+                System.out.println("Database connection closed");
             } catch (SQLException e) {
+                System.out.println("Error closing database connection: " + e.getMessage());
                 e.printStackTrace();
             }
         }
