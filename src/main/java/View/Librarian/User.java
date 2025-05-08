@@ -8,6 +8,7 @@ import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.GridLayout;
 import java.awt.Image;
+import java.security.MessageDigest;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
@@ -247,11 +248,12 @@ public class User extends JFrame {
             if (result == JOptionPane.OK_OPTION) {
                 String tenNguoiDung = tenNguoiDungField.getText();
                 String taiKhoan = taiKhoanField.getText();
-                String matKhau = matKhauField.getText();
+                String matKhauGoc = matKhauField.getText();
+                String matKhauHash = hashSHA1(matKhauGoc); // hash trước khi lưu
                 String email = emailField.getText();
                 String soDienThoai = soDienThoaiField.getText();
 
-                if (tenNguoiDung.isEmpty() || taiKhoan.isEmpty() || matKhau.isEmpty()) {
+                if (tenNguoiDung.isEmpty() || taiKhoan.isEmpty() || matKhauGoc.isEmpty()) {
                     JOptionPane.showMessageDialog(this, "Tên, tài khoản và mật khẩu không được để trống!");
                     return;
                 }
@@ -261,7 +263,7 @@ public class User extends JFrame {
                     String maNguoiDung = docGiaDao.layMaNguoiDungMoiNhat(); // Lấy mã mới nhất
                     Date ngayTao = new Date(); // Lấy thời gian hiện tại
 
-                    DocGia docGia = new DocGia(maNguoiDung, tenNguoiDung, taiKhoan, matKhau, email, soDienThoai, ngayTao);
+                    DocGia docGia = new DocGia(maNguoiDung, tenNguoiDung, taiKhoan, matKhauHash, email, soDienThoai, ngayTao);
                     int rowsAffected = docGiaDao.themDoiTuong(docGia);
                     if (rowsAffected > 0) {
                         JOptionPane.showMessageDialog(this, "Thêm độc giả thành công!");
@@ -302,7 +304,7 @@ public class User extends JFrame {
         pnl_top.add(btn_delete);
 
         // Bảng hiển thị danh sách độc giả
-        String[] columnNames = {"Mã Người Dùng", "Tên Người Dùng", "Tài Khoản", "Mật Khẩu", "Email", "Số Điện Thoại", "Ngày Tạo"};
+        String[] columnNames = {"Mã Người Dùng", "Tên Người Dùng", "Tài Khoản", "Email", "Số Điện Thoại", "Ngày Tạo"};
         tableModel = new DefaultTableModel(columnNames, 0);
         table = new JTable(tableModel);
         loadTableData(""); // Tải dữ liệu ban đầu
@@ -331,7 +333,7 @@ public class User extends JFrame {
                 docGia.getMaNguoiDung(),
                 docGia.getTenNguoiDung(),
                 docGia.getTaiKhoan(),
-                docGia.getMatKhau(),
+                // docGia.getMatKhau(),
                 docGia.getEmail(),
                 docGia.getSoDienThoai(),
                 sdf.format(docGia.getNgayTao())
@@ -339,4 +341,21 @@ public class User extends JFrame {
             tableModel.addRow(row);
         }
     }
+
+
+    private String hashSHA1(String input) {
+    try {
+        MessageDigest md = MessageDigest.getInstance("SHA-1");
+        byte[] hashed = md.digest(input.getBytes("UTF-8"));
+        StringBuilder sb = new StringBuilder();
+        for (byte b : hashed) {
+            sb.append(String.format("%02x", b));
+        }
+        return sb.toString();
+    } catch (Exception e) {
+        throw new RuntimeException("Không thể hash mật khẩu", e);
+    }
+}
+
+
 }
