@@ -282,25 +282,43 @@ public class User extends JFrame {
         btn_delete.setPreferredSize(new Dimension(80, 40));
         btn_delete.setMaximumSize(new Dimension(80, 40));
         btn_delete.setMinimumSize(new Dimension(80, 40));
-        btn_delete.addActionListener(e -> {
-            int selectedRow = table.getSelectedRow();
-            if (selectedRow >= 0) {
-                String maNguoiDung = (String) tableModel.getValueAt(selectedRow, 0);
-                int confirm = JOptionPane.showConfirmDialog(this, "Xóa độc giả " + maNguoiDung + "?", "Xác nhận", JOptionPane.YES_NO_OPTION);
-                if (confirm == JOptionPane.YES_OPTION) {
-                    DocGiaDao docGiaDao = DocGiaDao.getInstance();
-                    int rowsAffected = docGiaDao.xoaDoiTuong(maNguoiDung);
-                    if (rowsAffected > 0) {
-                        JOptionPane.showMessageDialog(this, "Xóa độc giả thành công!");
-                        loadTableData(""); // Cập nhật lại bảng
-                    } else {
-                        JOptionPane.showMessageDialog(this, "Xóa độc giả thất bại!");
-                    }
+btn_delete.addActionListener(e -> {
+    System.out.println("[DEBUG] Nút Xóa được nhấn"); // Debug
+    int selectedRow = table.getSelectedRow();
+    if (selectedRow >= 0) {
+        String maNguoiDung = (String) tableModel.getValueAt(selectedRow, 0);
+        String tenNguoiDung = (String) tableModel.getValueAt(selectedRow, 1);
+        System.out.println("[DEBUG] Độc giả được chọn: " + maNguoiDung + " - " + tenNguoiDung); // Debug
+        int confirm = JOptionPane.showConfirmDialog(this,
+                "Bạn có chắc chắn muốn xóa độc giả '" + tenNguoiDung + "' (Mã: " + maNguoiDung + ") không?\n" +
+                "Các thông tin liên quan đến độc giả này sẽ được xóa toàn bộ.",
+                "Xác nhận xóa độc giả",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.WARNING_MESSAGE);
+        System.out.println("[DEBUG] Kết quả xác nhận: " + confirm + " (0 = Yes, 2 = No)"); // Debug
+        if (confirm == JOptionPane.YES_OPTION) {
+            System.out.println("[DEBUG] Bắt đầu xóa độc giả: " + maNguoiDung); // Debug
+            try {
+                DocGiaDao docGiaDao = DocGiaDao.getInstance();
+                int rowsAffected = docGiaDao.xoaDoiTuong(maNguoiDung);
+                System.out.println("[DEBUG] Rows affected: " + rowsAffected); // Debug
+                if (rowsAffected > 0) {
+                    JOptionPane.showMessageDialog(this, "Xóa độc giả thành công!");
+                    loadTableData("");
+                } else {
+                    JOptionPane.showMessageDialog(this, "Xóa độc giả thất bại! Không tìm thấy độc giả hoặc lỗi cơ sở dữ liệu.", "Lỗi", JOptionPane.ERROR_MESSAGE);
                 }
-            } else {
-                JOptionPane.showMessageDialog(this, "Vui lòng chọn một độc giả để xóa!");
+            } catch (Exception ex) {
+                System.err.println("[ERROR] Lỗi khi xóa độc giả: " + ex.getMessage());
+                ex.printStackTrace();
+                JOptionPane.showMessageDialog(this, "Lỗi khi xóa độc giả: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
             }
-        });
+        }
+    } else {
+        System.out.println("[DEBUG] Không có dòng nào được chọn"); // Debug
+        JOptionPane.showMessageDialog(this, "Vui lòng chọn một độc giả để xóa!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+    }
+});
         pnl_top.add(btn_delete);
 
         // Bảng hiển thị danh sách độc giả

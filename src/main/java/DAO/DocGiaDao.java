@@ -11,11 +11,11 @@ import java.util.List;
 import Model.DocGia;
 import Util.JDBCUtil;
 
-public class DocGiaDao implements InterfaceDao<DocGia>{
+public class DocGiaDao implements InterfaceDao<DocGia> {
     
     public static DocGiaDao getInstance() {
-		return new DocGiaDao();
-	}
+        return new DocGiaDao();
+    }
     
     @Override
     public int themDoiTuong(DocGia t) {
@@ -31,6 +31,7 @@ public class DocGiaDao implements InterfaceDao<DocGia>{
             stmt.setDate(7, new Date(t.getNgayTao().getTime()));
             return stmt.executeUpdate(); 
         } catch (SQLException e) {
+            System.err.println("Lỗi khi thêm độc giả: " + e.getMessage());
             e.printStackTrace();
             return 0; 
         }
@@ -48,43 +49,65 @@ public class DocGiaDao implements InterfaceDao<DocGia>{
                     return String.format("DG%03d", number);
                 }
             }
-            return "DG001"; // Mặc định nếu bảng rỗng hoặc mã không hợp lệ
+            return "DG001";
         } catch (SQLException e) {
+            System.err.println("Lỗi khi lấy mã người dùng mới nhất: " + e.getMessage());
             e.printStackTrace();
             return "DG001";
         }
     }
-
-    @Override
-    public int xoaDoiTuong(DocGia t) {
-        String sql = "DELETE FROM DocGia WHERE maNguoiDung = ?";
-        try (Connection conn = JDBCUtil.connect();
-            PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setString(1, t.getMaNguoiDung());
-            JDBCUtil.closeConnection();
-            return stmt.executeUpdate();
+    
+    public int xoaDoiTuong(String maNguoiDung) {
+        String sqlPhieuPhat = "UPDATE phieuphat SET maDocGia = NULL WHERE maDocGia = ?";
+        String sqlLichSu = "UPDATE lichsumuonsach SET maDocGia = NULL WHERE maDocGia = ?";
+        String sqlXoaDocGia = "DELETE FROM docgia WHERE maNguoiDung = ?";
+    
+        try (Connection conn = JDBCUtil.connect()) {
+            conn.setAutoCommit(false);
+    
+            try (
+                PreparedStatement stmt1 = conn.prepareStatement(sqlPhieuPhat);
+                PreparedStatement stmt2 = conn.prepareStatement(sqlLichSu);
+                PreparedStatement stmtDel = conn.prepareStatement(sqlXoaDocGia)
+            ) {
+                stmt1.setString(1, maNguoiDung);
+                stmt1.executeUpdate();
+    
+                stmt2.setString(1, maNguoiDung);
+                stmt2.executeUpdate();
+    
+                stmtDel.setString(1, maNguoiDung);
+                int result = stmtDel.executeUpdate();
+    
+                conn.commit();
+                return result;
+            } catch (SQLException e) {
+                conn.rollback();
+                throw e;
+            }
         } catch (SQLException e) {
             e.printStackTrace();
             return 0;
         }
     }
+    
+    
 
     @Override
     public int capNhatDoiTuong(DocGia t) {
         String sql = "UPDATE DocGia SET taiKhoan = ?, matKhau = ?, email = ?, soDienThoai = ?, tenNguoiDung = ?, ngayTao = ? WHERE maNguoiDung = ?";
         try (Connection conn = JDBCUtil.connect();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
-
             stmt.setString(1, t.getTaiKhoan());
             stmt.setString(2, t.getMatKhau());
             stmt.setString(3, t.getEmail());
             stmt.setString(4, t.getSoDienThoai());
             stmt.setString(5, t.getTenNguoiDung());
-            stmt.setDate(6, (Date) t.getNgayTao());
+            stmt.setDate(6, new Date(t.getNgayTao().getTime()));
             stmt.setString(7, t.getMaNguoiDung());
-            JDBCUtil.closeConnection();
             return stmt.executeUpdate();
         } catch (SQLException e) {
+            System.err.println("SQLException: " + e.getMessage());
             e.printStackTrace();
             return 0;
         }
@@ -113,26 +136,18 @@ public class DocGiaDao implements InterfaceDao<DocGia>{
             System.err.println("Lỗi khi lấy danh sách độc giả: " + e.getMessage());
             e.printStackTrace();
         }
-        JDBCUtil.closeConnection();
         return list;
     }
 
     public List<DocGia> timKiem(String keyword) {
         List<DocGia> list = new ArrayList<>();
-        String sql = "SELECT * FROM DocGia WHERE " +
-                     "maNguoiDung LIKE ? OR " +
-                     "tenNguoiDung LIKE ? OR " +
-                     "taiKhoan LIKE ? OR " +
-                     "email LIKE ?";
-    
+        String sql = "SELECT * FROM DocGia WHERE maNguoiDung LIKE ? OR tenNguoiDung LIKE ? OR taiKhoan LIKE ? OR email LIKE ?";
         try (Connection conn = JDBCUtil.connect();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
-    
             String like = "%" + keyword + "%";
             for (int i = 1; i <= 4; i++) {
                 stmt.setString(i, like);
             }
-    
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
                     DocGia docGia = new DocGia(
@@ -148,17 +163,17 @@ public class DocGiaDao implements InterfaceDao<DocGia>{
                 }
             }
         } catch (SQLException e) {
+            System.err.println("Lỗi khi tìm kiếm độc giả: " + e.getMessage());
             e.printStackTrace();
         }
-        JDBCUtil.closeConnection();
         return list;
     }
-    
 
-    public List<DocGia> layDanhSachTheoMa(String dk){
+    public List<DocGia> layDanhSachTheoMa(String dk) {
         List<DocGia> list = new ArrayList<>();
         String sql = "SELECT * FROM DocGia WHERE maNguoiDung LIKE ?";
-             try(PreparedStatement stmt = JDBCUtil.connect().prepareStatement(sql)) {
+        try (Connection conn = JDBCUtil.connect();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, dk);
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
@@ -178,27 +193,11 @@ public class DocGiaDao implements InterfaceDao<DocGia>{
             System.err.println("Lỗi khi tìm kiếm độc giả: " + e.getMessage());
             e.printStackTrace();
         }
-        JDBCUtil.closeConnection();
         return list;
     }
 
-    public int xoaDoiTuong(String maNguoiDung) {
-        String sql = "DELETE FROM DocGia WHERE maNguoiDung = ?";
-        try (Connection conn = JDBCUtil.connect();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setString(1, maNguoiDung);
-            JDBCUtil.closeConnection();
-            return stmt.executeUpdate();
-        } catch (SQLException e) {
-            System.err.println("Lỗi khi xóa độc giả: " + e.getMessage());
-            e.printStackTrace();
-            return 0;
-        }
+    @Override
+    public List<DocGia> layDanhSachTheoDK(String dk) {
+        return null; // TODO: Implement if needed
     }
-
-	@Override
-	public List<DocGia> layDanhSachTheoDK(String dk) {
-		// TODO Auto-generated method stub
-		return null;
-	}
 }
