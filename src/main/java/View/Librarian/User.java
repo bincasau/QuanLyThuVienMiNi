@@ -300,7 +300,9 @@ btn_delete.addActionListener(e -> {
             System.out.println("[DEBUG] Bắt đầu xóa độc giả: " + maNguoiDung); // Debug
             try {
                 DocGiaDao docGiaDao = DocGiaDao.getInstance();
-                int rowsAffected = docGiaDao.xoaDoiTuong(maNguoiDung);
+                DocGia tmp = new DocGia();
+                tmp.setMaNguoiDung(maNguoiDung);
+                int rowsAffected = docGiaDao.xoaDoiTuong(tmp);
                 System.out.println("[DEBUG] Rows affected: " + rowsAffected); // Debug
                 if (rowsAffected > 0) {
                     JOptionPane.showMessageDialog(this, "Xóa độc giả thành công!");

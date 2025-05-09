@@ -22,8 +22,16 @@ public class DocGia {
         this.soDienThoai = soDienThoai;
         this.ngayTao = ngayTao;
     }
+    
+    public DocGia() {
+    }
 
     // Getters
+
+    public void setMaNguoiDung(String maNguoiDung) {
+    this.maNguoiDung = maNguoiDung;
+    }
+
     public String getMaNguoiDung() {
         return maNguoiDung;
     }

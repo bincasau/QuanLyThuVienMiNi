@@ -57,7 +57,9 @@ public class DocGiaDao implements InterfaceDao<DocGia> {
         }
     }
     
-    public int xoaDoiTuong(String maNguoiDung) {
+    @Override
+    public int xoaDoiTuong(DocGia t) {
+        String maNguoiDung = t.getMaNguoiDung();
         String sqlPhieuPhat = "UPDATE phieuphat SET maDocGia = NULL WHERE maDocGia = ?";
         String sqlLichSu = "UPDATE lichsumuonsach SET maDocGia = NULL WHERE maDocGia = ?";
         String sqlXoaDocGia = "DELETE FROM docgia WHERE maNguoiDung = ?";
