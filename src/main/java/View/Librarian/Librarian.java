@@ -1195,7 +1195,7 @@ public class Librarian extends JFrame {
 
         gbc.gridx = 0;
         gbc.gridy++;
-        addPanel.add(new JLabel("Mã thủ thư:"), gbc);
+        addPanel.add(new JLabel("Tên thủ thư:"), gbc);
         gbc.gridx = 1;
         JTextField txtMaThuThu = new JTextField(20);
         txtMaThuThu.setText(LoginSession.getInstance().getFullName());
