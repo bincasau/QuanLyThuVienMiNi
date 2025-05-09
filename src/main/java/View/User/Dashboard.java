@@ -1,34 +1,26 @@
 package View.User;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.EventQueue;
-import java.awt.Font;
-import java.awt.Image;
-import java.awt.Insets;
-import java.awt.GridLayout;
+import java.awt.*;
+import java.awt.event.*;
 import java.util.List;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
-import java.awt.event.AdjustmentEvent;
-import java.awt.event.AdjustmentListener;
-
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import DAO.SachDao;
 import Model.Sach;
-import Model.TheLoai;
 import View.Login.Login;
 
 public class Dashboard extends JFrame {
-
     private static final long serialVersionUID = 1L;
     private JPanel contentPane;
     private String fullName;
     private List<Sach> bookList;
+    private List<Sach> fullBookList;
     private int currentBookIndex = 0;
     private static final int BATCH_SIZE = 20;
     private JPanel pnl_Content;
+    private JTextField txt_Search;
 
     public Dashboard(String fullName) {
         this.fullName = fullName;
@@ -63,18 +55,13 @@ public class Dashboard extends JFrame {
         scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
         scrollPane.setBorder(null);
 
-        // Add scroll listener for lazy loading
-        scrollPane.getVerticalScrollBar().addAdjustmentListener(new AdjustmentListener() {
-            @Override
-            public void adjustmentValueChanged(AdjustmentEvent e) {
-                JScrollBar scrollBar = (JScrollBar) e.getSource();
-                int extent = scrollBar.getModel().getExtent();
-                int maximum = scrollBar.getModel().getMaximum();
-                int value = scrollBar.getValue();
-                // Check if user has scrolled to the bottom
-                if (value + extent >= maximum - 10 && currentBookIndex < bookList.size()) {
-                    loadMoreBooks();
-                }
+        scrollPane.getVerticalScrollBar().addAdjustmentListener(e -> {
+            JScrollBar scrollBar = (JScrollBar) e.getSource();
+            int extent = scrollBar.getModel().getExtent();
+            int maximum = scrollBar.getModel().getMaximum();
+            int value = scrollBar.getValue();
+            if (value + extent >= maximum - 10 && currentBookIndex < bookList.size()) {
+                loadMoreBooks();
             }
         });
 
@@ -98,44 +85,22 @@ public class Dashboard extends JFrame {
         pnl_ButtonGroup.setBackground(new Color(240, 233, 222));
         pnl_ButtonGroup.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 10));
 
-        JButton btn_Home = new JButton("Trang chủ");
-        btn_Home.setBackground(new Color(252, 215, 194));
-        btn_Home.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
-        btn_Home.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
-        btn_Home.setAlignmentX(Component.LEFT_ALIGNMENT);
-        btn_Home.setHorizontalAlignment(SwingConstants.LEFT);
-        pnl_ButtonGroup.add(Box.createRigidArea(new Dimension(0, 10)));
-        pnl_ButtonGroup.add(btn_Home);
-
-        JButton btn_History = new JButton("Lịch sử");
-        btn_History.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
-        btn_History.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
-        btn_History.setAlignmentX(Component.LEFT_ALIGNMENT);
-        btn_History.setHorizontalAlignment(SwingConstants.LEFT);
-        pnl_ButtonGroup.add(Box.createRigidArea(new Dimension(0, 10)));
-        pnl_ButtonGroup.add(btn_History);
-
-        JButton btn_Penalty = new JButton("Phiếu phạt");
-        btn_Penalty.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
-        btn_Penalty.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
-        btn_Penalty.setAlignmentX(Component.LEFT_ALIGNMENT);
-        btn_Penalty.setHorizontalAlignment(SwingConstants.LEFT);
-        pnl_ButtonGroup.add(Box.createRigidArea(new Dimension(0, 10)));
-        pnl_ButtonGroup.add(btn_Penalty);
-
-        JButton btn_Logout = new JButton("Đăng xuất");
-        btn_Logout.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
-        btn_Logout.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
-        btn_Logout.setAlignmentX(Component.LEFT_ALIGNMENT);
-        btn_Logout.setHorizontalAlignment(SwingConstants.LEFT);
-        btn_Logout.addActionListener(e -> {
-            dispose();
-            SwingUtilities.invokeLater(() -> {
-                new Login().setVisible(true);
-            });
-        });
-        pnl_ButtonGroup.add(Box.createRigidArea(new Dimension(0, 10)));
-        pnl_ButtonGroup.add(btn_Logout);
+        String[] btnLabels = {"Trang chủ", "Lịch sử", "Phiếu phạt", "Đăng xuất"};
+        for (String text : btnLabels) {
+            JButton btn = new JButton(text);
+            btn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
+            btn.setAlignmentX(Component.LEFT_ALIGNMENT);
+            btn.setHorizontalAlignment(SwingConstants.LEFT);
+            btn.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
+            if (text.equals("Đăng xuất")) {
+                btn.addActionListener(e -> {
+                    dispose();
+                    SwingUtilities.invokeLater(() -> new Login().setVisible(true));
+                });
+            }
+            pnl_ButtonGroup.add(Box.createRigidArea(new Dimension(0, 10)));
+            pnl_ButtonGroup.add(btn);
+        }
 
         pnl_Sidebar.add(pnl_ButtonGroup);
         return pnl_Sidebar;
@@ -151,26 +116,12 @@ public class Dashboard extends JFrame {
         pnl_TopRow.setOpaque(false);
         pnl_TopRow.setBorder(BorderFactory.createEmptyBorder(10, 35, 0, 20));
 
-        JButton btn_Avatar = new JButton("AVT");
+        JButton btn_Avatar = createIconButton("pictures/profile.png", "👤");
+        JButton btn_Notification = createIconButton("pictures/bell.png", "🔔");
+
         JLabel lbl_UserName = new JLabel(fullName);
         lbl_UserName.setFont(new Font("SansSerif", Font.PLAIN, 14));
         lbl_UserName.setForeground(Color.WHITE);
-
-        JButton btn_Notification = new JButton("Noti");
-
-        btn_Avatar.setFont(new Font("SansSerif", Font.PLAIN, 10));
-        btn_Avatar.setFocusable(false);
-        btn_Avatar.setPreferredSize(new Dimension(60, 60));
-        btn_Avatar.setMaximumSize(new Dimension(60, 60));
-
-        btn_Notification.setFont(new Font("SansSerif", Font.PLAIN, 10));
-        btn_Notification.setFocusable(false);
-        btn_Notification.setPreferredSize(new Dimension(60, 60));
-        btn_Notification.setMaximumSize(new Dimension(60, 60));
-
-        btn_Avatar.setAlignmentY(Component.CENTER_ALIGNMENT);
-        btn_Notification.setAlignmentY(Component.CENTER_ALIGNMENT);
-        lbl_UserName.setAlignmentY(Component.CENTER_ALIGNMENT);
 
         pnl_TopRow.add(btn_Avatar);
         pnl_TopRow.add(Box.createHorizontalStrut(10));
@@ -178,27 +129,19 @@ public class Dashboard extends JFrame {
         pnl_TopRow.add(Box.createHorizontalGlue());
         pnl_TopRow.add(btn_Notification);
 
-        JPanel pnl_SearchWithIcon = new JPanel();
-        pnl_SearchWithIcon.setLayout(new BoxLayout(pnl_SearchWithIcon, BoxLayout.X_AXIS));
-        pnl_SearchWithIcon.setOpaque(false);
-
-        JTextField txt_Search = new JTextField("Tìm kiếm...");
-        txt_Search.setPreferredSize(new Dimension(300, 40));
-        txt_Search.setMaximumSize(new Dimension(500, 40));
+        txt_Search = new JTextField("Tìm kiếm...");
         txt_Search.setFont(new Font("SansSerif", Font.PLAIN, 14));
         txt_Search.setForeground(Color.GRAY);
 
-        txt_Search.addFocusListener(new java.awt.event.FocusAdapter() {
-            @Override
-            public void focusGained(java.awt.event.FocusEvent e) {
+        txt_Search.addFocusListener(new FocusAdapter() {
+            public void focusGained(FocusEvent e) {
                 if (txt_Search.getText().equals("Tìm kiếm...")) {
                     txt_Search.setText("");
                     txt_Search.setForeground(Color.BLACK);
                 }
             }
 
-            @Override
-            public void focusLost(java.awt.event.FocusEvent e) {
+            public void focusLost(FocusEvent e) {
                 if (txt_Search.getText().isEmpty()) {
                     txt_Search.setText("Tìm kiếm...");
                     txt_Search.setForeground(Color.GRAY);
@@ -206,135 +149,152 @@ public class Dashboard extends JFrame {
             }
         });
 
-        JButton btn_SearchIcon = new JButton("🔍");
-        btn_SearchIcon.setFont(new Font("SansSerif", Font.PLAIN, 18));
-        btn_SearchIcon.setFocusPainted(false);
-        btn_SearchIcon.setContentAreaFilled(true);
-        btn_SearchIcon.setBorderPainted(true);
-        btn_SearchIcon.setPreferredSize(new Dimension(40, 40));
-        btn_SearchIcon.setMaximumSize(new Dimension(40, 40));
-        btn_SearchIcon.setMinimumSize(new Dimension(40, 40));
-        btn_SearchIcon.setBackground(new Color(240, 240, 240));
-        btn_SearchIcon.setOpaque(true);
-        btn_SearchIcon.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
-        btn_SearchIcon.setMargin(new Insets(0, 0, 0, 0));
-        btn_SearchIcon.setHorizontalAlignment(SwingConstants.CENTER);
-        btn_SearchIcon.setVerticalAlignment(SwingConstants.CENTER);
+        txt_Search.getDocument().addDocumentListener(new DocumentListener() {
+            public void insertUpdate(DocumentEvent e) { search(txt_Search.getText()); }
+            public void removeUpdate(DocumentEvent e) { search(txt_Search.getText()); }
+            public void changedUpdate(DocumentEvent e) { search(txt_Search.getText()); }
 
-        JButton btn_FilterByCategory = new JButton("Tìm theo thể loại");
-        btn_FilterByCategory.setFont(new Font("SansSerif", Font.PLAIN, 14));
-        btn_FilterByCategory.setBackground(new Color(240, 240, 240));
-        btn_FilterByCategory.setOpaque(true);
-        btn_FilterByCategory.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
-        btn_FilterByCategory.setPreferredSize(new Dimension(120, 40));
-        btn_FilterByCategory.setMaximumSize(new Dimension(120, 40));
+            private void search(String keyword) {
+                if (keyword.trim().isEmpty()) {
+                    bookList = fullBookList;
+                    currentBookIndex = 0;
+                    pnl_Content.removeAll();
+                    loadMoreBooks();
+                } else {
+                    updateBookListByKeyword(keyword);
+                }
+            }
+        });
 
-        pnl_SearchWithIcon.add(txt_Search);
-        pnl_SearchWithIcon.add(Box.createRigidArea(new Dimension(5, 0)));
-        pnl_SearchWithIcon.add(btn_SearchIcon);
-        pnl_SearchWithIcon.add(Box.createRigidArea(new Dimension(10, 0)));
-        pnl_SearchWithIcon.add(btn_FilterByCategory);
+        JButton btn_Clear = new JButton("✕");
+        btn_Clear.setPreferredSize(new Dimension(40, 40));
+        btn_Clear.addActionListener(e -> {
+            txt_Search.setText("");
+            txt_Search.requestFocus();
+            bookList = fullBookList;
+            currentBookIndex = 0;
+            pnl_Content.removeAll();
+            loadMoreBooks();
+        });
 
-        JPanel pnl_SearchWrapper = new JPanel();
+        JPanel pnl_SearchWrapper = new JPanel(new FlowLayout(FlowLayout.LEFT));
         pnl_SearchWrapper.setOpaque(false);
-        pnl_SearchWrapper.setLayout(new BoxLayout(pnl_SearchWrapper, BoxLayout.X_AXIS));
         pnl_SearchWrapper.setBorder(BorderFactory.createEmptyBorder(15, 35, 10, 10));
-        pnl_SearchWrapper.add(pnl_SearchWithIcon);
-        pnl_SearchWrapper.add(Box.createHorizontalGlue());
+        txt_Search.setPreferredSize(new Dimension(300, 40));
+        pnl_SearchWrapper.add(txt_Search);
+        pnl_SearchWrapper.add(btn_Clear);
 
         pnl_Header.add(pnl_TopRow, BorderLayout.NORTH);
         pnl_Header.add(pnl_SearchWrapper, BorderLayout.CENTER);
-
         return pnl_Header;
+    }
+
+    private JButton createIconButton(String imagePath, String fallbackText) {
+        ImageIcon icon = new ImageIcon(imagePath);
+        JButton button;
+        if (icon.getIconWidth() != -1) {
+            Image scaled = icon.getImage().getScaledInstance(30, 30, Image.SCALE_SMOOTH);
+            button = new JButton(new ImageIcon(scaled));
+        } else {
+            button = new JButton(fallbackText);
+        }
+        button.setPreferredSize(new Dimension(60, 60));
+        button.setMaximumSize(new Dimension(60, 60));
+        button.setFocusable(false);
+        return button;
     }
 
     private JPanel createContentPanel() {
         pnl_Content = new JPanel();
         pnl_Content.setBackground(Color.WHITE);
-        pnl_Content.setLayout(new GridLayout(0, 4, 10, 10));
+        pnl_Content.setLayout(new BoxLayout(pnl_Content, BoxLayout.Y_AXIS));
         pnl_Content.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
         SachDao sachDao = SachDao.getInstance();
-        bookList = sachDao.layDanhSach();
+        fullBookList = sachDao.layDanhSach();
+        bookList = fullBookList;
 
-        // Load initial batch of books
         loadMoreBooks();
-
         return pnl_Content;
     }
 
     private void loadMoreBooks() {
         int endIndex = Math.min(currentBookIndex + BATCH_SIZE, bookList.size());
+        int count = 0;
+        JPanel rowPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 15)); // Adjusted gap
+        rowPanel.setBackground(Color.WHITE);
         for (int i = currentBookIndex; i < endIndex; i++) {
             Sach book = bookList.get(i);
             JPanel card = createBookCard(book);
-            pnl_Content.add(card);
+            rowPanel.add(card);
+            count++;
+            if (count % 4 == 0) {
+                pnl_Content.add(rowPanel);
+                rowPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 15));
+                rowPanel.setBackground(Color.WHITE);
+            }
         }
+        if (rowPanel.getComponentCount() > 0) pnl_Content.add(rowPanel);
         currentBookIndex = endIndex;
+        pnl_Content.revalidate();
+        pnl_Content.repaint();
+    }
 
-        // Update the layout and revalidate
+    private void updateBookListByKeyword(String keyword) {
+        keyword = keyword.trim().toLowerCase();
+        pnl_Content.removeAll();
+        pnl_Content.setLayout(new BoxLayout(pnl_Content, BoxLayout.Y_AXIS));
+
+        int columnsPerRow = 4;
+        int count = 0;
+        JPanel rowPanel = null;
+
+        for (Sach book : fullBookList) {
+            if (book.getTenSach().toLowerCase().contains(keyword)) {
+                if (count % columnsPerRow == 0) {
+                    rowPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 15));
+                    rowPanel.setBackground(Color.WHITE);
+                    pnl_Content.add(rowPanel);
+                }
+                JPanel card = createBookCard(book);
+                rowPanel.add(card);
+                count++;
+            }
+        }
+
         pnl_Content.revalidate();
         pnl_Content.repaint();
     }
 
     private JPanel createBookCard(Sach book) {
         JPanel card = new JPanel();
-        card.setLayout(new BorderLayout());
+        card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
         card.setBackground(Color.WHITE);
         card.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
-        card.setPreferredSize(new Dimension(220, 150));
+        card.setPreferredSize(new Dimension(180, 260)); // Larger card
 
         JLabel lblImage = new JLabel();
+        lblImage.setHorizontalAlignment(SwingConstants.CENTER);
         try {
             ImageIcon icon = new ImageIcon("pictures/" + book.getAnh());
-            Image scaledImage = icon.getImage().getScaledInstance(100, 130, Image.SCALE_SMOOTH);
+            Image scaledImage = icon.getImage().getScaledInstance(140, 180, Image.SCALE_SMOOTH);
             lblImage.setIcon(new ImageIcon(scaledImage));
         } catch (Exception e) {
             lblImage.setText("No Image");
-            lblImage.setHorizontalAlignment(SwingConstants.CENTER);
         }
-        lblImage.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 5));
-        card.add(lblImage, BorderLayout.WEST);
-
-        JPanel detailsPanel = new JPanel();
-        detailsPanel.setLayout(new BoxLayout(detailsPanel, BoxLayout.Y_AXIS));
-        detailsPanel.setBackground(Color.WHITE);
-        detailsPanel.setBorder(BorderFactory.createEmptyBorder(10, 5, 10, 10));
+        lblImage.setAlignmentX(Component.CENTER_ALIGNMENT);
+        lblImage.setBorder(BorderFactory.createEmptyBorder(10, 10, 5, 10));
 
         JLabel lblTitle = new JLabel(book.getTenSach());
         lblTitle.setFont(new Font("SansSerif", Font.BOLD, 14));
-        lblTitle.setAlignmentX(Component.LEFT_ALIGNMENT);
-        detailsPanel.add(lblTitle);
+        lblTitle.setHorizontalAlignment(SwingConstants.CENTER);
+        lblTitle.setAlignmentX(Component.CENTER_ALIGNMENT);
+        lblTitle.setBorder(BorderFactory.createEmptyBorder(0, 10, 10, 10));
+        lblTitle.setMaximumSize(new Dimension(160, 50));
 
-        JLabel lblPublisher = new JLabel("NXB: " + book.getnXB());
-        lblPublisher.setFont(new Font("SansSerif", Font.PLAIN, 12));
-        lblPublisher.setAlignmentX(Component.LEFT_ALIGNMENT);
-        detailsPanel.add(lblPublisher);
-
-        JLabel lblYear = new JLabel("Năm: " + book.getNamXB());
-        lblYear.setFont(new Font("SansSerif", Font.PLAIN, 12));
-        lblYear.setAlignmentX(Component.LEFT_ALIGNMENT);
-        detailsPanel.add(lblYear);
-
-        StringBuilder genres = new StringBuilder("Thể loại: ");
-        List<TheLoai> genreList = book.getDsTheLoai();
-        if (genreList != null && !genreList.isEmpty()) {
-            for (int i = 0; i < genreList.size(); i++) {
-                genres.append(genreList.get(i).getTenTheLoai());
-                if (i < genreList.size() - 1) {
-                    genres.append(", ");
-                }
-            }
-        } else {
-            genres.append("N/A");
-        }
-        String genresText = "<html><body style='width: 150px'>" + genres.toString() + "</body></html>";
-        JLabel lblGenres = new JLabel(genresText);
-        lblGenres.setFont(new Font("SansSerif", Font.PLAIN, 12));
-        lblGenres.setAlignmentX(Component.LEFT_ALIGNMENT);
-        detailsPanel.add(lblGenres);
-
-        card.add(detailsPanel, BorderLayout.CENTER);
+        card.add(lblImage);
+        card.add(Box.createVerticalStrut(5));
+        card.add(lblTitle);
 
         return card;
     }
