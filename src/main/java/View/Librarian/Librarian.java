@@ -50,8 +50,8 @@ public class Librarian extends JFrame {
     private List<Ls_Dg_sach> filteredDs;
     private JPanel pnl_cards;
     private JTabbedPane tabbedPane = new JTabbedPane();
-    private Font itemFont;
-    private Font itemBoldFont;
+    private Font itemFont = new Font("Segoe UI", Font.PLAIN, 12);
+    private Font itemBoldFont = new Font("Segoe UI", Font.BOLD, 12);
     private PdfController pdfExportController = new PdfController();
     private DecimalFormat currencyFormat;
     private JPanel pnl_MainContent;
@@ -81,6 +81,17 @@ public class Librarian extends JFrame {
         mainPanel.add(pnl_Sidebar, BorderLayout.WEST);
 
         tabbedPane.setBackground(Color.WHITE);
+        // Ẩn thanh tab phía trên
+        tabbedPane.setUI(new javax.swing.plaf.basic.BasicTabbedPaneUI() {
+            @Override
+            protected int calculateTabAreaHeight(int tabPlacement, int horizRunCount, int maxTabHeight) {
+                return 0;
+            }
+            @Override
+            protected int calculateTabAreaWidth(int tabPlacement, int vertRunCount, int maxTabWidth) {
+                return 0;
+            }
+        });
 
         // Add tabs
         tabbedPane.addTab("Sách", createBookPanel());
@@ -102,7 +113,7 @@ public class Librarian extends JFrame {
         pnl_Sidebar.setLayout(new BoxLayout(pnl_Sidebar, BoxLayout.Y_AXIS));
         pnl_Sidebar.setPreferredSize(new Dimension(200, 600));
         pnl_Sidebar.setBackground(new Color(106, 85, 85));
-
+    
         JButton[] buttons = new JButton[] {
             new JButton("Sách"),
             new JButton("Độc giả"),
@@ -111,7 +122,7 @@ public class Librarian extends JFrame {
             new JButton("Thống kê"),
             new JButton("Đăng xuất")
         };
-
+    
         for (int i = 0; i < buttons.length; i++) {
             JButton btn = buttons[i];
             btn.setPreferredSize(new Dimension(200, 50));
@@ -130,24 +141,30 @@ public class Librarian extends JFrame {
                 pnl_Sidebar.add(Box.createVerticalGlue());
             }
         }
-
+    
         // Xử lý sự kiện đăng xuất
         buttons[5].addActionListener(e -> {
             int confirm = JOptionPane.showConfirmDialog(this,
                 "Bạn có chắc chắn muốn đăng xuất?",
                 "Xác nhận đăng xuất",
                 JOptionPane.YES_NO_OPTION);
-
+    
             if (confirm == JOptionPane.YES_OPTION) {
                 LoginSession.getInstance().logout();
-                dispose();
+                // Close the current frame
+                JFrame frame = (JFrame) SwingUtilities.getWindowAncestor(pnl_Sidebar);
+                if (frame != null) {
+                    frame.setVisible(false);
+                    frame.dispose();
+                }
+                // Open the login window
                 SwingUtilities.invokeLater(() -> {
                     Login loginForm = new Login();
                     loginForm.setVisible(true);
                 });
             }
         });
-
+    
         // Update button highlighting when tabs change
         tabbedPane.addChangeListener(e -> {
             int selectedIndex = tabbedPane.getSelectedIndex();
@@ -155,7 +172,7 @@ public class Librarian extends JFrame {
                 buttons[i].setBackground(i == selectedIndex ? new Color(182, 162, 162) : null);
             }
         });
-
+    
         return pnl_Sidebar;
     }
 
@@ -231,9 +248,7 @@ public class Librarian extends JFrame {
     // Book Panel
     private JPanel createBookPanel() {
         JPanel pnl_Main = new JPanel(new BorderLayout());
-        pnl_center = new JPanel();
-        fullBookList = SachDao.getInstance().layDanhSach();
-        displayedBooks = new ArrayList<>();
+        isFiltering = false;
 
         JPanel pnl_top = new JPanel(new FlowLayout(FlowLayout.LEFT));
         pnl_top.setBackground(Color.WHITE);
@@ -276,6 +291,7 @@ public class Librarian extends JFrame {
 
                 suggestionList.setListData(matches.toArray(new String[0]));
                 suggestionList.setSelectedIndex(0);
+
                 suggestionsPopup.setPopupSize(txt_search.getWidth(), 150);
                 suggestionsPopup.show(txt_search, 0, txt_search.getHeight());
             }
@@ -319,20 +335,30 @@ public class Librarian extends JFrame {
         btn_add.addActionListener(e -> showAddBookForm(pnl_Main));
         pnl_top.add(btn_add);
 
+        pnl_center = new JPanel();
         pnl_center.setLayout(new BoxLayout(pnl_center, BoxLayout.Y_AXIS));
         pnl_center.setBackground(Color.WHITE);
         pnl_center.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
+        // Khởi tạo danh sách sách
+        SachDao sachDao = SachDao.getInstance();
+        fullBookList = sachDao.layDanhSach();
+        displayedBooks = new ArrayList<>();
+
+        // Hiển thị 20 cuốn sách đầu tiên (nếu có)
         loadMoreBooks();
 
         JScrollPane scrollPane = new JScrollPane(pnl_center);
-        scrollPane.getVerticalScrollBar().addAdjustmentListener(e -> {
-            JScrollBar scrollBar = (JScrollBar) e.getSource();
-            int extent = scrollBar.getModel().getExtent();
-            int maximum = scrollBar.getModel().getMaximum();
-            int value = scrollBar.getModel().getValue();
-            if (value + extent >= maximum - 10) {
-                loadMoreBooks();
+        scrollPane.getVerticalScrollBar().addAdjustmentListener(new AdjustmentListener() {
+            @Override
+            public void adjustmentValueChanged(AdjustmentEvent e) {
+                JScrollBar scrollBar = (JScrollBar) e.getSource();
+                int extent = scrollBar.getModel().getExtent();
+                int maximum = scrollBar.getModel().getMaximum();
+                int value = scrollBar.getModel().getValue();
+                if (value + extent >= maximum - 10) {
+                    loadMoreBooks();
+                }
             }
         });
 
@@ -342,45 +368,103 @@ public class Librarian extends JFrame {
         return pnl_Main;
     }
 
+    private void loadMoreBooks() {
+        if (isFiltering) return;
+
+        int currentSize = displayedBooks.size();
+        int booksToLoad = Math.min(fullBookList.size() - currentSize, BOOKS_PER_LOAD);
+
+        if (booksToLoad > 0) {
+            List<Sach> newBooks = fullBookList.subList(currentSize, currentSize + booksToLoad);
+            displayedBooks.addAll(newBooks);
+
+            JPanel rowPanel = new JPanel(new GridBagLayout());
+            rowPanel.setBackground(Color.WHITE);
+            GridBagConstraints gbc = new GridBagConstraints();
+            gbc.insets = new Insets(10, 10, 10, 10);
+            gbc.anchor = GridBagConstraints.WEST;
+
+            int count = 0;
+            for (Sach book : newBooks) {
+                gbc.gridx = count % 5;
+                gbc.gridy = count / 5;
+
+                JPanel pnl_card = createBookCard(book);
+                rowPanel.add(pnl_card, gbc);
+
+                count++;
+            }
+
+            pnl_center.add(rowPanel);
+            pnl_center.revalidate();
+            pnl_center.repaint();
+        }
+    }
+
     private void updateDisplayedBooksByKeyword(String keyword) {
         isFiltering = true;
         displayedBooks.clear();
         pnl_center.removeAll();
-        
-        for (Sach book : fullBookList) {
-            if (book.getTenSach().toLowerCase().contains(keyword.toLowerCase())) {
-                JPanel card = createBookCard(book);
-                pnl_center.add(card);
-                displayedBooks.add(book);
+
+        JPanel rowPanel = null;
+        int count = 0;
+
+        for (Sach sach : fullBookList) {
+            if (sach.getTenSach().toLowerCase().contains(keyword.toLowerCase())) {
+                if (count % 5 == 0) {
+                    rowPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 20, 20));
+                    rowPanel.setBackground(Color.WHITE);
+                    pnl_center.add(rowPanel);
+                }
+
+                JPanel pnl_card = createBookCard(sach);
+                rowPanel.add(pnl_card);
+                displayedBooks.add(sach);
+
+                count++;
             }
         }
-        
+
         pnl_center.revalidate();
         pnl_center.repaint();
     }
 
     private JPanel createBookCard(Sach book) {
-        JPanel card = new JPanel(new BorderLayout());
-        card.setBackground(Color.WHITE);
-        card.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
-        
-        JLabel lblImage = new JLabel();
+        JPanel pnl_card = new JPanel();
+        pnl_card.setLayout(new BorderLayout());
+        pnl_card.setBackground(Color.WHITE);
+        pnl_card.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
+        pnl_card.setPreferredSize(new Dimension(120, 180));
+        pnl_card.setMaximumSize(new Dimension(120, 180));
+        pnl_card.setMinimumSize(new Dimension(120, 180));
+
+        pnl_card.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                showEditBookForm(book, tabbedPane);
+            }
+        });
+
+        JLabel lbl_image = new JLabel();
         try {
             ImageIcon icon = new ImageIcon("pictures/" + book.getAnh());
             Image scaledImage = icon.getImage().getScaledInstance(100, 130, Image.SCALE_SMOOTH);
-            lblImage.setIcon(new ImageIcon(scaledImage));
+            lbl_image.setIcon(new ImageIcon(scaledImage));
         } catch (Exception e) {
-            lblImage.setText("No Image");
-            lblImage.setHorizontalAlignment(SwingConstants.CENTER);
+            lbl_image.setText("No Image");
+            lbl_image.setHorizontalAlignment(SwingConstants.CENTER);
         }
-        
-        card.add(lblImage, BorderLayout.CENTER);
-        
-        JLabel lblTitle = new JLabel(book.getTenSach());
-        lblTitle.setHorizontalAlignment(SwingConstants.CENTER);
-        card.add(lblTitle, BorderLayout.SOUTH);
-        
-        return card;
+        lbl_image.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 5));
+        lbl_image.setAlignmentX(Component.CENTER_ALIGNMENT);
+        lbl_image.setHorizontalAlignment(SwingConstants.CENTER);
+        pnl_card.add(lbl_image, BorderLayout.NORTH);
+
+        JLabel lbl_Title = new JLabel(book.getTenSach());
+        lbl_Title.setAlignmentX(Component.CENTER_ALIGNMENT);
+        lbl_Title.setHorizontalAlignment(SwingConstants.CENTER);
+        pnl_card.add(lbl_Title);
+
+        return pnl_card;
     }
 
     private void showAddBookForm(JPanel pnl_Main) {
@@ -568,7 +652,7 @@ public class Librarian extends JFrame {
         });
     }
 
-    private void showEditBookForm(Sach book, JPanel pnl_Main) {
+    private void showEditBookForm(Sach book, JTabbedPane tabbedPane) {
         List<TheLoai> categories = TheLoaiDao.getInstance().layDanhSach();
         List<String> selectedCategories = new ArrayList<>();
         final String[] selectedImagePath = {null};
@@ -657,12 +741,9 @@ public class Librarian extends JFrame {
         leftPanel.setPreferredSize(new Dimension(160, 240));
         leftPanel.add(imagePanel, BorderLayout.CENTER);
 
-        pnl_Main.removeAll();
-        pnl_Main.setLayout(new BorderLayout());
+        JPanel pnl_Main = new JPanel(new BorderLayout());
         pnl_Main.add(leftPanel, BorderLayout.WEST);
         pnl_Main.add(formPanel, BorderLayout.CENTER);
-        pnl_Main.revalidate();
-        pnl_Main.repaint();
 
         for (TheLoai tl : book.getDsTheLoai()) {
             selectedCategories.add(tl.getTenTheLoai());
@@ -711,7 +792,7 @@ public class Librarian extends JFrame {
         btnUpdate.addActionListener(e -> {
             if (txtBookName.getText().isEmpty() || selectedCategories.isEmpty() || txtPublisher.getText().isEmpty() ||
                 txtYear.getText().isEmpty() || txtPrice.getText().isEmpty()) {
-                JOptionPane.showMessageDialog(null, "Vui lòng nhập đầy đủ mã sách, mã thủ thư, mã độc giả và ngày mượn!");
+                JOptionPane.showMessageDialog(null, "Vui lòng nhập đầy đủ thông tin!");
                 return;
             }
 
@@ -764,6 +845,10 @@ public class Librarian extends JFrame {
                 }
             }
         });
+
+        tabbedPane.setComponentAt(0, pnl_Main);
+        tabbedPane.revalidate();
+        tabbedPane.repaint();
     }
 
     private String generateBookCode() {
@@ -1688,26 +1773,6 @@ public class Librarian extends JFrame {
         return card;
     }
 
-    private void loadMoreBooks() {
-        if (isFiltering) return;
-        
-        int currentSize = displayedBooks.size();
-        int booksToLoad = Math.min(fullBookList.size() - currentSize, BOOKS_PER_LOAD);
-        
-        if (booksToLoad > 0) {
-            List<Sach> newBooks = fullBookList.subList(currentSize, currentSize + booksToLoad);
-            displayedBooks.addAll(newBooks);
-            
-            for (Sach book : newBooks) {
-                JPanel card = createBookCard(book);
-                pnl_center.add(card);
-            }
-            
-            pnl_center.revalidate();
-            pnl_center.repaint();
-        }
-    }
-
     private void loadTableData(String keyword) {
         tableModel.setRowCount(0);
         DocGiaDao docGiaDao = DocGiaDao.getInstance();
@@ -1746,7 +1811,6 @@ public class Librarian extends JFrame {
         pnl_MainContent.repaint();
 
         scrollPane.getVerticalScrollBar().setValue(0);
-
         btn_prev.setVisible(currentPage > 1);
         btn_next.setVisible((currentPage * itemsPerPage) < filteredDs.size());
     }
