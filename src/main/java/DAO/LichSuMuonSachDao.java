@@ -158,4 +158,23 @@ public class LichSuMuonSachDao implements InterfaceDao<LichSuMuonSach> {
             return null;
         }
     }
+    
+    public boolean isBookCurrentlyBorrowed(String maSach) throws SQLException {
+        String sql = "SELECT * FROM LichSuMuonSach WHERE maSach = ? AND trangThai = 'Chưa trả'";
+
+        // Mở kết nối và thực thi câu truy vấn trong try-with-resources
+        try (Connection conn = JDBCUtil.connect(); 
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setString(1, maSach); // Gắn maSach vào câu truy vấn
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                // Nếu có kết quả trả về thì sách đang được mượn
+                return rs.next(); // Nếu có dữ liệu trả về thì trả về true
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false; // Nếu có lỗi xảy ra, trả về false
+        }
+    }
 }

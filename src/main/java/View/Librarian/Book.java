@@ -827,14 +827,16 @@ public class Book extends JFrame {
         int confirm = JOptionPane.showConfirmDialog(null, "Bạn có chắc chắn muốn xóa sách này?",
                 "Xác nhận", JOptionPane.YES_NO_OPTION);
         if (confirm == JOptionPane.YES_OPTION) {
-            SachDao.getInstance().xoaDoiTuong(book);
-            JOptionPane.showMessageDialog(null, "Đã xóa sách.");
-            pnl_content.remove(pnl_Main);
-            pnl_Main = createMain();
-            pnl_content.add(pnl_Main, BorderLayout.CENTER);
-            pnl_content.revalidate();
-            pnl_content.repaint();
-        }
+            int ketQua=SachDao.getInstance().xoaDoiTuong(book);
+            if(ketQua!=0) {
+            	JOptionPane.showMessageDialog(null, "Đã xóa sách.");
+	            pnl_content.remove(pnl_Main);
+	            pnl_Main = createMain();
+	            pnl_content.add(pnl_Main, BorderLayout.CENTER);
+	            pnl_content.revalidate();
+	            pnl_content.repaint();
+            }
+            else JOptionPane.showMessageDialog(null, "Sách đang được mượn không thể xóa");        }
     });
 }
 
