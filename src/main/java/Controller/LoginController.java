@@ -14,7 +14,7 @@ import Util.JDBCUtil;
 
 public class LoginController {
     public interface LoginCallBack {
-        void onSuccess(String username, boolean isAdmin);
+        void onSuccess(String fullName, boolean isAdmin);
         void onFailure(String message);
         void onError(String errorMessage);
     }
@@ -51,7 +51,8 @@ public class LoginController {
 
             if (rs.next()) {
                 System.out.println("Found in ThuThu table");
-                callBack.onSuccess(username, true);
+                String fullName = rs.getString("tenNguoiDung");
+                callBack.onSuccess(fullName, true);
             } else {
                 System.out.println("Not found in thuthu table, checking docgia table");
                 sql = "SELECT * FROM docgia WHERE taiKhoan = ? AND matKhau = ?";
@@ -62,20 +63,21 @@ public class LoginController {
                 rs = stmt.executeQuery();
                 if (rs.next()) {
                     System.out.println("Found in docgia table");
-                    callBack.onSuccess(username, false);
+                    String fullName = rs.getString("tenNguoiDung");
+                    callBack.onSuccess(fullName, false);
                 } else {
                     System.out.println("Not found in either table");
                     callBack.onFailure("Tên đăng nhập hoặc mật khẩu không đúng");
-                    //callBack.onSuccess(username, false); // debug
                 }
             }
-        } catch (NoSuchAlgorithmException e) {
-            System.out.println("Error hashing password: " + e.getMessage());
-            e.printStackTrace();
         } catch (SQLException e) {
             System.out.println("Database error: " + e.getMessage());
             callBack.onError("Lỗi kết nối database: " + e.getMessage());
             e.printStackTrace();
+        } catch (NoSuchAlgorithmException e) {
+            System.out.println("Error hashing password: " + e.getMessage());
+            e.printStackTrace();
+            callBack.onError("Lỗi mã hóa mật khẩu: " + e.getMessage());
         } finally {
             try {
                 if (rs != null) rs.close();

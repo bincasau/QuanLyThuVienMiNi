@@ -353,7 +353,7 @@ public class MuonSach extends JFrame {
         addPanel.add(new JLabel("Mã thủ thư:"), gbc);
         gbc.gridx = 1;
         JTextField txtMaThuThu = new JTextField(20);
-        txtMaThuThu.setText(Session.LoginSession.getInstance().getUsername());
+        txtMaThuThu.setText(Session.LoginSession.getInstance().getFullName());
         txtMaThuThu.setEditable(false);
         addPanel.add(txtMaThuThu, gbc);
 

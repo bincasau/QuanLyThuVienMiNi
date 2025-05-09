@@ -24,19 +24,19 @@ public class Dashboard extends JFrame {
 
     private static final long serialVersionUID = 1L;
     private JPanel contentPane;
-    private String username;
+    private String fullName;
     private List<Sach> bookList;
     private int currentBookIndex = 0;
     private static final int BATCH_SIZE = 20;
     private JPanel pnl_Content;
 
-    public Dashboard(String username) {
-        this.username = username;
+    public Dashboard(String fullName) {
+        this.fullName = fullName;
         initializeUI();
     }
 
     public Dashboard() {
-        this.username = "Guest";
+        this.fullName = "Guest";
         initializeUI();
     }
 
@@ -152,7 +152,7 @@ public class Dashboard extends JFrame {
         pnl_TopRow.setBorder(BorderFactory.createEmptyBorder(10, 35, 0, 20));
 
         JButton btn_Avatar = new JButton("AVT");
-        JLabel lbl_UserName = new JLabel(username);
+        JLabel lbl_UserName = new JLabel(fullName);
         lbl_UserName.setFont(new Font("SansSerif", Font.PLAIN, 14));
         lbl_UserName.setForeground(Color.WHITE);
 

@@ -28,7 +28,7 @@ import Model.TheLoai;
 public class Book extends JFrame {
     private static final long serialVersionUID = 1L;
     private JPanel pnl_content;
-    private String username; // Lưu username
+    private String fullName; // Lưu fullName
     private List<Sach> fullBookList; // Danh sách đầy đủ sách
     private List<Sach> displayedBooks; // Danh sách sách đã hiển thị
     private JPanel pnl_center; // Để cập nhật giao diện
@@ -36,14 +36,14 @@ public class Book extends JFrame {
     private boolean isFiltering = false; //Chế độ tìm kiếm
     private JPanel pnl_Main;
 
-    // Constructor nhận username
-    public Book(String username) {
-        this.username = username;
+    // Constructor nhận fullName
+    public Book(String fullName) {
+        this.fullName = fullName;
         initializeUI();
     }
 
     public Book() {
-        this.username = "Guest"; // Giá trị mặc định
+        this.fullName = "Guest"; // Giá trị mặc định
         initializeUI();
     }
 
@@ -154,7 +154,7 @@ public class Book extends JFrame {
         pnl_Header.add(lbl_Title);
         pnl_Header.add(Box.createHorizontalGlue());
 
-        JLabel lbl_LibrarianName = new JLabel("Thủ thư: " + username); // Hiển thị username
+        JLabel lbl_LibrarianName = new JLabel("Thủ thư: " + fullName); // Hiển thị fullName
         lbl_LibrarianName.setFont(new Font("Arial", Font.PLAIN, 16));
         lbl_LibrarianName.setForeground(Color.WHITE);
         lbl_LibrarianName.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 20));

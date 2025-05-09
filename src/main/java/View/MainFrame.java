@@ -1,7 +1,7 @@
 package View;
 
 import Session.LoginSession;
-import View.Librarian.Book;
+import View.Librarian.Librarian;
 import View.User.Dashboard;
 
 import javax.swing.*;
@@ -17,12 +17,14 @@ public class MainFrame extends JFrame {
         LoginSession session = LoginSession.getInstance();
         if (session.isAdmin()) {
             // Giao diện thủ thư
-            Book bookFrame = new Book(session.getUsername());
-            setContentPane(bookFrame.getContentPane());
+            Librarian librarian = new Librarian(session.getFullName());
+            setContentPane(librarian.getMainPanel());
         } else {
             // Giao diện độc giả
-            Dashboard dashboardFrame = new Dashboard(session.getUsername());
+            Dashboard dashboardFrame = new Dashboard(session.getFullName());
             setContentPane(dashboardFrame.getContentPane());
         }
+
+        setVisible(true);
     }
-} 
+}

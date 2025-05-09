@@ -2,7 +2,7 @@ package Session;
 
 public class LoginSession {
     private static LoginSession instance;
-    private String username;
+    private String fullName;
     private boolean isAdmin;
 
     private LoginSession() {}
@@ -14,18 +14,18 @@ public class LoginSession {
         return instance;
     }
 
-    public void login(String username, boolean isAdmin) {
-        this.username = username;
+    public void login(String fullName, boolean isAdmin) {
+        this.fullName = fullName;
         this.isAdmin = isAdmin;
     }
 
     public void logout() {
-        this.username = null;
+        this.fullName = null;
         this.isAdmin = false;
     }
 
-    public String getUsername() {
-        return username;
+    public String getFullName() {
+        return fullName;
     }
 
     public boolean isAdmin() {
@@ -33,6 +33,6 @@ public class LoginSession {
     }
 
     public boolean isLoggedIn() {
-        return username != null;
+        return fullName != null;
     }
 } 
