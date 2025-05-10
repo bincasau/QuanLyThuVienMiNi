@@ -15,7 +15,6 @@ public class Sach {
 	private String nXB;
 	private int namXB;
 	private double gia;
-
 	private String anh;
 	private List<TheLoai> dsTheLoai;
 
