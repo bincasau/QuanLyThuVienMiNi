@@ -96,10 +96,31 @@ public class LichSuMuonSachDao implements InterfaceDao<LichSuMuonSach> {
     }
 
     @Override
-    public List<LichSuMuonSach> layDanhSachTheoDK(String dk) {
-        // TODO: Implement if needed
-        return null;
+    public List<LichSuMuonSach> layDanhSachTheoDK(String maDocGia) {
+    List<LichSuMuonSach> list = new ArrayList<>();
+    String sql = "SELECT * FROM lichsumuonsach WHERE maDocGia = ?";
+    try (Connection conn = JDBCUtil.connect();
+         PreparedStatement stmt = conn.prepareStatement(sql)) {
+        stmt.setString(1, maDocGia);
+        try (ResultSet rs = stmt.executeQuery()) {
+            while (rs.next()) {
+                LichSuMuonSach ls = new LichSuMuonSach(
+                    rs.getString("maLichSu"),
+                    rs.getDate("ngayMuon"),
+                    rs.getDate("ngayTra"),
+                    rs.getString("trangThai"),
+                    rs.getString("maSach"),
+                    rs.getString("maThuThu"),
+                    rs.getString("maDocGia")
+                );
+                list.add(ls);
+            }
+        }
+    } catch (SQLException e) {
+        e.printStackTrace();
     }
+    return list;
+}
 
     public LichSuMuonSach getByMaLichSu(String maLichSu) {
         String sql = "SELECT * FROM lichsumuonsach WHERE maLichSu = ?";
