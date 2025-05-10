@@ -7,16 +7,19 @@ import DAO.Ls_Dg_sachDao;
 import Model.LichSuMuonSach;
 import Model.Ls_Dg_sach;
 import java.awt.*;
-import java.awt.event.FocusAdapter;
-import java.awt.event.FocusEvent;
+import java.awt.event.*;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 
 public class MuonSach extends JFrame {
     private JPanel pnl_Content;
     private JTextField txt_Search;
+    private JPopupMenu suggestionsPopup;
+    private JList<String> suggestionList;
     private JPanel pnl_MainContent;
     private JScrollPane scrollPane;
     private List<Ls_Dg_sach> ds;
@@ -29,14 +32,12 @@ public class MuonSach extends JFrame {
     private JPanel pnl_ListContent;
 
     public static void main(String[] args) {
-        EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                try {
-                    MuonSach frame = new MuonSach();
-                    frame.setVisible(true);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
+        EventQueue.invokeLater(() -> {
+            try {
+                MuonSach frame = new MuonSach();
+                frame.setVisible(true);
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         });
     }
@@ -159,11 +160,19 @@ public class MuonSach extends JFrame {
 
         JPanel pnl_top = new JPanel(new FlowLayout(FlowLayout.LEFT));
         pnl_top.setBackground(Color.WHITE);
+
         txt_Search = new JTextField(25);
-        txt_Search.setPreferredSize(new Dimension(0, 40));
+        txt_Search.setPreferredSize(new Dimension(300, 40));
         txt_Search.setMaximumSize(new Dimension(300, 40));
         txt_Search.setText(PLACEHOLDER_TEXT);
         txt_Search.setForeground(Color.GRAY);
+
+        suggestionsPopup = new JPopupMenu();
+        suggestionList = new JList<>();
+        suggestionList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        suggestionsPopup.setFocusable(false);
+        suggestionsPopup.setBorder(BorderFactory.createLineBorder(Color.GRAY));
+        suggestionsPopup.add(new JScrollPane(suggestionList));
 
         txt_Search.addFocusListener(new FocusAdapter() {
             @Override
@@ -183,42 +192,91 @@ public class MuonSach extends JFrame {
             }
         });
 
-        pnl_top.add(txt_Search);
+        txt_Search.getDocument().addDocumentListener(new DocumentListener() {
+            public void insertUpdate(DocumentEvent e) { showSuggestions(); }
+            public void removeUpdate(DocumentEvent e) { showSuggestions(); }
+            public void changedUpdate(DocumentEvent e) { showSuggestions(); }
 
-        JButton btn_search = new JButton("Tìm");
-        btn_search.setPreferredSize(new Dimension(80, 40));
-        btn_search.setMaximumSize(new Dimension(80, 40));
-        btn_search.setMinimumSize(new Dimension(80, 40));
-        btn_search.addActionListener(e -> {
-            String query = txt_Search.getText().trim();
-            if (query.equals(PLACEHOLDER_TEXT) || query.isEmpty()) {
-                filteredDs = new ArrayList<>(ds);
-            } else {
-                filteredDs = new ArrayList<>();
-                String lowerQuery = query.toLowerCase();
+            private void showSuggestions() {
+                String input = txt_Search.getText().trim().toLowerCase();
+                if (input.isEmpty() || input.equals(PLACEHOLDER_TEXT.toLowerCase())) {
+                    suggestionsPopup.setVisible(false);
+                    return;
+                }
+
+                List<String> matches = new ArrayList<>();
                 for (Ls_Dg_sach ls : ds) {
-                    if (ls.getMaNguoiDung().toLowerCase().contains(lowerQuery) ||
-                        ls.getTenSach().toLowerCase().contains(lowerQuery)) {
-                        filteredDs.add(ls);
+                    if (ls.getMaNguoiDung().toLowerCase().contains(input) && !matches.contains(ls.getMaNguoiDung())) {
+                        matches.add(ls.getMaNguoiDung());
+                    }
+                    if (ls.getTenSach().toLowerCase().contains(input) && !matches.contains(ls.getTenSach())) {
+                        matches.add(ls.getTenSach());
+                    }
+                }
+
+                if (matches.isEmpty()) {
+                    suggestionsPopup.setVisible(false);
+                    return;
+                }
+
+                suggestionList.setListData(matches.toArray(new String[0]));
+                suggestionList.setSelectedIndex(0);
+                suggestionsPopup.setPopupSize(txt_Search.getWidth(), 150);
+                suggestionsPopup.show(txt_Search, 0, txt_Search.getHeight());
+            }
+        });
+
+        txt_Search.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyPressed(KeyEvent e) {
+                if (e.getKeyCode() == KeyEvent.VK_ENTER && suggestionsPopup.isVisible()) {
+                    String selected = suggestionList.getSelectedValue();
+                    if (selected != null) {
+                        txt_Search.setText(selected);
+                        suggestionsPopup.setVisible(false);
+                        updateDisplayedBooksByKeyword(selected);
                     }
                 }
             }
-            currentPage = 1;
-            updatePageContent();
+        });
+
+        suggestionList.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() == 1) {
+                    String selected = suggestionList.getSelectedValue();
+                    if (selected != null) {
+                        txt_Search.setText(selected);
+                        suggestionsPopup.setVisible(false);
+                        updateDisplayedBooksByKeyword(selected);
+                    }
+                }
+            }
+        });
+
+        pnl_top.add(txt_Search);
+
+        JButton btn_search = new JButton("🔍");
+        btn_search.setPreferredSize(new Dimension(40, 40));
+        btn_search.addActionListener(e -> {
+            String keyword = txt_Search.getText().trim();
+            if (keyword.equals(PLACEHOLDER_TEXT) || keyword.isEmpty()) {
+                filteredDs = new ArrayList<>(ds);
+                currentPage = 1;
+                updatePageContent();
+            } else {
+                updateDisplayedBooksByKeyword(keyword);
+            }
         });
         pnl_top.add(btn_search);
 
         JButton btn_add = new JButton("Thêm");
         btn_add.setPreferredSize(new Dimension(80, 40));
-        btn_add.setMaximumSize(new Dimension(80, 40));
-        btn_add.setMinimumSize(new Dimension(80, 40));
         btn_add.addActionListener(e -> showAddForm());
         pnl_top.add(btn_add);
 
         JButton btn_filter = new JButton("Lọc");
         btn_filter.setPreferredSize(new Dimension(80, 40));
-        btn_filter.setMaximumSize(new Dimension(80, 40));
-        btn_filter.setMinimumSize(new Dimension(80, 40));
 
         JPopupMenu filterMenu = new JPopupMenu();
         JMenuItem itemChuaTra = new JMenuItem("Chưa trả");
@@ -256,10 +314,7 @@ public class MuonSach extends JFrame {
             updatePageContent();
         });
 
-        btn_filter.addActionListener(e -> {
-            filterMenu.show(btn_filter, 0, btn_filter.getHeight());
-        });
-
+        btn_filter.addActionListener(e -> filterMenu.show(btn_filter, 0, btn_filter.getHeight()));
         pnl_top.add(btn_filter);
 
         panelMain.add(pnl_top, BorderLayout.NORTH);
@@ -286,8 +341,6 @@ public class MuonSach extends JFrame {
 
         btn_prev = new JButton("Trước");
         btn_prev.setPreferredSize(new Dimension(80, 40));
-        btn_prev.setMaximumSize(new Dimension(80, 40));
-        btn_prev.setMinimumSize(new Dimension(80, 40));
         btn_prev.setVisible(currentPage > 1);
         btn_prev.addActionListener(e -> {
             if (currentPage > 1) {
@@ -299,8 +352,6 @@ public class MuonSach extends JFrame {
 
         btn_next = new JButton("Sau");
         btn_next.setPreferredSize(new Dimension(80, 40));
-        btn_next.setMaximumSize(new Dimension(80, 40));
-        btn_next.setMinimumSize(new Dimension(80, 40));
         btn_next.setVisible(ds != null && ds.size() > ITEMS_PER_PAGE);
         btn_next.addActionListener(e -> {
             if ((currentPage * ITEMS_PER_PAGE) < filteredDs.size()) {
@@ -313,6 +364,19 @@ public class MuonSach extends JFrame {
         panelMain.add(pnl_pagination, BorderLayout.SOUTH);
 
         return panelMain;
+    }
+
+    private void updateDisplayedBooksByKeyword(String keyword) {
+        filteredDs = new ArrayList<>();
+        String lowerQuery = keyword.toLowerCase();
+        for (Ls_Dg_sach ls : ds) {
+            if (ls.getMaNguoiDung().toLowerCase().contains(lowerQuery) ||
+                ls.getTenSach().toLowerCase().contains(lowerQuery)) {
+                filteredDs.add(ls);
+            }
+        }
+        currentPage = 1;
+        updatePageContent();
     }
 
     private void showAddForm() {
@@ -430,21 +494,30 @@ public class MuonSach extends JFrame {
 
                 LichSuMuonSach ls = new LichSuMuonSach(maLichSu, ngayMuon, ngayTra, trangThai, maSach, maThuThu, maDocGia);
 
-                int result = LichSuMuonSachDao.getInstance().themDoiTuong(ls);
-                if (result > 0) {
-                    JOptionPane.showMessageDialog(this, "Thêm lịch sử mượn sách thành công!");
-                    ds = Ls_Dg_sachDao.getInstance().layDanhSach();
-                    filteredDs = ds != null ? new ArrayList<>(ds) : new ArrayList<>();
-                    currentPage = 1;
+                int confirm = JOptionPane.showConfirmDialog(
+                    this,
+                    "Bạn có chắc muốn thêm lịch sử mượn sách với mã " + maLichSu + "?",
+                    "Xác nhận thêm",
+                    JOptionPane.YES_NO_OPTION
+                );
+
+                if (confirm == JOptionPane.YES_OPTION) {
+                    int result = LichSuMuonSachDao.getInstance().themDoiTuong(ls);
                     pnl_Content.removeAll();
                     pnl_Content.add(createSidebar(), BorderLayout.WEST);
                     pnl_Content.add(createHeader(), BorderLayout.NORTH);
                     pnl_Content.add(pnl_ListContent, BorderLayout.CENTER);
+                    if (result > 0) {
+                        ds = Ls_Dg_sachDao.getInstance().layDanhSach();
+                        filteredDs = ds != null ? new ArrayList<>(ds) : new ArrayList<>();
+                        currentPage = 1;
+                        updatePageContent();
+                        JOptionPane.showMessageDialog(this, "Thêm lịch sử mượn sách thành công!");
+                    } else {
+                        JOptionPane.showMessageDialog(this, "Thêm thất bại! Vui lòng kiểm tra lại dữ liệu.");
+                    }
                     pnl_Content.revalidate();
                     pnl_Content.repaint();
-                    updatePageContent();
-                } else {
-                    JOptionPane.showMessageDialog(this, "Thêm thất bại! Vui lòng kiểm tra lại dữ liệu.");
                 }
             } catch (Exception ex) {
                 JOptionPane.showMessageDialog(this, "Lỗi: " + ex.getMessage());
@@ -590,21 +663,30 @@ public class MuonSach extends JFrame {
                     ls.getMaLichSu(), ngayMuon, ngayTra, trangThai, maSach, maThuThu, maDocGia
                 );
 
-                int result = LichSuMuonSachDao.getInstance().capNhatDoiTuong(lsUpdated);
-                if (result > 0) {
-                    JOptionPane.showMessageDialog(this, "Cập nhật lịch sử mượn sách thành công!");
-                    ds = Ls_Dg_sachDao.getInstance().layDanhSach();
-                    filteredDs = ds != null ? new ArrayList<>(ds) : new ArrayList<>();
-                    currentPage = 1;
+                int confirm = JOptionPane.showConfirmDialog(
+                    this,
+                    "Bạn có chắc muốn sửa lịch sử mượn sách với mã " + ls.getMaLichSu() + "?",
+                    "Xác nhận sửa",
+                    JOptionPane.YES_NO_OPTION
+                );
+
+                if (confirm == JOptionPane.YES_OPTION) {
+                    int result = LichSuMuonSachDao.getInstance().capNhatDoiTuong(lsUpdated);
                     pnl_Content.removeAll();
                     pnl_Content.add(createSidebar(), BorderLayout.WEST);
                     pnl_Content.add(createHeader(), BorderLayout.NORTH);
                     pnl_Content.add(pnl_ListContent, BorderLayout.CENTER);
+                    if (result > 0) {
+                        ds = Ls_Dg_sachDao.getInstance().layDanhSach();
+                        filteredDs = ds != null ? new ArrayList<>(ds) : new ArrayList<>();
+                        currentPage = 1;
+                        updatePageContent();
+                        JOptionPane.showMessageDialog(this, "Cập nhật lịch sử mượn sách thành công!");
+                    } else {
+                        JOptionPane.showMessageDialog(this, "Cập nhật thất bại! Vui lòng kiểm tra lại dữ liệu.");
+                    }
                     pnl_Content.revalidate();
                     pnl_Content.repaint();
-                    updatePageContent();
-                } else {
-                    JOptionPane.showMessageDialog(this, "Cập nhật thất bại! Vui lòng kiểm tra lại dữ liệu.");
                 }
             } catch (Exception ex) {
                 JOptionPane.showMessageDialog(this, "Lỗi: " + ex.getMessage());
@@ -680,9 +762,9 @@ public class MuonSach extends JFrame {
         JPanel leftPanel = new JPanel();
         leftPanel.setLayout(new BoxLayout(leftPanel, BoxLayout.Y_AXIS));
         leftPanel.setOpaque(false);
-        leftPanel.setPreferredSize(new Dimension(150, 140));
+        leftPanel.setPreferredSize(new Dimension(200, 160));
 
-        leftPanel.add(Box.createVerticalStrut(10));
+        leftPanel.add(Box.createVerticalGlue());
 
         ImageIcon bookIcon = new ImageIcon("Pictures/" + ls.getAnh());
         if (bookIcon.getIconWidth() != -1) {
@@ -692,22 +774,27 @@ public class MuonSach extends JFrame {
             leftPanel.add(lblBook);
         }
 
-        String bookName = "<html><div style='text-align: center; width: 140px;'>" + ls.getTenSach() + "</div></html>";
+        leftPanel.add(Box.createVerticalStrut(5));
+
+        String bookName = "<html><div style='text-align: center; width: 180px; overflow-wrap: break-word; white-space: normal;'>" + 
+                         ls.getTenSach() + "</div></html>";
         JLabel lblBookName = new JLabel(bookName);
         lblBookName.setFont(itemBoldFont);
         lblBookName.setAlignmentX(Component.CENTER_ALIGNMENT);
         lblBookName.setForeground(Color.BLACK);
-
-        leftPanel.add(Box.createVerticalStrut(5));
+        lblBookName.setPreferredSize(new Dimension(180, 100));
+        lblBookName.setHorizontalAlignment(SwingConstants.CENTER);
+        lblBookName.setVerticalAlignment(SwingConstants.TOP);
         leftPanel.add(lblBookName);
 
-        leftPanel.add(Box.createVerticalStrut(10));
+        leftPanel.add(Box.createVerticalGlue());
 
         itemPanel.add(leftPanel, BorderLayout.WEST);
 
         JPanel rightPanel = new JPanel();
         rightPanel.setLayout(new GridBagLayout());
         rightPanel.setOpaque(false);
+        rightPanel.setBorder(new EmptyBorder(0, 20, 0, 0));
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(1, 5, 1, 5);
@@ -766,11 +853,11 @@ public class MuonSach extends JFrame {
                 );
                 int result = LichSuMuonSachDao.getInstance().xoaDoiTuong(lsToDelete);
                 if (result > 0) {
-                    JOptionPane.showMessageDialog(this, "Xóa lịch sử mượn sách thành công!");
                     ds = Ls_Dg_sachDao.getInstance().layDanhSach();
                     filteredDs = ds != null ? new ArrayList<>(ds) : new ArrayList<>();
                     currentPage = Math.min(currentPage, (filteredDs.size() + ITEMS_PER_PAGE - 1) / ITEMS_PER_PAGE);
                     updatePageContent();
+                    JOptionPane.showMessageDialog(this, "Xóa lịch sử mượn sách thành công!");
                 } else {
                     JOptionPane.showMessageDialog(this, "Xóa thất bại! Vui lòng thử lại.");
                 }
