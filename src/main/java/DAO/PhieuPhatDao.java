@@ -18,7 +18,7 @@ public class PhieuPhatDao implements InterfaceDao<PhieuPhat> {
 
     @Override
     public int themDoiTuong(PhieuPhat t) {
-        String sql = "INSERT INTO phieuphat (maPhieuPhat, loi, giaTien, maDocGia, maSach) VALUES (?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO phieuphat (maPhieuPhat, loi, giaTien, maDocGia, maSach, ngayPhieu) VALUES (?, ?, ?, ?, ?, CURRENT_DATE)";
         try (Connection conn = JDBCUtil.connect();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, t.getMaPhieuPhat());
@@ -26,6 +26,7 @@ public class PhieuPhatDao implements InterfaceDao<PhieuPhat> {
             stmt.setDouble(3, t.getGiaTien());
             stmt.setString(4, t.getMaDocGia());
             stmt.setString(5, t.getMaSach());
+            stmt.setDate(6, t.getNgayPhieu() != null ? t.getNgayPhieu() : new java.sql.Date(System.currentTimeMillis()));
             return stmt.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
@@ -48,14 +49,15 @@ public class PhieuPhatDao implements InterfaceDao<PhieuPhat> {
 
     @Override
     public int capNhatDoiTuong(PhieuPhat t) {
-        String sql = "UPDATE phieuphat SET loi = ?, giaTien = ?, maDocGia = ?, maSach = ? WHERE maPhieuPhat = ?";
+        String sql = "UPDATE phieuphat SET loi = ?, giaTien = ?, maDocGia = ?, maSach = ?, ngayPhieu = ? WHERE maPhieuPhat = ?";
         try (Connection conn = JDBCUtil.connect();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, t.getLoi());
             stmt.setDouble(2, t.getGiaTien());
             stmt.setString(3, t.getMaDocGia());
             stmt.setString(4, t.getMaSach());
-            stmt.setString(5, t.getMaPhieuPhat());
+            stmt.setDate(5, t.getNgayPhieu() != null ? t.getNgayPhieu() : new java.sql.Date(System.currentTimeMillis()));
+            stmt.setString(6, t.getMaPhieuPhat());
             return stmt.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
@@ -76,7 +78,8 @@ public class PhieuPhatDao implements InterfaceDao<PhieuPhat> {
                     rs.getString("loi"),
                     rs.getDouble("giaTien"),
                     rs.getString("maDocGia"),
-                    rs.getString("maSach")
+                    rs.getString("maSach"),
+                    rs.getDate("ngayPhieu")
                 );
                 list.add(pp);
             }
@@ -100,7 +103,8 @@ public class PhieuPhatDao implements InterfaceDao<PhieuPhat> {
                         rs.getString("loi"),
                         rs.getDouble("giaTien"),
                         rs.getString("maDocGia"),
-                        rs.getString("maSach")
+                        rs.getString("maSach"),
+                        rs.getDate("ngayPhieu")
                     );
                     list.add(pp);
                 }
@@ -123,7 +127,8 @@ public class PhieuPhatDao implements InterfaceDao<PhieuPhat> {
                         rs.getString("loi"),
                         rs.getDouble("giaTien"),
                         rs.getString("maDocGia"),
-                        rs.getString("maSach")
+                        rs.getString("maSach"),
+                        rs.getDate("ngayPhieu")
                     );
                 }
             }
