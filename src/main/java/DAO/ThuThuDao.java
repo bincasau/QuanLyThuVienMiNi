@@ -40,31 +40,31 @@ public class ThuThuDao implements InterfaceDao<ThuThu>{
 	}
 
 	@Override
-	public List<ThuThu> layDanhSachTheoDK(String dk) {
-		List<ThuThu> ds = new ArrayList<ThuThu>();
-		Connection conn = JDBCUtil.connect();
-		String sql = "select * from thuthu where maNguoiDung = ?";
-		if(conn != null) {
-			try {
-				PreparedStatement stmt = conn.prepareStatement(sql);
-				stmt.setString(1, dk);
-				ResultSet rs = stmt.executeQuery();
-				if(rs.next()) {
-					ThuThu tt = new ThuThu();
-					tt.setMaNguoiDung(rs.getString("maNguoiDung"));
-					tt.setTenNguoiDung(rs.getString("tenNguoiDung"));
-					tt.setTaiKhoan(rs.getString("taiKhoan"));
-					tt.setMatKhau(rs.getString("matKhau"));
-					tt.setEmail(rs.getString("email"));
-					tt.setSoDienThoai(rs.getString("soDienThoai"));
-					ds.add(tt);
-				}
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-			JDBCUtil.closeConnection();
-		}
-		return ds;
-	}
+public List<ThuThu> layDanhSachTheoDK(String dk) {
+    List<ThuThu> ds = new ArrayList<ThuThu>();
+    Connection conn = JDBCUtil.connect();
+    String sql = "select * from thuthu where tenNguoiDung = ?";
+    if (conn != null) {
+        try {
+            PreparedStatement stmt = conn.prepareStatement(sql);
+            stmt.setString(1, dk);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                ThuThu tt = new ThuThu();
+                tt.setMaNguoiDung(rs.getString("maNguoiDung"));
+                tt.setTenNguoiDung(rs.getString("tenNguoiDung"));
+                tt.setTaiKhoan(rs.getString("taiKhoan"));
+                tt.setMatKhau(rs.getString("matKhau"));
+                tt.setEmail(rs.getString("email"));
+                tt.setSoDienThoai(rs.getString("soDienThoai"));
+                ds.add(tt);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        JDBCUtil.closeConnection();
+    }
+    return ds;
+}
 
 }

@@ -26,12 +26,14 @@ import DAO.LichSuMuonSachDao;
 import DAO.Ls_Dg_sachDao;
 import DAO.SachDao;
 import DAO.TheLoaiDao;
+import DAO.ThuThuDao;
 import Model.DocGia;
 import Model.LichSuMuonSach;
 import Model.Ls_Dg_sach;
 import Model.Sach;
 import Model.TheLoai;
 import Model.ThongTinThongKe;
+import Model.ThuThu;
 import Session.LoginSession;
 import View.Login.Login;
 
@@ -1195,10 +1197,10 @@ public class Librarian extends JFrame {
 
         gbc.gridx = 0;
         gbc.gridy++;
-        addPanel.add(new JLabel("Tên thủ thư:"), gbc);
+        addPanel.add(new JLabel("Mã thủ thư:"), gbc);
         gbc.gridx = 1;
-        JTextField txtMaThuThu = new JTextField(20);
-        txtMaThuThu.setText(LoginSession.getInstance().getFullName());
+        String maThuThu = getCurrentLibrarianCode();
+        JTextField txtMaThuThu = new JTextField(maThuThu, 20);
         txtMaThuThu.setEditable(false);
         addPanel.add(txtMaThuThu, gbc);
 
@@ -1239,13 +1241,13 @@ public class Librarian extends JFrame {
         btnSave.addActionListener(e -> {
             try {
                 String maSach = txtMaSach.getText().trim();
-                String maThuThu = txtMaThuThu.getText().trim();
+                String maThuThuInput = txtMaThuThu.getText().trim();
                 String maDocGia = txtMaDocGia.getText().trim();
                 String ngayMuonStr = txtNgayMuon.getText().trim();
                 String ngayTraStr = txtNgayTra.getText().trim();
                 String trangThai = txtTrangThai.getText().trim();
 
-                if (maSach.isEmpty() || maThuThu.isEmpty() || maDocGia.isEmpty() || ngayMuonStr.isEmpty()) {
+                if (maSach.isEmpty() || maThuThuInput.isEmpty() || maDocGia.isEmpty() || ngayMuonStr.isEmpty()) {
                     JOptionPane.showMessageDialog(this, "Vui lòng nhập đầy đủ mã sách, mã thủ thư, mã độc giả và ngày mượn!");
                     return;
                 }
@@ -1273,7 +1275,7 @@ public class Librarian extends JFrame {
                     }
                 }
 
-                LichSuMuonSach ls = new LichSuMuonSach(maLichSu, ngayMuon, ngayTra, trangThai, maSach, maThuThu, maDocGia);
+                LichSuMuonSach ls = new LichSuMuonSach(maLichSu, ngayMuon, ngayTra, trangThai, maSach, maThuThuInput, maDocGia);
 
                 int result = LichSuMuonSachDao.getInstance().themDoiTuong(ls);
                 if (result > 0) {
@@ -1303,6 +1305,15 @@ public class Librarian extends JFrame {
         panelMain.add(addPanel, BorderLayout.CENTER);
         panelMain.revalidate();
         panelMain.repaint();
+    }
+
+    private String getCurrentLibrarianCode() {
+        String fullName = LoginSession.getInstance().getFullName();
+        List<ThuThu> librarians = ThuThuDao.getInstance().layDanhSachTheoDK(fullName);
+        if (!librarians.isEmpty()) {
+            return librarians.get(0).getMaNguoiDung();
+        }
+        return "UNKNOWN";
     }
 
     private void showEditBorrowForm(Ls_Dg_sach lsDg, JPanel panelMain) {
