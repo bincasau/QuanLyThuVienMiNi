@@ -755,39 +755,39 @@ public class MuonSach extends JFrame {
         RoundedPanel itemPanel = new RoundedPanel(20);
         itemPanel.setLayout(new BorderLayout());
         itemPanel.setBackground(new Color(182, 162, 162));
-        itemPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 180));
+        itemPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 200)); // Tăng chiều cao để chứa tên dài
         itemPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
         itemPanel.setBorder(new EmptyBorder(5, 10, 5, 15));
 
-        JPanel leftPanel = new JPanel();
-        leftPanel.setLayout(new BoxLayout(leftPanel, BoxLayout.Y_AXIS));
+        // Sử dụng BorderLayout cho leftPanel để căn giữa dễ dàng hơn
+        JPanel leftPanel = new JPanel(new BorderLayout());
         leftPanel.setOpaque(false);
-        leftPanel.setPreferredSize(new Dimension(200, 160));
+        leftPanel.setPreferredSize(new Dimension(240, 180)); // Tăng chiều rộng để chứa tên dài
 
-        leftPanel.add(Box.createVerticalGlue());
-
+        // Panel con để chứa hình ảnh, căn giữa
+        JPanel imagePanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        imagePanel.setOpaque(false);
         ImageIcon bookIcon = new ImageIcon("Pictures/" + ls.getAnh());
         if (bookIcon.getIconWidth() != -1) {
             Image scaledBook = bookIcon.getImage().getScaledInstance(80, 100, Image.SCALE_SMOOTH);
             JLabel lblBook = new JLabel(new ImageIcon(scaledBook));
-            lblBook.setAlignmentX(Component.CENTER_ALIGNMENT);
-            leftPanel.add(lblBook);
+            imagePanel.add(lblBook);
         }
+        leftPanel.add(imagePanel, BorderLayout.NORTH);
 
-        leftPanel.add(Box.createVerticalStrut(5));
-
-        String bookName = "<html><div style='text-align: center; width: 180px; overflow-wrap: break-word; white-space: normal;'>" + 
+        // Tên sách
+        String bookName = "<html><div style='text-align: center; width: 220px; overflow-wrap: break-word; white-space: normal;'>" + 
                          ls.getTenSach() + "</div></html>";
         JLabel lblBookName = new JLabel(bookName);
         lblBookName.setFont(itemBoldFont);
-        lblBookName.setAlignmentX(Component.CENTER_ALIGNMENT);
         lblBookName.setForeground(Color.BLACK);
-        lblBookName.setPreferredSize(new Dimension(180, 100));
-        lblBookName.setHorizontalAlignment(SwingConstants.CENTER);
+        lblBookName.setHorizontalAlignment(SwingConstants.CENTER); // Căn giữa văn bản
         lblBookName.setVerticalAlignment(SwingConstants.TOP);
-        leftPanel.add(lblBookName);
-
-        leftPanel.add(Box.createVerticalGlue());
+        // Đặt tên sách trong panel con để căn giữa
+        JPanel namePanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        namePanel.setOpaque(false);
+        namePanel.add(lblBookName);
+        leftPanel.add(namePanel, BorderLayout.CENTER);
 
         itemPanel.add(leftPanel, BorderLayout.WEST);
 
@@ -871,7 +871,6 @@ public class MuonSach extends JFrame {
 
         return itemPanel;
     }
-
     private JPanel createInfoRow(String label, String value, Font itemFont, Font itemBoldFont) {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 3, 0));
         panel.setOpaque(false);
