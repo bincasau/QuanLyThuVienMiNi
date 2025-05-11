@@ -45,5 +45,41 @@ public class Ls_Dg_sachDao {
         JDBCUtil.closeConnection();
         return list;
 	}
+	public List<Ls_Dg_sach> layDanhSachTheoMaDocGiaVaMaSach(String maDocGia, String maSach) {
+        List<Ls_Dg_sach> list = new ArrayList<>();
+        String sql = "SELECT dg.maNguoiDung, tenNguoiDung, sc.maSach, tenSach, maLichSu, ngayMuon, ngayTra, trangThai, anh " +
+                     "FROM lichsumuonsach ls " +
+                     "JOIN sach sc ON ls.maSach = sc.maSach " +
+                     "JOIN docgia dg ON ls.maDocGia = dg.maNguoiDung " +
+                     "WHERE dg.maNguoiDung = ? AND sc.maSach = ?";
+
+        try (Connection conn = JDBCUtil.connect();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, maDocGia);
+            stmt.setString(2, maSach);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    Ls_Dg_sach ls = new Ls_Dg_sach(
+                        rs.getString("maNguoiDung"),
+                        rs.getString("tenNguoiDung"),
+                        rs.getString("maSach"),
+                        rs.getString("tenSach"),
+                        rs.getString("maLichSu"),
+                        rs.getDate("ngayMuon"),
+                        rs.getDate("ngayTra"),
+                        rs.getString("trangThai"),
+                        rs.getString("anh")
+                    );
+                    list.add(ls);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        JDBCUtil.closeConnection();
+        return list;
+    }
 
 }
