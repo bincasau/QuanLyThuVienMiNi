@@ -18,7 +18,7 @@ public class PhieuPhatDao implements InterfaceDao<PhieuPhat> {
 
     @Override
     public int themDoiTuong(PhieuPhat t) {
-        String sql = "INSERT INTO phieuphat (maPhieuPhat, loi, giaTien, maDocGia, maSach, ngayPhieu) VALUES (?, ?, ?, ?, ?, CURRENT_DATE)";
+        String sql = "INSERT INTO phieuphat (maPhieuPhat, loi, giaTien, maDocGia, maSach, ngayPhieu) VALUES (?, ?, ?, ?, ?, ?)";
         try (Connection conn = JDBCUtil.connect();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, t.getMaPhieuPhat());
