@@ -5,36 +5,45 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.Image;
 import java.awt.Insets;
 import java.awt.Window;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.border.Border;
 import javax.swing.border.LineBorder;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 
 import DAO.DocGiaDao;
 import DAO.LichSuMuonSachDao;
+import DAO.SachDao;
 import Model.DocGia;
 import Model.LichSuMuonSach;
+import Model.Sach;
 
 public class UserHistoryPanel extends JPanel {
     private String maDocGia;
-    private JPanel pnl_ContentArea; // Để cập nhật nội dung khi lọc
-    private List<LichSuMuonSach> lichSuList; // Dữ liệu từ cơ sở dữ liệu
+    private JPanel pnl_ContentArea;
+    private List<LichSuMuonSach> lichSuList;
+    private JTextField txt_Search;
+    private JButton btn_ClearSearch;
 
-    // Constructor nhận maDocGia
     public UserHistoryPanel(String maDocGia) {
         this.maDocGia = maDocGia;
         initializeData();
@@ -42,33 +51,37 @@ public class UserHistoryPanel extends JPanel {
     }
 
     public UserHistoryPanel() {
-        this.maDocGia = "DG001"; // Mặc định, thay bằng mã độc giả hợp lệ
+        this.maDocGia = "DG001";
         initializeData();
         initializeUI();
     }
 
     private void initializeData() {
-        // Kiểm tra maDocGia có hợp lệ không
         if (maDocGia == null || maDocGia.trim().isEmpty()) {
-            System.err.println("Mã độc giả không hợp lệ");
+            System.err.println("Mã độc giả không hợp lệ: " + maDocGia);
             lichSuList = List.of();
             return;
         }
 
-        // Kiểm tra xem maDocGia có tồn tại trong cơ sở dữ liệu không
-        DocGiaDao docGiaDao = DocGiaDao.getInstance();
-        List<DocGia> docGiaList = docGiaDao.layDanhSachTheoMa(maDocGia);
-        if (docGiaList == null || docGiaList.isEmpty()) {
-            System.err.println("Không tìm thấy độc giả với mã: " + maDocGia);
-            lichSuList = List.of();
-            return;
-        }
+        try {
+            DocGiaDao docGiaDao = DocGiaDao.getInstance();
+            List<DocGia> docGiaList = docGiaDao.layDanhSachTheoMa(maDocGia);
+            if (docGiaList == null || docGiaList.isEmpty()) {
+                System.err.println("Không tìm thấy độc giả với mã: " + maDocGia);
+                lichSuList = List.of();
+                return;
+            }
 
-        // Lấy danh sách lịch sử mượn sách từ maDocGia
-        LichSuMuonSachDao lichSuDao = LichSuMuonSachDao.getInstance();
-        lichSuList = lichSuDao.layDanhSachTheoDK(maDocGia);
-        if (lichSuList == null) {
-            lichSuList = List.of(); // Đảm bảo không trả về null để tránh NullPointerException
+            LichSuMuonSachDao lichSuDao = LichSuMuonSachDao.getInstance();
+            lichSuList = lichSuDao.layDanhSachTheoDK(maDocGia);
+            if (lichSuList == null) {
+                System.err.println("Lịch sử mượn sách trả về null cho mã: " + maDocGia);
+                lichSuList = List.of();
+            }
+        } catch (Exception e) {
+            System.err.println("Lỗi khi lấy dữ liệu: " + e.getMessage());
+            e.printStackTrace();
+            lichSuList = List.of();
         }
     }
 
@@ -76,18 +89,14 @@ public class UserHistoryPanel extends JPanel {
         setLayout(new BorderLayout());
         setPreferredSize(new Dimension(1000, 600));
 
-        // Sidebar
         JPanel pnl_Sidebar = createSidebar();
         add(pnl_Sidebar, BorderLayout.WEST);
 
-        // Main panel
         JPanel pnl_Main = new JPanel(new BorderLayout());
 
-        // Header
         JPanel pnl_Header = createHeader();
         pnl_Main.add(pnl_Header, BorderLayout.NORTH);
 
-        // Content area with history list
         JPanel pnl_Content = createHistoryContent();
         pnl_Main.add(pnl_Content, BorderLayout.CENTER);
 
@@ -123,7 +132,7 @@ public class UserHistoryPanel extends JPanel {
         btn_History.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
         btn_History.setAlignmentX(Component.LEFT_ALIGNMENT);
         btn_History.setHorizontalAlignment(SwingConstants.LEFT);
-        btn_History.setEnabled(false); // Đánh dấu nút Lịch sử đang chọn
+        btn_History.setEnabled(false);
         pnl_ButtonGroup.add(Box.createRigidArea(new Dimension(0, 10)));
         pnl_ButtonGroup.add(btn_History);
 
@@ -169,20 +178,18 @@ public class UserHistoryPanel extends JPanel {
         pnl_Header.setPreferredSize(new Dimension(0, 160));
         pnl_Header.setBackground(new Color(107, 142, 35));
 
+        // Top row with avatar, user info, and notification
         JPanel pnl_TopRow = new JPanel();
         pnl_TopRow.setLayout(new BoxLayout(pnl_TopRow, BoxLayout.X_AXIS));
         pnl_TopRow.setOpaque(false);
         pnl_TopRow.setBorder(BorderFactory.createEmptyBorder(10, 35, 0, 20));
 
-        JButton btn_Avatar = new JButton("AVT");
+        JButton btn_Avatar = createIconButton("pictures/profile.png", "👤");
         JPanel pnl_UserInfo = new JPanel();
         pnl_UserInfo.setLayout(new BoxLayout(pnl_UserInfo, BoxLayout.Y_AXIS));
         pnl_UserInfo.setOpaque(false);
 
-        // Mặc định hiển thị nếu không tìm thấy thông tin
         String tenNguoiDung = "Không tìm thấy";
-
-        // Lấy thông tin độc giả từ maDocGia
         if (maDocGia != null && !maDocGia.trim().isEmpty()) {
             DocGiaDao docGiaDao = DocGiaDao.getInstance();
             List<DocGia> docGiaList = docGiaDao.layDanhSachTheoMa(maDocGia);
@@ -191,24 +198,14 @@ public class UserHistoryPanel extends JPanel {
             }
         }
 
-        JLabel lbl_Name = new JLabel(tenNguoiDung); // Hiển thị tên độc giả
+        JLabel lbl_Name = new JLabel(tenNguoiDung);
         lbl_Name.setFont(new Font("SansSerif", Font.PLAIN, 14));
         lbl_Name.setForeground(Color.WHITE);
-        JLabel lbl_ID = new JLabel("Mã độc giả: " + maDocGia); // Hiển thị mã độc giả
+        JLabel lbl_ID = new JLabel("Mã độc giả: " + maDocGia);
         lbl_ID.setFont(new Font("SansSerif", Font.PLAIN, 12));
         lbl_ID.setForeground(Color.WHITE);
 
-        JButton btn_Notification = new JButton("Noti");
-
-        btn_Avatar.setFont(new Font("SansSerif", Font.PLAIN, 10));
-        btn_Avatar.setFocusable(false);
-        btn_Avatar.setPreferredSize(new Dimension(60, 60));
-        btn_Avatar.setMaximumSize(new Dimension(60, 60));
-
-        btn_Notification.setFont(new Font("SansSerif", Font.PLAIN, 10));
-        btn_Notification.setFocusable(false);
-        btn_Notification.setPreferredSize(new Dimension(60, 60));
-        btn_Notification.setMaximumSize(new Dimension(60, 60));
+        JButton btn_Notification = createIconButton("pictures/bell.png", "🔔");
 
         btn_Avatar.setAlignmentY(Component.CENTER_ALIGNMENT);
         btn_Notification.setAlignmentY(Component.CENTER_ALIGNMENT);
@@ -224,9 +221,153 @@ public class UserHistoryPanel extends JPanel {
         pnl_TopRow.add(Box.createHorizontalGlue());
         pnl_TopRow.add(btn_Notification);
 
+        // Search row with text field and buttons
+        JPanel pnl_SearchRow = new JPanel();
+        pnl_SearchRow.setLayout(new BoxLayout(pnl_SearchRow, BoxLayout.X_AXIS));
+        pnl_SearchRow.setOpaque(false);
+        pnl_SearchRow.setBorder(BorderFactory.createEmptyBorder(10, 35, 10, 0));
+
+        // Search field
+        txt_Search = new JTextField("Tìm kiếm mã sách, tên sách, ngày mượn, ngày trả...");
+        txt_Search.setPreferredSize(new Dimension(300, 25));
+        txt_Search.setMaximumSize(new Dimension(500, 25));
+        txt_Search.setFont(new Font("SansSerif", Font.PLAIN, 12));
+        txt_Search.setForeground(Color.GRAY);
+
+        // Placeholder handling
+        txt_Search.addFocusListener(new java.awt.event.FocusAdapter() {
+            @Override
+            public void focusGained(java.awt.event.FocusEvent evt) {
+                if (txt_Search.getText().equals("Tìm kiếm mã sách, tên sách, ngày mượn, ngày trả...")) {
+                    txt_Search.setText("");
+                    txt_Search.setForeground(Color.BLACK);
+                }
+            }
+
+            @Override
+            public void focusLost(java.awt.event.FocusEvent evt) {
+                if (txt_Search.getText().isEmpty()) {
+                    txt_Search.setText("Tìm kiếm mã sách, tên sách, ngày mượn, ngày trả...");
+                    txt_Search.setForeground(Color.GRAY);
+                }
+            }
+        });
+
+        // Auto-filter on text change
+        txt_Search.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                if (txt_Search.isEditable()) {
+                    updateHistoryContent(txt_Search.getText(), null);
+                }
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                if (txt_Search.isEditable()) {
+                    updateHistoryContent(txt_Search.getText(), null);
+                }
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                if (txt_Search.isEditable()) {
+                    updateHistoryContent(txt_Search.getText(), null);
+                }
+            }
+        });
+
+        // Lock search on Enter
+        txt_Search.addKeyListener(new java.awt.event.KeyAdapter() {
+            @Override
+            public void keyPressed(java.awt.event.KeyEvent evt) {
+                if (evt.getKeyCode() == java.awt.event.KeyEvent.VK_ENTER) {
+                    txt_Search.setEditable(false);
+                    btn_ClearSearch.setVisible(true);
+                }
+            }
+        });
+
+        // Search icon
+        ImageIcon searchIcon = new ImageIcon("pictures/search.png");
+        Image scaledImage = searchIcon.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
+        searchIcon = new ImageIcon(scaledImage);
+
+        RoundedButton btn_SearchIcon = new RoundedButton("🔍", 10);
+        btn_SearchIcon.setIcon(searchIcon);
+        btn_SearchIcon.setPreferredSize(new Dimension(25, 25));
+        btn_SearchIcon.setMaximumSize(new Dimension(25, 25));
+        btn_SearchIcon.setBackground(new Color(240, 240, 240));
+        btn_SearchIcon.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
+        btn_SearchIcon.addActionListener(e -> {
+            if (txt_Search.isEditable()) {
+                updateHistoryContent(txt_Search.getText(), null);
+            }
+        });
+
+        // Clear search button
+        btn_ClearSearch = new RoundedButton("Xóa", 10);
+        btn_ClearSearch.setPreferredSize(new Dimension(60, 25));
+        btn_ClearSearch.setFont(new Font("SansSerif", Font.PLAIN, 12));
+        btn_ClearSearch.setBackground(Color.LIGHT_GRAY);
+        btn_ClearSearch.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+        btn_ClearSearch.setVisible(false);
+        btn_ClearSearch.addActionListener(e -> {
+            txt_Search.setText("Tìm kiếm mã sách, tên sách, ngày mượn, ngày trả...");
+            txt_Search.setForeground(Color.GRAY);
+            txt_Search.setEditable(true);
+            btn_ClearSearch.setVisible(false);
+            updateHistoryContent(null, null);
+        });
+
+        // Filter buttons
+        RoundedButton btn_Borrowing = new RoundedButton("Đang mượn", 10);
+        btn_Borrowing.setPreferredSize(new Dimension(100, 25));
+        btn_Borrowing.setFont(new Font("SansSerif", Font.PLAIN, 12));
+        btn_Borrowing.setBackground(Color.LIGHT_GRAY);
+        btn_Borrowing.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+        btn_Borrowing.setAlignmentX(Component.LEFT_ALIGNMENT);
+        btn_Borrowing.addActionListener(e -> updateHistoryContent(txt_Search.getText(), "Chưa trả"));
+
+        RoundedButton btn_Returned = new RoundedButton("Đã trả", 10);
+        btn_Returned.setPreferredSize(new Dimension(80, 25));
+        btn_Returned.setFont(new Font("SansSerif", Font.PLAIN, 12));
+        btn_Returned.setBackground(Color.LIGHT_GRAY);
+        btn_Returned.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+        btn_Returned.setAlignmentX(Component.LEFT_ALIGNMENT);
+        btn_Returned.addActionListener(e -> updateHistoryContent(txt_Search.getText(), "Đã trả"));
+
+        pnl_SearchRow.add(txt_Search);
+        pnl_SearchRow.add(Box.createHorizontalStrut(5));
+        pnl_SearchRow.add(btn_SearchIcon);
+        pnl_SearchRow.add(Box.createHorizontalStrut(5));
+        pnl_SearchRow.add(btn_ClearSearch);
+        pnl_SearchRow.add(Box.createHorizontalStrut(10));
+        pnl_SearchRow.add(btn_Borrowing);
+        pnl_SearchRow.add(Box.createHorizontalStrut(5));
+        pnl_SearchRow.add(btn_Returned);
+
         pnl_Header.add(pnl_TopRow, BorderLayout.NORTH);
+        pnl_Header.add(pnl_SearchRow, BorderLayout.CENTER);
 
         return pnl_Header;
+    }
+
+    private JButton createIconButton(String imagePath, String fallbackText) {
+        ImageIcon icon = new ImageIcon(imagePath);
+        JButton button;
+        if (icon.getIconWidth() != -1) {
+            Image scaled = icon.getImage().getScaledInstance(30, 30, Image.SCALE_SMOOTH);
+            button = new JButton(new ImageIcon(scaled));
+        } else {
+            button = new JButton(fallbackText);
+        }
+        button.setPreferredSize(new Dimension(60, 60));
+        button.setMaximumSize(new Dimension(60, 60));
+        button.setFocusable(false);
+        button.setBackground(new Color(240, 240, 240));
+        button.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
+        return button;
     }
 
     private JPanel createHistoryContent() {
@@ -235,44 +376,6 @@ public class UserHistoryPanel extends JPanel {
         pnl_Content.setBackground(Color.WHITE);
         pnl_Content.setBorder(BorderFactory.createEmptyBorder(0, 0, 20, 20));
 
-        // Tiêu đề và nút lọc trên cùng một hàng
-        JPanel pnl_TitleRow = new JPanel();
-        pnl_TitleRow.setLayout(new BoxLayout(pnl_TitleRow, BoxLayout.X_AXIS));
-        pnl_TitleRow.setOpaque(false);
-        pnl_TitleRow.setBorder(BorderFactory.createEmptyBorder(10, 35, 0, 0));
-        pnl_TitleRow.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-        RoundedButton btn_History = new RoundedButton("Lịch sử mượn sách", 10);
-        btn_History.setPreferredSize(new Dimension(150, 25));
-        btn_History.setFont(new Font("SansSerif", Font.BOLD, 16));
-        btn_History.setBackground(Color.LIGHT_GRAY);
-        btn_History.setBorder(BorderFactory.createLineBorder(Color.BLACK));
-        btn_History.setAlignmentX(Component.LEFT_ALIGNMENT);
-        btn_History.addActionListener(e -> updateHistoryContent(null));
-
-        RoundedButton btn_Borrowing = new RoundedButton("Đang mượn", 10);
-        btn_Borrowing.setPreferredSize(new Dimension(100, 25));
-        btn_Borrowing.setFont(new Font("SansSerif", Font.PLAIN, 12));
-        btn_Borrowing.setBackground(Color.LIGHT_GRAY);
-        btn_Borrowing.setBorder(BorderFactory.createLineBorder(Color.BLACK));
-        btn_Borrowing.setAlignmentX(Component.LEFT_ALIGNMENT);
-        btn_Borrowing.addActionListener(e -> updateHistoryContent("Chưa trả"));
-
-        RoundedButton btn_Returned = new RoundedButton("Đã trả", 10);
-        btn_Returned.setPreferredSize(new Dimension(80, 25));
-        btn_Returned.setFont(new Font("SansSerif", Font.PLAIN, 12));
-        btn_Returned.setBackground(Color.LIGHT_GRAY);
-        btn_Returned.setBorder(BorderFactory.createLineBorder(Color.BLACK));
-        btn_Returned.setAlignmentX(Component.LEFT_ALIGNMENT);
-        btn_Returned.addActionListener(e -> updateHistoryContent("Đã trả"));
-
-        pnl_TitleRow.add(btn_History);
-        pnl_TitleRow.add(Box.createHorizontalStrut(5));
-        pnl_TitleRow.add(btn_Borrowing);
-        pnl_TitleRow.add(Box.createHorizontalStrut(5));
-        pnl_TitleRow.add(btn_Returned);
-
-        // Khu vực nội dung lịch sử
         pnl_ContentArea = new JPanel();
         pnl_ContentArea.setLayout(new BoxLayout(pnl_ContentArea, BoxLayout.Y_AXIS));
         pnl_ContentArea.setBackground(Color.WHITE);
@@ -282,35 +385,66 @@ public class UserHistoryPanel extends JPanel {
         scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         scrollPane.setBorder(null);
 
-        // Thêm các thành phần vào panel chính
-        pnl_Content.add(pnl_TitleRow, BorderLayout.NORTH);
         pnl_Content.add(scrollPane, BorderLayout.CENTER);
 
-        // Khởi tạo nội dung ban đầu
-        updateHistoryContent(null);
+        updateHistoryContent(null, null);
         return pnl_Content;
     }
 
-    private void updateHistoryContent(String filter) {
+    private void updateHistoryContent(String searchText, String filter) {
         pnl_ContentArea.removeAll();
         SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
         boolean hasData = false;
+        SachDao sachDao = SachDao.getInstance();
+        List<LichSuMuonSach> filteredList = new ArrayList<>();
 
+        // Apply search filter
         for (LichSuMuonSach lichSu : lichSuList) {
+            String maSach = lichSu.getMaSach();
+            String tenSach = "Không tìm thấy";
+            List<Sach> sachList = sachDao.layDanhSachTheoDK(maSach);
+            if (!sachList.isEmpty()) {
+                tenSach = sachList.get(0).getTenSach();
+            }
+
+            String ngayMuon = (lichSu.getNgayMuon() != null) ? dateFormat.format(lichSu.getNgayMuon()) : "";
+            String ngayTra = (lichSu.getNgayTra() != null) ? dateFormat.format(lichSu.getNgayTra()) : "";
             String trangThai = lichSu.getTrangThai();
-            if (filter == null || trangThai.equals(filter)) {
-                hasData = true;
-                String ngayMuon = (lichSu.getNgayMuon() != null) ? dateFormat.format(lichSu.getNgayMuon()) : "N/A";
-                String ngayTra = (lichSu.getNgayTra() != null) ? dateFormat.format(lichSu.getNgayTra()) : "N/A";
-                String bookTitle = "Tên sách: " + lichSu.getMaSach();
-                boolean isBorrowing = "Chưa trả".equals(trangThai);
-                JPanel itemPanel = createHistoryItem(bookTitle, "Mượn: " + ngayMuon + ", Trả: " + ngayTra, isBorrowing);
-                pnl_ContentArea.add(itemPanel);
-                pnl_ContentArea.add(Box.createRigidArea(new Dimension(0, 5)));
+
+            // Check if item matches search text
+            boolean matchesSearch = searchText == null ||
+                    searchText.equals("Tìm kiếm mã sách, tên sách, ngày mượn, ngày trả...") ||
+                    maSach.toLowerCase().contains(searchText.toLowerCase()) ||
+                    tenSach.toLowerCase().contains(searchText.toLowerCase()) ||
+                    ngayMuon.contains(searchText) ||
+                    ngayTra.contains(searchText);
+
+            // Check if item matches status filter
+            boolean matchesFilter = filter == null || trangThai.equals(filter);
+
+            if (matchesSearch && matchesFilter) {
+                filteredList.add(lichSu);
             }
         }
 
-        // Nếu không có dữ liệu, hiển thị thông báo
+        // Display filtered items
+        for (LichSuMuonSach lichSu : filteredList) {
+            hasData = true;
+            String maSach = lichSu.getMaSach();
+            String tenSach = "Không tìm thấy";
+            List<Sach> sachList = sachDao.layDanhSachTheoDK(maSach);
+            if (!sachList.isEmpty()) {
+                tenSach = sachList.get(0).getTenSach();
+            }
+            String ngayMuon = (lichSu.getNgayMuon() != null) ? dateFormat.format(lichSu.getNgayMuon()) : "N/A";
+            String ngayTra = (lichSu.getNgayTra() != null) ? dateFormat.format(lichSu.getNgayTra()) : "N/A";
+            String bookTitle = "Tên sách: " + tenSach + " (" + maSach + ")";
+            boolean isBorrowing = "Chưa trả".equals(lichSu.getTrangThai());
+            JPanel itemPanel = createHistoryItem(bookTitle, "Mượn: " + ngayMuon + ", Trả: " + ngayTra, isBorrowing);
+            pnl_ContentArea.add(itemPanel);
+            pnl_ContentArea.add(Box.createRigidArea(new Dimension(0, 5)));
+        }
+
         if (!hasData) {
             JLabel lbl_NoData = new JLabel("Không tìm thấy lịch sử");
             lbl_NoData.setFont(new Font("SansSerif", Font.PLAIN, 14));
@@ -349,7 +483,7 @@ public class UserHistoryPanel extends JPanel {
 
         JLabel lbl_BookTitle = new JLabel(bookTitle);
         lbl_BookTitle.setFont(new Font("SansSerif", Font.PLAIN, 12));
-        lbl_BookTitle.setPreferredSize(new Dimension(200, 25));
+        lbl_BookTitle.setPreferredSize(new Dimension(300, 25));
 
         JLabel lbl_Date = new JLabel(date);
         lbl_Date.setFont(new Font("SansSerif", Font.PLAIN, 12));
@@ -370,10 +504,10 @@ public class UserHistoryPanel extends JPanel {
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
-            JFrame frame = new JFrame("Thư viện mini - Lịch sử");
+            JFrame frame = new JFrame("Thư viện mini");
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
             frame.setSize(1000, 600);
-            frame.add(new UserHistoryPanel("DG001")); // Thay DG001 bằng mã độc giả có trong cơ sở dữ liệu
+            frame.add(new UserHistoryPanel("DG002"));
             frame.setLocationRelativeTo(null);
             frame.setVisible(true);
         });

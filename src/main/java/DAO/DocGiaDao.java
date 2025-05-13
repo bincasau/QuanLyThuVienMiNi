@@ -93,8 +93,6 @@ public class DocGiaDao implements InterfaceDao<DocGia> {
         }
     }
     
-    
-
     @Override
     public int capNhatDoiTuong(DocGia t) {
         String sql = "UPDATE DocGia SET taiKhoan = ?, matKhau = ?, email = ?, soDienThoai = ?, tenNguoiDung = ?, ngayTao = ? WHERE maNguoiDung = ?";
@@ -201,5 +199,23 @@ public class DocGiaDao implements InterfaceDao<DocGia> {
     @Override
     public List<DocGia> layDanhSachTheoDK(String dk) {
         return null; // TODO: Implement if needed
+    }
+
+    // Thêm phương thức kiểm tra tài khoản tồn tại
+    public boolean kiemTraTaiKhoanTonTai(String taiKhoan) {
+        String sql = "SELECT COUNT(*) FROM DocGia WHERE taiKhoan = ?";
+        try (Connection conn = JDBCUtil.connect();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, taiKhoan);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1) > 0;
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Lỗi khi kiểm tra tài khoản: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return false;
     }
 }
