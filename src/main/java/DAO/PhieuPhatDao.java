@@ -68,7 +68,7 @@ public class PhieuPhatDao implements InterfaceDao<PhieuPhat> {
     @Override
     public List<PhieuPhat> layDanhSach() {
         List<PhieuPhat> list = new ArrayList<>();
-        String sql = "SELECT * FROM phieuphat";
+        String sql = "SELECT * FROM phieuphat ORDER BY ngayPhieu DESC";
         try (Connection conn = JDBCUtil.connect();
              PreparedStatement stmt = conn.prepareStatement(sql);
              ResultSet rs = stmt.executeQuery()) {
@@ -92,7 +92,7 @@ public class PhieuPhatDao implements InterfaceDao<PhieuPhat> {
     @Override
     public List<PhieuPhat> layDanhSachTheoDK(String dk) {
         List<PhieuPhat> list = new ArrayList<>();
-        String sql = "SELECT * FROM phieuphat WHERE maDocGia = ?";
+        String sql = "SELECT * FROM phieuphat WHERE maDocGia = ? ORDER BY ngayPhieu DESC";
         try (Connection conn = JDBCUtil.connect();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, dk);
@@ -140,7 +140,7 @@ public class PhieuPhatDao implements InterfaceDao<PhieuPhat> {
 
     public String generateMaPhieuPhat() {
         String prefix = "PP";
-        int startNumber = 1;
+        int startNumber = 200;
         String maPhieuPhat;
 
         try (Connection conn = JDBCUtil.connect()) {

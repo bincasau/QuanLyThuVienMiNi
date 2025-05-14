@@ -1,5 +1,6 @@
 package View.Librarian;
 
+import DAO.DocGiaDao;
 import DAO.PhieuPhatDao;
 import Model.PhieuPhat;
 import javax.swing.*;
@@ -28,7 +29,7 @@ public class ThongTinPhieuPhat extends JFrame {
     private final int ITEMS_PER_PAGE = 20;
     private JButton btn_prev;
     private JButton btn_next;
-    private final String PLACEHOLDER_TEXT = "Tìm mã phiếu phạt, lý do";
+    private final String PLACEHOLDER_TEXT = "Tìm mã phiếu phạt, lý do, tên độc giả";
     private JPanel pnl_ListContent;
 
     public static void main(String[] args) {
@@ -151,7 +152,6 @@ public class ThongTinPhieuPhat extends JFrame {
         btn_Profile.setMaximumSize(size);
         btn_Profile.setMinimumSize(size);
         pnl_Header.add(btn_Profile);
-
         return pnl_Header;
     }
 
@@ -206,11 +206,15 @@ public class ThongTinPhieuPhat extends JFrame {
 
                 List<String> matches = new ArrayList<>();
                 for (PhieuPhat pp : ds) {
+                    String tenDocGia = DocGiaDao.getInstance().getTenNguoiDungByMaNguoiDung(pp.getMaDocGia());
                     if (pp.getMaPhieuPhat().toLowerCase().contains(input) && !matches.contains(pp.getMaPhieuPhat())) {
                         matches.add(pp.getMaPhieuPhat());
                     }
                     if (pp.getLoi().toLowerCase().contains(input) && !matches.contains(pp.getLoi())) {
                         matches.add(pp.getLoi());
+                    }
+                    if (tenDocGia != null && tenDocGia.toLowerCase().contains(input) && !matches.contains(tenDocGia)) {
+                        matches.add(tenDocGia);
                     }
                 }
 
@@ -256,8 +260,8 @@ public class ThongTinPhieuPhat extends JFrame {
 
         pnl_top.add(txt_Search);
 
-        JButton btn_search = new JButton("🔍");
-        btn_search.setPreferredSize(new Dimension(40, 40));
+        JButton btn_search = new JButton("Tìm");
+        btn_search.setPreferredSize(new Dimension(80, 40));
         btn_search.addActionListener(e -> {
             String keyword = txt_Search.getText().trim();
             if (keyword.equals(PLACEHOLDER_TEXT) || keyword.isEmpty()) {
@@ -326,7 +330,7 @@ public class ThongTinPhieuPhat extends JFrame {
 
         panelMain.add(pnl_top, BorderLayout.NORTH);
 
-        String[] columnNames = {"Mã phiếu phạt", "Lý do", "Số tiền (VND)", "Mã độc giả", "Mã sách", "Ngày lập phiếu"};
+        String[] columnNames = {"Mã phiếu phạt", "Lý do", "Số tiền (VND)", "Tên độc giả", "Mã sách", "Ngày lập phiếu"};
         tableModel = new DefaultTableModel(columnNames, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -386,8 +390,10 @@ public class ThongTinPhieuPhat extends JFrame {
         filteredDs = new ArrayList<>();
         String lowerQuery = keyword.toLowerCase();
         for (PhieuPhat pp : ds) {
+            String tenDocGia = DocGiaDao.getInstance().getTenNguoiDungByMaNguoiDung(pp.getMaDocGia());
             if (pp.getMaPhieuPhat().toLowerCase().contains(lowerQuery) ||
-                pp.getLoi().toLowerCase().contains(lowerQuery)) {
+                pp.getLoi().toLowerCase().contains(lowerQuery) ||
+                (tenDocGia != null && tenDocGia.toLowerCase().contains(lowerQuery))) {
                 filteredDs.add(pp);
             }
         }
@@ -398,16 +404,20 @@ public class ThongTinPhieuPhat extends JFrame {
     private void updateTableContent() {
         tableModel.setRowCount(0);
 
+        // Sắp xếp filteredDs theo ngày lập phiếu (mới nhất trước)
+        filteredDs.sort((pp1, pp2) -> pp2.getNgayPhieu().compareTo(pp1.getNgayPhieu()));
+
         int startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
         int endIndex = Math.min(startIndex + ITEMS_PER_PAGE, filteredDs.size());
 
         for (int i = startIndex; i < endIndex; i++) {
             PhieuPhat pp = filteredDs.get(i);
+            String tenDocGia = DocGiaDao.getInstance().getTenNguoiDungByMaNguoiDung(pp.getMaDocGia());
             tableModel.addRow(new Object[]{
                 pp.getMaPhieuPhat(),
                 pp.getLoi(),
                 String.format("%.2f", pp.getGiaTien()),
-                pp.getMaDocGia(),
+                tenDocGia != null ? tenDocGia : "Không tìm thấy",
                 pp.getMaSach(),
                 pp.getNgayPhieu() != null ? new SimpleDateFormat("yyyy-MM-dd").format(pp.getNgayPhieu()) : "N/A"
             });
@@ -462,13 +472,6 @@ public class ThongTinPhieuPhat extends JFrame {
 
         gbc.gridx = 0;
         gbc.gridy++;
-        addPanel.add(new JLabel("Mã độc giả:"), gbc);
-        gbc.gridx = 1;
-        JTextField txtMaDocGia = new JTextField(20);
-        addPanel.add(txtMaDocGia, gbc);
-
-        gbc.gridx = 0;
-        gbc.gridy++;
         addPanel.add(new JLabel("Mã sách:"), gbc);
         gbc.gridx = 1;
         JTextField txtMaSach = new JTextField(20);
@@ -480,7 +483,7 @@ public class ThongTinPhieuPhat extends JFrame {
         gbc.gridx = 1;
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         JTextField txtNgayPhieu = new JTextField(sdf.format(new Date()), 20);
-        txtNgayPhieu.setEditable(false); // Không cho sửa, tự động lấy ngày hiện tại
+        txtNgayPhieu.setEditable(false);
         addPanel.add(txtNgayPhieu, gbc);
 
         gbc.gridx = 0;
@@ -491,11 +494,10 @@ public class ThongTinPhieuPhat extends JFrame {
             try {
                 String loi = txtLoi.getText().trim();
                 String giaTienStr = txtGiaTien.getText().trim();
-                String maDocGia = txtMaDocGia.getText().trim();
                 String maSach = txtMaSach.getText().trim();
                 String ngayPhieuStr = txtNgayPhieu.getText().trim();
 
-                if (loi.isEmpty() || giaTienStr.isEmpty() || maDocGia.isEmpty() || maSach.isEmpty()) {
+                if (loi.isEmpty() || giaTienStr.isEmpty() || maSach.isEmpty()) {
                     JOptionPane.showMessageDialog(this, "Vui lòng nhập đầy đủ thông tin!");
                     return;
                 }
@@ -515,7 +517,7 @@ public class ThongTinPhieuPhat extends JFrame {
                 SimpleDateFormat sdfParse = new SimpleDateFormat("yyyy-MM-dd");
                 java.sql.Date ngayPhieu = new java.sql.Date(sdfParse.parse(ngayPhieuStr).getTime());
 
-                PhieuPhat pp = new PhieuPhat(maPhieuPhat, loi, giaTien, maDocGia, maSach, ngayPhieu);
+                PhieuPhat pp = new PhieuPhat(maPhieuPhat, loi, giaTien, null, maSach, ngayPhieu);
 
                 int confirm = JOptionPane.showConfirmDialog(
                     this,
@@ -616,13 +618,6 @@ public class ThongTinPhieuPhat extends JFrame {
 
         gbc.gridx = 0;
         gbc.gridy++;
-        editPanel.add(new JLabel("Mã độc giả:"), gbc);
-        gbc.gridx = 1;
-        JTextField txtMaDocGia = new JTextField(phieuPhat.getMaDocGia(), 20);
-        editPanel.add(txtMaDocGia, gbc);
-
-        gbc.gridx = 0;
-        gbc.gridy++;
         editPanel.add(new JLabel("Mã sách:"), gbc);
         gbc.gridx = 1;
         JTextField txtMaSach = new JTextField(phieuPhat.getMaSach(), 20);
@@ -634,7 +629,7 @@ public class ThongTinPhieuPhat extends JFrame {
         gbc.gridx = 1;
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         JTextField txtNgayPhieu = new JTextField(phieuPhat.getNgayPhieu() != null ? sdf.format(phieuPhat.getNgayPhieu()) : sdf.format(new Date()), 20);
-        txtNgayPhieu.setEditable(false); // Không cho sửa, giữ nguyên ngày hiện tại hoặc ngày cũ
+        txtNgayPhieu.setEditable(false);
         editPanel.add(txtNgayPhieu, gbc);
 
         gbc.gridx = 0;
@@ -645,11 +640,10 @@ public class ThongTinPhieuPhat extends JFrame {
             try {
                 String loi = txtLoi.getText().trim();
                 String giaTienStr = txtGiaTien.getText().trim();
-                String maDocGia = txtMaDocGia.getText().trim();
                 String maSach = txtMaSach.getText().trim();
                 String ngayPhieuStr = txtNgayPhieu.getText().trim();
 
-                if (loi.isEmpty() || giaTienStr.isEmpty() || maDocGia.isEmpty() || maSach.isEmpty()) {
+                if (loi.isEmpty() || giaTienStr.isEmpty() || maSach.isEmpty()) {
                     JOptionPane.showMessageDialog(this, "Vui lòng nhập đầy đủ thông tin!");
                     return;
                 }
@@ -670,7 +664,7 @@ public class ThongTinPhieuPhat extends JFrame {
                 java.sql.Date ngayPhieu = new java.sql.Date(sdfUpdate.parse(ngayPhieuStr).getTime());
 
                 PhieuPhat ppUpdated = new PhieuPhat(
-                    phieuPhat.getMaPhieuPhat(), loi, giaTien, maDocGia, maSach, ngayPhieu
+                    phieuPhat.getMaPhieuPhat(), loi, giaTien, null, maSach, ngayPhieu
                 );
 
                 int confirm = JOptionPane.showConfirmDialog(

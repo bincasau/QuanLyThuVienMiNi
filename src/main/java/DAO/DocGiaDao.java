@@ -218,4 +218,22 @@ public class DocGiaDao implements InterfaceDao<DocGia> {
         }
         return false;
     }
+
+    // Thêm phương thức lấy tên người dùng theo mã người dùng
+    public String getTenNguoiDungByMaNguoiDung(String maNguoiDung) {
+        String sql = "SELECT tenNguoiDung FROM DocGia WHERE maNguoiDung = ?";
+        try (Connection conn = JDBCUtil.connect();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, maNguoiDung);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getString("tenNguoiDung");
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Lỗi khi lấy tên người dùng: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return null;
+    }
 }
