@@ -92,14 +92,18 @@ public class Dashboard extends JFrame {
         pnl_ButtonGroup.setBackground(new Color(240, 233, 222));
         pnl_ButtonGroup.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 10));
 
-        String[] btnLabels = { "Trang chủ", "Lịch sử", "Phiếu phạt", "Đăng xuất" };
+        String[] btnLabels = {"Trang chủ", "Lịch sử", "Phiếu phạt", "Đăng xuất"};
         for (String text : btnLabels) {
             JButton btn = new JButton(text);
             btn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
             btn.setAlignmentX(Component.LEFT_ALIGNMENT);
             btn.setHorizontalAlignment(SwingConstants.LEFT);
             btn.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
-            if (text.equals("Đăng xuất")) {
+            if (text.equals("Trang chủ")) {
+            	btn.setBackground(Color.white);
+            	btn.setOpaque(true);
+            }
+            else if (text.equals("Đăng xuất")) {
                 btn.addActionListener(e -> {
                     dispose();
                     SwingUtilities.invokeLater(() -> new Login().setVisible(true));
@@ -206,8 +210,8 @@ public class Dashboard extends JFrame {
             }
         });
 
-        JButton btn_Clear = new JButton("✕");
-        btn_Clear.setPreferredSize(new Dimension(40, 40));
+        JButton btn_Clear = new JButton("Tìm");
+        btn_Clear.setPreferredSize(new Dimension(60, 40));
         btn_Clear.addActionListener(e -> {
             txt_Search.setText("");
             txt_Search.setForeground(Color.BLACK);
@@ -283,7 +287,7 @@ public class Dashboard extends JFrame {
             JPanel card = createBookCard(book);
             rowPanel.add(card);
             count++;
-            if (count % 4 == 0) {
+            if (count % 5 == 0) {
                 pnl_Content.add(rowPanel);
                 rowPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 15));
                 rowPanel.setBackground(Color.WHITE);
@@ -302,13 +306,13 @@ public class Dashboard extends JFrame {
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
         card.setBackground(Color.WHITE);
         card.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
-        card.setPreferredSize(new Dimension(180, 260));
+        card.setPreferredSize(new Dimension(120, 180));
 
         JLabel lblImage = new JLabel();
         lblImage.setHorizontalAlignment(SwingConstants.CENTER);
         try {
             ImageIcon icon = new ImageIcon("pictures/" + book.getAnh());
-            Image scaledImage = icon.getImage().getScaledInstance(140, 180, Image.SCALE_SMOOTH);
+            Image scaledImage = icon.getImage().getScaledInstance(80, 120, Image.SCALE_SMOOTH);
             lblImage.setIcon(new ImageIcon(scaledImage));
         } catch (Exception e) {
             lblImage.setText("No Image");
