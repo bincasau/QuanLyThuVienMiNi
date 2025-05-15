@@ -9,8 +9,9 @@ import java.awt.Image;
 import java.awt.Insets;
 import java.awt.Window;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -44,7 +45,8 @@ public class UserHistoryPanel extends JPanel {
     private List<LichSuMuonSach> lichSuList;
     private JTextField txt_Search;
     private JButton btn_ClearSearch;
-    private JComboBox<String> cmb_Filter; // Added to track filter state
+    private JComboBox<String> cmb_Filter;
+    private Map<String, String> sachCache = new HashMap<>();
 
     public UserHistoryPanel(String maDocGia) {
         this.maDocGia = maDocGia;
@@ -79,6 +81,17 @@ public class UserHistoryPanel extends JPanel {
             if (lichSuList == null) {
                 System.err.println("Lịch sử mượn sách trả về null cho mã: " + maDocGia);
                 lichSuList = List.of();
+            }
+
+            // Tiền xử lý thông tin sách
+            SachDao sachDao = SachDao.getInstance();
+            for (LichSuMuonSach lichSu : lichSuList) {
+                String maSach = lichSu.getMaSach();
+                if (!sachCache.containsKey(maSach)) {
+                    List<Sach> sachList = sachDao.layDanhSachTheoDK(maSach);
+                    String tenSach = sachList.isEmpty() ? "Không tìm thấy" : sachList.get(0).getTenSach();
+                    sachCache.put(maSach, tenSach);
+                }
             }
         } catch (Exception e) {
             System.err.println("Lỗi khi lấy dữ liệu: " + e.getMessage());
@@ -213,7 +226,7 @@ public class UserHistoryPanel extends JPanel {
         btn_Notification.setAlignmentY(Component.CENTER_ALIGNMENT);
         lbl_Name.setAlignmentY(Component.CENTER_ALIGNMENT);
         lbl_ID.setAlignmentY(Component.CENTER_ALIGNMENT);
-
+        
         pnl_UserInfo.add(lbl_Name);
         pnl_UserInfo.add(lbl_ID);
 
@@ -386,24 +399,18 @@ public class UserHistoryPanel extends JPanel {
         pnl_ContentArea.removeAll();
         SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
         boolean hasData = false;
-        SachDao sachDao = SachDao.getInstance();
-        List<LichSuMuonSach> filteredList = new ArrayList<>();
 
         // Normalize search text
         String normalizedSearch = searchText == null || 
             searchText.trim().isEmpty() || 
             searchText.equals("Tìm kiếm mã sách, tên sách, ngày mượn, ngày trả...") 
             ? null : searchText.trim().toLowerCase();
+        String normalizedSearchDate = normalizedSearch != null ? normalizedSearch.replace("/", "").replace("-", "") : null;
 
-        // Apply search filter
+        // Duyệt danh sách lịch sử một lần duy nhất
         for (LichSuMuonSach lichSu : lichSuList) {
             String maSach = lichSu.getMaSach();
-            String tenSach = "Không tìm thấy";
-            List<Sach> sachList = sachDao.layDanhSachTheoDK(maSach);
-            if (!sachList.isEmpty()) {
-                tenSach = sachList.get(0).getTenSach();
-            }
-
+            String tenSach = sachCache.getOrDefault(maSach, "Không tìm thấy");
             String ngayMuon = (lichSu.getNgayMuon() != null) ? dateFormat.format(lichSu.getNgayMuon()) : "";
             String ngayTra = (lichSu.getNgayTra() != null) ? dateFormat.format(lichSu.getNgayTra()) : "";
             String trangThai = lichSu.getTrangThai();
@@ -411,7 +418,6 @@ public class UserHistoryPanel extends JPanel {
             // Normalize date for flexible matching
             String normalizedNgayMuon = ngayMuon.replace("/", "");
             String normalizedNgayTra = ngayTra.replace("/", "");
-            String normalizedSearchDate = normalizedSearch != null ? normalizedSearch.replace("/", "").replace("-", "") : null;
 
             // Check if item matches search text
             boolean matchesSearch = normalizedSearch == null ||
@@ -424,26 +430,16 @@ public class UserHistoryPanel extends JPanel {
             boolean matchesFilter = filter == null || trangThai.equals(filter);
 
             if (matchesSearch && matchesFilter) {
-                filteredList.add(lichSu);
+                hasData = true;
+                String bookTitle = "Tên sách: " + tenSach + " (" + maSach + ")";
+                boolean isBorrowing = "Chưa trả".equals(trangThai);
+                JPanel itemPanel = createHistoryItem(bookTitle, 
+                    "Mượn: " + (ngayMuon.isEmpty() ? "N/A" : ngayMuon) + 
+                    ", Trả: " + (ngayTra.isEmpty() ? "N/A" : ngayTra), 
+                    isBorrowing);
+                pnl_ContentArea.add(itemPanel);
+                pnl_ContentArea.add(Box.createRigidArea(new Dimension(0, 5)));
             }
-        }
-
-        // Display filtered items
-        for (LichSuMuonSach lichSu : filteredList) {
-            hasData = true;
-            String maSach = lichSu.getMaSach();
-            String tenSach = "Không tìm thấy";
-            List<Sach> sachList = sachDao.layDanhSachTheoDK(maSach);
-            if (!sachList.isEmpty()) {
-                tenSach = sachList.get(0).getTenSach();
-            }
-            String ngayMuon = (lichSu.getNgayMuon() != null) ? dateFormat.format(lichSu.getNgayMuon()) : "N/A";
-            String ngayTra = (lichSu.getNgayTra() != null) ? dateFormat.format(lichSu.getNgayTra()) : "N/A";
-            String bookTitle = "Tên sách: " + tenSach + " (" + maSach + ")";
-            boolean isBorrowing = "Chưa trả".equals(lichSu.getTrangThai());
-            JPanel itemPanel = createHistoryItem(bookTitle, "Mượn: " + ngayMuon + ", Trả: " + ngayTra, isBorrowing);
-            pnl_ContentArea.add(itemPanel);
-            pnl_ContentArea.add(Box.createRigidArea(new Dimension(0, 5)));
         }
 
         if (!hasData) {

@@ -77,34 +77,40 @@ public class DocGiaDao implements InterfaceDao<DocGia> {
     @Override
     public int xoaDoiTuong(DocGia t) {
         String maNguoiDung = t.getMaNguoiDung();
-        String sqlPhieuPhat = "UPDATE phieuphat SET maDocGia = NULL WHERE maDocGia = ?";
-        String sqlLichSu = "UPDATE lichsumuonsach SET maDocGia = NULL WHERE maDocGia = ?";
+        String sqlPhieuPhat = "DELETE FROM phieuphat WHERE maDocGia = ?";
+        String sqlLichSu = "DELETE FROM lichsumuonsach WHERE maDocGia = ?";
         String sqlXoaDocGia = "DELETE FROM docgia WHERE maNguoiDung = ?";
-    
+
         try (Connection conn = JDBCUtil.connect()) {
             conn.setAutoCommit(false);
-    
+
             try (
                 PreparedStatement stmt1 = conn.prepareStatement(sqlPhieuPhat);
                 PreparedStatement stmt2 = conn.prepareStatement(sqlLichSu);
                 PreparedStatement stmtDel = conn.prepareStatement(sqlXoaDocGia)
             ) {
-                stmt1.setString(1, maNguoiDung);
+                // Xóa bản ghi trong phieuphat
+                stmt1.setString(1, maNguoiDung); // Dùng maNguoiDung thay vì maDocGia
                 stmt1.executeUpdate();
-    
+
+                // Xóa bản ghi trong lichsumuonsach
                 stmt2.setString(1, maNguoiDung);
                 stmt2.executeUpdate();
-    
+
+                // Xóa bản ghi trong docgia
                 stmtDel.setString(1, maNguoiDung);
                 int result = stmtDel.executeUpdate();
-    
+
                 conn.commit();
                 return result;
             } catch (SQLException e) {
                 conn.rollback();
+                System.err.println("Lỗi khi xóa độc giả: " + e.getMessage());
+                e.printStackTrace();
                 throw e;
             }
         } catch (SQLException e) {
+            System.err.println("Lỗi kết nối cơ sở dữ liệu: " + e.getMessage());
             e.printStackTrace();
             return 0;
         }
