@@ -37,6 +37,23 @@ public class DocGiaDao implements InterfaceDao<DocGia> {
         }
     }
 
+    public String getMaDocGiaByUsername(String username) {
+        String sql = "SELECT maNguoiDung FROM DocGia WHERE taiKhoan = '" + username + "'";
+        try (Connection conn = JDBCUtil.connect();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+            if (rs.next()) {
+                String result = rs.getString("maNguoiDung");
+                return result;
+            }
+            return "DG001";
+        } catch (SQLException e) {
+            System.err.println("Lỗi khi lấy mã người dùng : " + e.getMessage());
+            e.printStackTrace();
+            return "DG001";
+        }
+    }
+
     public String layMaNguoiDungMoiNhat() {
         String sql = "SELECT maNguoiDung FROM DocGia ORDER BY maNguoiDung DESC LIMIT 1";
         try (Connection conn = JDBCUtil.connect();

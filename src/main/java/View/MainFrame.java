@@ -2,7 +2,7 @@ package View;
 
 import Session.LoginSession;
 import View.Librarian.Librarian;
-import View.User.Dashboard;
+import View.User.User;
 
 import javax.swing.*;
 import java.awt.*;
@@ -21,8 +21,9 @@ public class MainFrame extends JFrame {
             setContentPane(librarian.getMainPanel());
         } else {
             // Giao diện độc giả
-            Dashboard dashboardFrame = new Dashboard(session.getFullName());
-            setContentPane(dashboardFrame.getContentPane());
+            User user = new User(session.getFullName());
+            user.showUI();
+            setContentPane(user.getContentPane());
         }
 
         setVisible(true);
