@@ -12,6 +12,8 @@ import java.nio.file.StandardCopyOption;
 import java.awt.*;
 import java.awt.event.AdjustmentEvent;
 import java.awt.event.AdjustmentListener;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import javax.swing.JCheckBoxMenuItem;
@@ -204,6 +206,29 @@ public class Book extends JFrame {
         JTextField txt_search = new JTextField(25);
         txt_search.setPreferredSize(new Dimension(0, 40));
         txt_search.setMaximumSize(new Dimension(300, 40));
+        txt_search.setFont(new Font("SansSerif", Font.PLAIN, 14));
+        txt_search.setForeground(Color.GRAY);
+        txt_search.setText("Nhập tên sách");
+        
+        txt_search.addFocusListener(new FocusAdapter() {
+            @Override
+            public void focusGained(FocusEvent e) {
+                if (txt_search.getText().trim().equals("Nhập tên sách")) {
+                    txt_search.setText("");
+                    txt_search.setForeground(Color.BLACK);
+                }
+            }
+
+            @Override
+            public void focusLost(FocusEvent e) {
+                if (txt_search.getText().trim().isEmpty()) {
+                    txt_search.setText("Nhập tên sách");
+                    txt_search.setForeground(Color.GRAY);
+                }
+            }
+        });
+
+        
         JPopupMenu suggestionsPopup = new JPopupMenu();
         pnl_top.add(txt_search);
         pnl_top.add(suggestionsPopup);
@@ -213,7 +238,7 @@ public class Book extends JFrame {
         suggestionsPopup.setFocusable(false);
         suggestionsPopup.setBorder(BorderFactory.createLineBorder(Color.GRAY));
         suggestionsPopup.add(new JScrollPane(suggestionList));
-
+        
         txt_search.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
             public void insertUpdate(javax.swing.event.DocumentEvent e) { showSuggestions(); }
             public void removeUpdate(javax.swing.event.DocumentEvent e) { showSuggestions(); }
@@ -261,13 +286,13 @@ public class Book extends JFrame {
             }
         });
         
-        JButton btn_search = new JButton("🔍");
-        btn_search.setPreferredSize(new Dimension(40, 40));
-        btn_search.setMaximumSize(new Dimension(40, 40));
-        btn_search.setMinimumSize(new Dimension(40, 40));
+        JButton btn_search = new JButton("Tìm");
+        btn_search.setPreferredSize(new Dimension(60, 40));
+        btn_search.setMaximumSize(new Dimension(60, 40));
+        btn_search.setMinimumSize(new Dimension(60, 40));
         btn_search.addActionListener(e -> {
             String keyword = txt_search.getText().trim();
-            if (keyword.isEmpty()) {
+            if (keyword.isEmpty() | keyword.equals("Nhập tên sách")) {
                 isFiltering = false;
                 pnl_center.removeAll();
                 displayedBooks.clear();
@@ -791,7 +816,7 @@ public class Book extends JFrame {
         book.setnXB(txtPublisher.getText());
         book.setNamXB(Integer.parseInt(txtYear.getText()));
         book.setGia(Double.parseDouble(txtPrice.getText()));
-        book.setAnh(book.getMaSach() + ".png");
+        book.setAnh(book.getAnh());
 
         List<TheLoai> selectedTL = new ArrayList<>();
         for (String name : selectedCategories) {
@@ -806,7 +831,7 @@ public class Book extends JFrame {
         if (selectedImagePath[0] != null) {
             try {
                 Files.copy(new File(selectedImagePath[0]).toPath(),
-                        new File("Pictures/" + book.getMaSach() + ".png").toPath(),
+                        new File("Pictures/" + book.getAnh()).toPath(),
                         StandardCopyOption.REPLACE_EXISTING);
             } catch (IOException ex) {
                 ex.printStackTrace();
