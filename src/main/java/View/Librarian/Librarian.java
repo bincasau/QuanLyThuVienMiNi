@@ -11,8 +11,10 @@ import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.time.Year;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -60,6 +62,21 @@ public class Librarian extends JFrame {
     private JScrollPane scrollPane;
     private JButton btn_prev;
     private JButton btn_next;
+
+    private int userCurrentPage = 1;
+    private int userPageSize = 20;
+    private int userTotalRecords = 0;
+    private List<DocGia> docGiaList = new ArrayList<>();
+
+    private JLabel lbl_pageInfo;
+    private JButton user_btn_previous;
+    private JButton user_btn_next;
+
+    // Regex patterns for user validation
+    private static final Pattern EMAIL_PATTERN = Pattern.compile("^[a-zA-Z0-9._%+-]+@gmail\\.com$");
+    private static final Pattern PHONE_PATTERN = Pattern.compile("^\\d{10}$");
+    private static final Pattern USERNAME_PASSWORD_PATTERN = Pattern.compile("^.{8,}$");
+
 
     public Librarian(String fullName) {
         this.fullName = fullName;
@@ -864,22 +881,48 @@ public class Librarian extends JFrame {
         JPanel pnl_Main = new JPanel(new BorderLayout());
         String[] columnNames = {"Mã Người Dùng", "Tên Người Dùng", "Tài Khoản", "Email", "Số Điện Thoại", "Ngày Tạo"};
         tableModel = new DefaultTableModel(columnNames, 0);
-        final JTable table = new JTable(tableModel);
-        loadTableData("");
+        table = new JTable(tableModel);
 
         JPanel pnl_top = new JPanel(new FlowLayout(FlowLayout.LEFT));
         pnl_top.setBackground(Color.WHITE);
-        JTextField txt_search = new JTextField(25);
+
+        JTextField txt_search = new JTextField("Tìm mã độc giả, tên, tài khoản...", 25);
         txt_search.setPreferredSize(new Dimension(0, 40));
         txt_search.setMaximumSize(new Dimension(300, 40));
+        txt_search.setFont(new Font("Arial", Font.PLAIN, 14));
+        txt_search.setForeground(Color.GRAY);
+
+        txt_search.addFocusListener(new FocusListener() {
+            @Override
+            public void focusGained(FocusEvent e) {
+                if (txt_search.getText().equals("Tìm mã độc giả, tên, tài khoản...")) {
+                    txt_search.setText("");
+                    txt_search.setForeground(Color.BLACK);
+                }
+            }
+
+            @Override
+            public void focusLost(FocusEvent e) {
+                if (txt_search.getText().isEmpty()) {
+                    txt_search.setText("Tìm mã độc giả, tên, tài khoản...");
+                    txt_search.setForeground(Color.GRAY);
+                }
+            }
+        });
+
         pnl_top.add(txt_search);
 
-        JButton btn_search = new JButton("🔍");
-        btn_search.setPreferredSize(new Dimension(40, 40));
-        btn_search.setMaximumSize(new Dimension(40, 40));
-        btn_search.setMinimumSize(new Dimension(40, 40));
+        JButton btn_search = new JButton("Tìm");
+        btn_search.setPreferredSize(new Dimension(80, 40));
+        btn_search.setMaximumSize(new Dimension(80, 40));
+        btn_search.setMinimumSize(new Dimension(80, 40));
+        btn_search.setFont(new Font("Arial", Font.BOLD, 14));
         btn_search.addActionListener(e -> {
+            userCurrentPage = 1; // Reset to page 1 on search
             String keyword = txt_search.getText().trim();
+            if (keyword.equals("Tìm mã độc giả, tên, tài khoản...")) {
+                keyword = "";
+            }
             loadTableData(keyword);
         });
         pnl_top.add(btn_search);
@@ -909,33 +952,71 @@ public class Librarian extends JFrame {
 
             int result = JOptionPane.showConfirmDialog(this, panel, "Thêm Độc Giả", JOptionPane.OK_CANCEL_OPTION);
             if (result == JOptionPane.OK_OPTION) {
-                String tenNguoiDung = tenNguoiDungField.getText();
-                String taiKhoan = taiKhoanField.getText();
-                String matKhauGoc = matKhauField.getText();
-                String matKhauHash = hashSHA1(matKhauGoc);
-                String email = emailField.getText();
-                String soDienThoai = soDienThoaiField.getText();
+                String tenNguoiDung = tenNguoiDungField.getText().trim();
+                String taiKhoan = taiKhoanField.getText().trim();
+                String matKhauGoc = matKhauField.getText().trim();
+                String email = emailField.getText().trim();
+                String soDienThoai = soDienThoaiField.getText().trim();
 
+                // Validation
                 if (tenNguoiDung.isEmpty() || taiKhoan.isEmpty() || matKhauGoc.isEmpty()) {
-                    JOptionPane.showMessageDialog(this, "Tên, tài khoản và mật khẩu không được để trống!");
+                    JOptionPane.showMessageDialog(this, "Tên, tài khoản và mật khẩu không được để trống!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
+                if (!USERNAME_PASSWORD_PATTERN.matcher(taiKhoan).matches()) {
+                    JOptionPane.showMessageDialog(this, "Tài khoản phải có ít nhất 8 ký tự!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
+                if (!USERNAME_PASSWORD_PATTERN.matcher(matKhauGoc).matches()) {
+                    JOptionPane.showMessageDialog(this, "Mật khẩu phải có ít nhất 8 ký tự!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
+                if (!email.isEmpty() && !EMAIL_PATTERN.matcher(email).matches()) {
+                    JOptionPane.showMessageDialog(this, "Email phải có định dạng hợp lệ (ví dụ: user@gmail.com)!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
+                if (!soDienThoai.isEmpty() && !PHONE_PATTERN.matcher(soDienThoai).matches()) {
+                    JOptionPane.showMessageDialog(this, "Số điện thoại phải có đúng 10 chữ số (ví dụ: 0123456789)!", "Lỗi", JOptionPane.ERROR_MESSAGE);
                     return;
                 }
 
                 try {
                     DocGiaDao docGiaDao = DocGiaDao.getInstance();
+                    if (docGiaDao == null) {
+                        throw new Exception("DocGiaDao instance is null");
+                    }
+
+                    // Check for duplicate account
+                    if (docGiaDao.kiemTraTaiKhoanTonTai(taiKhoan)) {
+                        JOptionPane.showMessageDialog(this, "Tài khoản '" + taiKhoan + "' đã tồn tại! Vui lòng chọn tài khoản khác.", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                        return;
+                    }
+
                     String maNguoiDung = docGiaDao.layMaNguoiDungMoiNhat();
+                    if (maNguoiDung == null) {
+                        throw new Exception("Cannot generate new maNguoiDung");
+                    }
                     Date ngayTao = new Date();
+                    String matKhauHash = hashSHA1(matKhauGoc);
 
                     DocGia docGia = new DocGia(maNguoiDung, tenNguoiDung, taiKhoan, matKhauHash, email, soDienThoai, ngayTao);
                     int rowsAffected = docGiaDao.themDoiTuong(docGia);
                     if (rowsAffected > 0) {
                         JOptionPane.showMessageDialog(this, "Thêm độc giả thành công!");
-                        loadTableData("");
+                        String keyword = txt_search.getText().trim();
+                        if (keyword.equals("Tìm mã độc giả, tên, tài khoản...")) {
+                            keyword = "";
+                        }
+                        loadTableData(keyword);
                     } else {
                         JOptionPane.showMessageDialog(this, "Thêm độc giả thất bại!");
                     }
                 } catch (Exception ex) {
-                    JOptionPane.showMessageDialog(this, "Lỗi khi thêm độc giả: " + ex.getMessage());
+                    JOptionPane.showMessageDialog(this, "Lỗi khi thêm độc giả: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
                 }
             }
         });
@@ -959,12 +1040,24 @@ public class Librarian extends JFrame {
                 if (confirm == JOptionPane.YES_OPTION) {
                     try {
                         DocGiaDao docGiaDao = DocGiaDao.getInstance();
+                        if (docGiaDao == null) {
+                            throw new Exception("DocGiaDao instance is null");
+                        }
                         DocGia tmp = new DocGia();
                         tmp.setMaNguoiDung(maNguoiDung);
                         int rowsAffected = docGiaDao.xoaDoiTuong(tmp);
                         if (rowsAffected > 0) {
                             JOptionPane.showMessageDialog(this, "Xóa độc giả thành công!");
-                            loadTableData("");
+                            String keyword = txt_search.getText().trim();
+                            if (keyword.equals("Tìm mã độc giả, tên, tài khoản...")) {
+                                keyword = "";
+                            }
+                            // Adjust pagination if current page is empty
+                            int totalPages = (int) Math.ceil((double) userTotalRecords / userPageSize);
+                            if (userCurrentPage > totalPages && totalPages > 0) {
+                                userCurrentPage = totalPages;
+                            }
+                            loadTableData(keyword);
                         } else {
                             JOptionPane.showMessageDialog(this, "Xóa độc giả thất bại! Không tìm thấy độc giả hoặc lỗi cơ sở dữ liệu.", "Lỗi", JOptionPane.ERROR_MESSAGE);
                         }
@@ -981,8 +1074,66 @@ public class Librarian extends JFrame {
         JScrollPane scrollPane = new JScrollPane(table);
         scrollPane.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
+        JPanel pnl_pagination = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        pnl_pagination.setBackground(Color.WHITE);
+
+        JLabel lbl_pageSize = new JLabel("Số dòng/trang:");
+        pnl_pagination.add(lbl_pageSize);
+
+        Integer[] pageSizes = {20, 30, 40};
+        JComboBox<Integer> cmb_pageSize = new JComboBox<>(pageSizes);
+        cmb_pageSize.setSelectedItem(20);
+        cmb_pageSize.setPreferredSize(new Dimension(60, 30));
+        cmb_pageSize.addActionListener(e -> {
+            userPageSize = (Integer) cmb_pageSize.getSelectedItem();
+            userCurrentPage = 1; // Reset to page 1 when changing pageSize
+            String keyword = txt_search.getText().trim();
+            if (keyword.equals("Tìm mã độc giả, tên, tài khoản...")) {
+                keyword = "";
+            }
+            loadTableData(keyword);
+        });
+        pnl_pagination.add(cmb_pageSize);
+
+        user_btn_previous = new JButton("Previous");
+        user_btn_previous.setPreferredSize(new Dimension(100, 30));
+        user_btn_previous.addActionListener(e -> {
+            if (userCurrentPage > 1) {
+                userCurrentPage--;
+                String keyword = txt_search.getText().trim();
+                if (keyword.equals("Tìm mã độc giả, tên, tài khoản...")) {
+                    keyword = "";
+                }
+                loadTableData(keyword);
+            }
+        });
+        pnl_pagination.add(user_btn_previous);
+
+        lbl_pageInfo = new JLabel("Trang 1/1");
+        lbl_pageInfo.setFont(new Font("Arial", Font.PLAIN, 14));
+        pnl_pagination.add(lbl_pageInfo);
+
+        user_btn_next = new JButton("Next");
+        user_btn_next.setPreferredSize(new Dimension(100, 30));
+        user_btn_next.addActionListener(e -> {
+            int totalPages = (int) Math.ceil((double) userTotalRecords / userPageSize);
+            if (userCurrentPage < totalPages) {
+                userCurrentPage++;
+                String keyword = txt_search.getText().trim();
+                if (keyword.equals("Tìm mã độc giả, tên, tài khoản...")) {
+                    keyword = "";
+                }
+                loadTableData(keyword);
+            }
+        });
+        pnl_pagination.add(user_btn_next);
+
         pnl_Main.add(pnl_top, BorderLayout.NORTH);
         pnl_Main.add(scrollPane, BorderLayout.CENTER);
+        pnl_Main.add(pnl_pagination, BorderLayout.SOUTH);
+
+        // Load table data after all components are initialized
+        loadTableData("");
 
         return pnl_Main;
     }
@@ -1786,24 +1937,63 @@ public class Librarian extends JFrame {
 
     private void loadTableData(String keyword) {
         tableModel.setRowCount(0);
-        DocGiaDao docGiaDao = DocGiaDao.getInstance();
-        List<DocGia> docGiaList;
-        if (keyword.isEmpty()) {
-            docGiaList = docGiaDao.layDanhSach();
-        } else {
-            docGiaList = docGiaDao.timKiem(keyword);
-        }
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-        for (DocGia docGia : docGiaList) {
-            Object[] row = {
-                docGia.getMaNguoiDung(),
-                docGia.getTenNguoiDung(),
-                docGia.getTaiKhoan(),
-                docGia.getEmail(),
-                docGia.getSoDienThoai(),
-                sdf.format(docGia.getNgayTao())
-            };
-            tableModel.addRow(row);
+        try {
+            DocGiaDao docGiaDao = DocGiaDao.getInstance();
+            if (docGiaDao == null) {
+                throw new Exception("DocGiaDao instance is null");
+            }
+            docGiaList.clear();
+            if (keyword.isEmpty()) {
+                docGiaList = docGiaDao.layDanhSach();
+            } else {
+                docGiaList = docGiaDao.timKiem(keyword);
+            }
+            if (docGiaList == null) {
+                throw new Exception("DocGia list is null");
+            }
+
+            // Reverse list to show newest users first
+            Collections.reverse(docGiaList);
+
+            userTotalRecords = docGiaList.size();
+            int totalPages = (int) Math.ceil((double) userTotalRecords / userPageSize);
+
+            // Adjust currentPage if it exceeds totalPages
+            if (userCurrentPage > totalPages && totalPages > 0) {
+                userCurrentPage = totalPages;
+            } else if (userCurrentPage < 1) {
+                userCurrentPage = 1;
+            }
+
+            // Paginate the list
+            int start = (userCurrentPage - 1) * userPageSize;
+            int end = Math.min(start + userPageSize, userTotalRecords);
+            List<DocGia> paginatedList = new ArrayList<>();
+            for (int i = start; i < end; i++) {
+                paginatedList.add(docGiaList.get(i));
+            }
+
+            // Update table
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+            for (DocGia docGia : paginatedList) {
+                Object[] row = {
+                    docGia.getMaNguoiDung(),
+                    docGia.getTenNguoiDung(),
+                    docGia.getTaiKhoan(),
+                    docGia.getEmail(),
+                    docGia.getSoDienThoai(),
+                    sdf.format(docGia.getNgayTao())
+                };
+                tableModel.addRow(row);
+            }
+
+            // Update pagination controls
+            lbl_pageInfo.setText("Trang " + userCurrentPage + "/" + (totalPages == 0 ? 1 : totalPages));
+            user_btn_previous.setEnabled(userCurrentPage > 1);
+            user_btn_next.setEnabled(userCurrentPage < totalPages);
+
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Lỗi tải dữ liệu bảng: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
     }
 
