@@ -330,10 +330,10 @@ public class Librarian extends JFrame {
             }
         });
 
-        JButton btn_search = new JButton("🔍");
-        btn_search.setPreferredSize(new Dimension(40, 40));
-        btn_search.setMaximumSize(new Dimension(40, 40));
-        btn_search.setMinimumSize(new Dimension(40, 40));
+        JButton btn_search = new JButton("Tìm kiếm");
+        btn_search.setPreferredSize(new Dimension(90, 40));
+        btn_search.setMaximumSize(new Dimension(90, 40));
+        btn_search.setMinimumSize(new Dimension(90, 40));
         btn_search.addActionListener(e -> {
             String keyword = txt_search.getText().trim();
             if (keyword.isEmpty()) {
@@ -1766,9 +1766,10 @@ public class Librarian extends JFrame {
     private JPanel createPenaltyTicketInfoPanel() {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(Color.WHITE);
-        JLabel label = new JLabel("Chức năng Thông tin phiếu phạt chưa được triển khai", SwingConstants.CENTER);
-        label.setFont(new Font("Arial", Font.PLAIN, 16));
-        panel.add(label, BorderLayout.CENTER);
+        //JLabel label = new JLabel("Chức năng Thông tin phiếu phạt chưa được triển khai", SwingConstants.CENTER);
+        //label.setFont(new Font("Arial", Font.PLAIN, 16));
+        JPanel phieuPhat = new ThongTinPhieuPhat();
+        panel.add(phieuPhat, BorderLayout.CENTER);
         return panel;
     }
 

@@ -15,7 +15,7 @@ import java.util.List;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
-public class ThongTinPhieuPhat extends JFrame {
+public class ThongTinPhieuPhat extends JPanel {
     private JPanel pnl_Content;
     private JTextField txt_Search;
     private JPopupMenu suggestionsPopup;
@@ -32,127 +32,17 @@ public class ThongTinPhieuPhat extends JFrame {
     private final String PLACEHOLDER_TEXT = "Tìm mã phiếu phạt, lý do, tên độc giả";
     private JPanel pnl_ListContent;
 
-    public static void main(String[] args) {
-        EventQueue.invokeLater(() -> {
-            try {
-                ThongTinPhieuPhat frame = new ThongTinPhieuPhat();
-                frame.setVisible(true);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        });
-    }
-
     public ThongTinPhieuPhat() {
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(1000, 600);
-        setTitle("Thư viện mini - Quản lý phiếu phạt");
-        setLocationRelativeTo(null);
+        setLayout(new BorderLayout());
+        setBackground(Color.WHITE);
 
         pnl_Content = new JPanel(new BorderLayout());
         pnl_Content.setBorder(new EmptyBorder(5, 5, 5, 5));
-        setContentPane(pnl_Content);
-
-        JPanel pnl_Sidebar = createSidebar();
-        pnl_Content.add(pnl_Sidebar, BorderLayout.WEST);
-
-        JPanel pnl_Header = createHeader();
-        pnl_Content.add(pnl_Header, BorderLayout.NORTH);
 
         pnl_ListContent = createContent();
         pnl_Content.add(pnl_ListContent, BorderLayout.CENTER);
-    }
 
-    private JPanel createSidebar() {
-        JPanel pnl_Sidebar = new JPanel();
-        pnl_Sidebar.setLayout(new BoxLayout(pnl_Sidebar, BoxLayout.Y_AXIS));
-        pnl_Sidebar.setPreferredSize(new Dimension(200, 600));
-        pnl_Sidebar.setBackground(new Color(106, 85, 85));
-
-        String[] buttonNames = {
-            "Sách", "Độc giả", "Mượn sách", "Thông tin phiếu phạt", "Thống kê", "Đăng xuất"
-        };
-
-        for (String name : buttonNames) {
-            JButton btn = new JButton(name);
-            btn.setPreferredSize(new Dimension(200, 50));
-            btn.setMaximumSize(new Dimension(200, 50));
-            btn.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-            if (name.equals("Thông tin phiếu phạt")) {
-                btn.setBackground(new Color(182, 162, 162));
-                btn.setOpaque(true);
-            }
-            pnl_Sidebar.add(btn);
-            if (name.equals("Thống kê")) {
-                pnl_Sidebar.add(Box.createVerticalGlue());
-            }
-        }
-        return pnl_Sidebar;
-    }
-
-    private JPanel createHeader() {
-        JPanel pnl_Header = new JPanel();
-        pnl_Header.setLayout(new BoxLayout(pnl_Header, BoxLayout.X_AXIS));
-        pnl_Header.setPreferredSize(new Dimension(0, 100));
-        pnl_Header.setBackground(new Color(106, 85, 85));
-
-        ImageIcon icon_Book = new ImageIcon("pictures/book.png");
-        if (icon_Book.getIconWidth() == -1) {
-            JLabel lbl_icon = new JLabel("BOOK");
-            lbl_icon.setFont(new Font("Arial", Font.BOLD, 20));
-            lbl_icon.setForeground(Color.WHITE);
-            lbl_icon.setBorder(BorderFactory.createEmptyBorder(10, 50, 10, 60));
-            pnl_Header.add(lbl_icon);
-        } else {
-            Image scaledImage = icon_Book.getImage().getScaledInstance(100, 100, Image.SCALE_SMOOTH);
-            JLabel lbl_icon = new JLabel(new ImageIcon(scaledImage));
-            lbl_icon.setBorder(BorderFactory.createEmptyBorder(10, 50, 10, 60));
-            pnl_Header.add(lbl_icon);
-        }
-
-        JLabel lbl_Title = new JLabel("NHÀ SÁCH MINI");
-        lbl_Title.setFont(new Font("Arial", Font.BOLD, 24));
-        lbl_Title.setForeground(Color.WHITE);
-        lbl_Title.setBorder(null);
-        pnl_Header.add(lbl_Title);
-        pnl_Header.add(Box.createHorizontalGlue());
-
-        JLabel lbl_LibrarianName = new JLabel("Thủ thư: Nguyễn Văn A");
-        lbl_LibrarianName.setFont(new Font("Arial", Font.PLAIN, 16));
-        lbl_LibrarianName.setForeground(Color.WHITE);
-        lbl_LibrarianName.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 20));
-        pnl_Header.add(lbl_LibrarianName);
-
-        Dimension size = new Dimension(50, 50);
-
-        ImageIcon icon_Bell = new ImageIcon("Pictures/bell.png");
-        JButton btn_Notification;
-        if (icon_Bell.getIconWidth() != -1) {
-            Image scaledImage = icon_Bell.getImage().getScaledInstance(30, 30, Image.SCALE_SMOOTH);
-            btn_Notification = new JButton(new ImageIcon(scaledImage));
-        } else {
-            btn_Notification = new JButton("🔔");
-        }
-        btn_Notification.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 20));
-        btn_Notification.setPreferredSize(size);
-        btn_Notification.setMaximumSize(size);
-        btn_Notification.setMinimumSize(size);
-        pnl_Header.add(btn_Notification);
-
-        ImageIcon icon_Profile = new ImageIcon("Pictures/profile.png");
-        JButton btn_Profile;
-        if (icon_Profile.getIconWidth() != -1) {
-            Image scaledImage = icon_Profile.getImage().getScaledInstance(30, 30, Image.SCALE_SMOOTH);
-            btn_Profile = new JButton(new ImageIcon(scaledImage));
-        } else {
-            btn_Profile = new JButton("👤");
-        }
-        btn_Profile.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 20));
-        btn_Profile.setPreferredSize(size);
-        btn_Profile.setMaximumSize(size);
-        btn_Profile.setMinimumSize(size);
-        pnl_Header.add(btn_Profile);
-        return pnl_Header;
+        add(pnl_Content, BorderLayout.CENTER);
     }
 
     private JPanel createContent() {
@@ -404,7 +294,6 @@ public class ThongTinPhieuPhat extends JFrame {
     private void updateTableContent() {
         tableModel.setRowCount(0);
 
-        // Sắp xếp filteredDs theo ngày lập phiếu (mới nhất trước)
         filteredDs.sort((pp1, pp2) -> pp2.getNgayPhieu().compareTo(pp1.getNgayPhieu()));
 
         int startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -423,16 +312,15 @@ public class ThongTinPhieuPhat extends JFrame {
             });
         }
 
-        if (btn_prev != null) btn_prev.setVisible(currentPage > 1);
-        if (btn_next != null) btn_next.setVisible((currentPage * ITEMS_PER_PAGE) < filteredDs.size());
+        btn_prev.setVisible(currentPage > 1);
+        btn_next.setVisible((currentPage * ITEMS_PER_PAGE) < filteredDs.size());
 
         table.revalidate();
         table.repaint();
     }
 
     private void showAddForm() {
-        JPanel addPanel = new JPanel();
-        addPanel.setLayout(new GridBagLayout());
+        JPanel addPanel = new JPanel(new GridBagLayout());
         addPanel.setBackground(Color.WHITE);
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(10, 10, 10, 10);
@@ -528,21 +416,19 @@ public class ThongTinPhieuPhat extends JFrame {
 
                 if (confirm == JOptionPane.YES_OPTION) {
                     int result = PhieuPhatDao.getInstance().themDoiTuong(pp);
-                    pnl_Content.removeAll();
-                    pnl_Content.add(createSidebar(), BorderLayout.WEST);
-                    pnl_Content.add(createHeader(), BorderLayout.NORTH);
-                    pnl_Content.add(pnl_ListContent, BorderLayout.CENTER);
                     if (result > 0) {
                         ds = PhieuPhatDao.getInstance().layDanhSach();
                         filteredDs = ds != null ? new ArrayList<>(ds) : new ArrayList<>();
                         currentPage = 1;
                         updateTableContent();
                         JOptionPane.showMessageDialog(this, "Thêm phiếu phạt thành công!");
+                        pnl_Content.removeAll();
+                        pnl_Content.add(pnl_ListContent, BorderLayout.CENTER);
+                        pnl_Content.revalidate();
+                        pnl_Content.repaint();
                     } else {
                         JOptionPane.showMessageDialog(this, "Thêm thất bại! Vui lòng kiểm tra lại dữ liệu.");
                     }
-                    pnl_Content.revalidate();
-                    pnl_Content.repaint();
                 }
             } catch (Exception ex) {
                 JOptionPane.showMessageDialog(this, "Lỗi: " + ex.getMessage());
@@ -554,8 +440,6 @@ public class ThongTinPhieuPhat extends JFrame {
         JButton btnCancel = new JButton("Hủy");
         btnCancel.addActionListener(e -> {
             pnl_Content.removeAll();
-            pnl_Content.add(createSidebar(), BorderLayout.WEST);
-            pnl_Content.add(createHeader(), BorderLayout.NORTH);
             pnl_Content.add(pnl_ListContent, BorderLayout.CENTER);
             pnl_Content.revalidate();
             pnl_Content.repaint();
@@ -563,8 +447,6 @@ public class ThongTinPhieuPhat extends JFrame {
         addPanel.add(btnCancel, gbc);
 
         pnl_Content.removeAll();
-        pnl_Content.add(createSidebar(), BorderLayout.WEST);
-        pnl_Content.add(createHeader(), BorderLayout.NORTH);
         pnl_Content.add(addPanel, BorderLayout.CENTER);
         pnl_Content.revalidate();
         pnl_Content.repaint();
@@ -578,8 +460,7 @@ public class ThongTinPhieuPhat extends JFrame {
             return;
         }
 
-        JPanel editPanel = new JPanel();
-        editPanel.setLayout(new GridBagLayout());
+        JPanel editPanel = new JPanel(new GridBagLayout());
         editPanel.setBackground(Color.WHITE);
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(10, 10, 10, 10);
@@ -676,21 +557,19 @@ public class ThongTinPhieuPhat extends JFrame {
 
                 if (confirm == JOptionPane.YES_OPTION) {
                     int result = PhieuPhatDao.getInstance().capNhatDoiTuong(ppUpdated);
-                    pnl_Content.removeAll();
-                    pnl_Content.add(createSidebar(), BorderLayout.WEST);
-                    pnl_Content.add(createHeader(), BorderLayout.NORTH);
-                    pnl_Content.add(pnl_ListContent, BorderLayout.CENTER);
                     if (result > 0) {
                         ds = PhieuPhatDao.getInstance().layDanhSach();
                         filteredDs = ds != null ? new ArrayList<>(ds) : new ArrayList<>();
                         currentPage = 1;
                         updateTableContent();
                         JOptionPane.showMessageDialog(this, "Cập nhật phiếu phạt thành công!");
+                        pnl_Content.removeAll();
+                        pnl_Content.add(pnl_ListContent, BorderLayout.CENTER);
+                        pnl_Content.revalidate();
+                        pnl_Content.repaint();
                     } else {
                         JOptionPane.showMessageDialog(this, "Cập nhật thất bại! Vui lòng kiểm tra lại dữ liệu.");
                     }
-                    pnl_Content.revalidate();
-                    pnl_Content.repaint();
                 }
             } catch (Exception ex) {
                 JOptionPane.showMessageDialog(this, "Lỗi: " + ex.getMessage());
@@ -702,8 +581,6 @@ public class ThongTinPhieuPhat extends JFrame {
         JButton btnCancel = new JButton("Hủy");
         btnCancel.addActionListener(e -> {
             pnl_Content.removeAll();
-            pnl_Content.add(createSidebar(), BorderLayout.WEST);
-            pnl_Content.add(createHeader(), BorderLayout.NORTH);
             pnl_Content.add(pnl_ListContent, BorderLayout.CENTER);
             pnl_Content.revalidate();
             pnl_Content.repaint();
@@ -711,8 +588,6 @@ public class ThongTinPhieuPhat extends JFrame {
         editPanel.add(btnCancel, gbc);
 
         pnl_Content.removeAll();
-        pnl_Content.add(createSidebar(), BorderLayout.WEST);
-        pnl_Content.add(createHeader(), BorderLayout.NORTH);
         pnl_Content.add(editPanel, BorderLayout.CENTER);
         pnl_Content.revalidate();
         pnl_Content.repaint();
