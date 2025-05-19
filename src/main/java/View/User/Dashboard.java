@@ -10,15 +10,12 @@ import java.util.stream.Collectors;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 import DAO.SachDao;
 import DAO.TheLoaiDao;
 import Model.Sach;
 import Model.TheLoai;
-import View.Login.Login;
 
-public class Dashboard extends JFrame {
+public class Dashboard extends JPanel {
     private static final long serialVersionUID = 1L;
     private JPanel contentPane;
     private String fullName;
@@ -27,35 +24,25 @@ public class Dashboard extends JFrame {
     private int currentBookIndex = 0;
     private static final int BATCH_SIZE = 20;
     private JPanel pnl_Content;
-    private JTextField txt_Search;
+    private JFrame parentFrame;
 
-    public Dashboard(String fullName) {
+    public Dashboard(String fullName, JFrame parentFrame) {
         this.fullName = fullName;
+        this.parentFrame = parentFrame;
         initializeUI();
     }
 
-    public Dashboard() {
+    public Dashboard(JFrame parentFrame) {
         this.fullName = "Guest";
+        this.parentFrame = parentFrame;
         initializeUI();
     }
 
     private void initializeUI() {
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setTitle("Thư viện mini");
         setSize(1000, 600);
-        setLocationRelativeTo(null);
 
         contentPane = new JPanel(new BorderLayout());
         contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
-        setContentPane(contentPane);
-
-        JPanel pnl_Sidebar = createSidebar();
-        contentPane.add(pnl_Sidebar, BorderLayout.WEST);
-
-        JPanel pnl_Main = new JPanel(new BorderLayout());
-
-        JPanel pnl_Header = createHeader();
-        pnl_Main.add(pnl_Header, BorderLayout.NORTH);
 
         pnl_Content = createContentPanel();
         JScrollPane scrollPane = new JScrollPane(pnl_Content);
@@ -72,180 +59,10 @@ public class Dashboard extends JFrame {
             }
         });
 
-        pnl_Main.add(scrollPane, BorderLayout.CENTER);
-        contentPane.add(pnl_Main, BorderLayout.CENTER);
-    }
+        contentPane.add(scrollPane, BorderLayout.CENTER);
 
-    private JPanel createSidebar() {
-        JPanel pnl_Sidebar = new JPanel();
-        pnl_Sidebar.setLayout(new BoxLayout(pnl_Sidebar, BoxLayout.Y_AXIS));
-        pnl_Sidebar.setPreferredSize(new Dimension(220, 600));
-        pnl_Sidebar.setBackground(new Color(240, 233, 222));
-
-        JLabel lbl_Title = new JLabel("Thư viện MINI");
-        lbl_Title.setFont(new Font("SansSerif", Font.BOLD, 24));
-        lbl_Title.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        pnl_Sidebar.add(lbl_Title);
-
-        JPanel pnl_ButtonGroup = new JPanel();
-        pnl_ButtonGroup.setLayout(new BoxLayout(pnl_ButtonGroup, BoxLayout.Y_AXIS));
-        pnl_ButtonGroup.setBackground(new Color(240, 233, 222));
-        pnl_ButtonGroup.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 10));
-
-        String[] btnLabels = {"Trang chủ", "Lịch sử", "Phiếu phạt", "Đăng xuất"};
-        for (String text : btnLabels) {
-            JButton btn = new JButton(text);
-            btn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
-            btn.setAlignmentX(Component.LEFT_ALIGNMENT);
-            btn.setHorizontalAlignment(SwingConstants.LEFT);
-            btn.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
-            if (text.equals("Trang chủ")) {
-            	btn.setBackground(Color.white);
-            	btn.setOpaque(true);
-            }
-            else if (text.equals("Đăng xuất")) {
-                btn.addActionListener(e -> {
-                    dispose();
-                    SwingUtilities.invokeLater(() -> new Login().setVisible(true));
-                });
-            }
-            pnl_ButtonGroup.add(Box.createRigidArea(new Dimension(0, 10)));
-            pnl_ButtonGroup.add(btn);
-        }
-
-        pnl_Sidebar.add(pnl_ButtonGroup);
-        return pnl_Sidebar;
-    }
-
-    private JPanel createHeader() {
-        JPanel pnl_Header = new JPanel(new BorderLayout());
-        pnl_Header.setPreferredSize(new Dimension(0, 160));
-        pnl_Header.setBackground(new Color(107, 142, 35));
-
-        JPanel pnl_TopRow = new JPanel();
-        pnl_TopRow.setLayout(new BoxLayout(pnl_TopRow, BoxLayout.X_AXIS));
-        pnl_TopRow.setOpaque(false);
-        pnl_TopRow.setBorder(BorderFactory.createEmptyBorder(10, 35, 0, 20));
-
-        JButton btn_Avatar = createIconButton("pictures/profile.png", "👤");
-        JButton btn_Notification = createIconButton("pictures/bell.png", "🔔");
-
-        JLabel lbl_UserName = new JLabel(fullName);
-        lbl_UserName.setFont(new Font("SansSerif", Font.PLAIN, 14));
-        lbl_UserName.setForeground(Color.WHITE);
-
-        pnl_TopRow.add(btn_Avatar);
-        pnl_TopRow.add(Box.createHorizontalStrut(10));
-        pnl_TopRow.add(lbl_UserName);
-        pnl_TopRow.add(Box.createHorizontalGlue());
-        pnl_TopRow.add(btn_Notification);
-
-        // Khởi tạo txt_Search với placeholder
-        txt_Search = new JTextField("Nhập Tên Sách", 20);
-        txt_Search.setFont(new Font("SansSerif", Font.PLAIN, 14));
-        txt_Search.setForeground(Color.GRAY);
-
-        // Xử lý placeholder
-        txt_Search.addFocusListener(new FocusAdapter() {
-            @Override
-            public void focusGained(FocusEvent e) {
-                if (txt_Search.getText().equals("Nhập Tên Sách")) {
-                    txt_Search.setText("");
-                    txt_Search.setForeground(Color.BLACK);
-                }
-            }
-
-            @Override
-            public void focusLost(FocusEvent e) {
-                if (txt_Search.getText().isEmpty()) {
-                    txt_Search.setText("Nhập Tên Sách");
-                    txt_Search.setForeground(Color.GRAY);
-                }
-            }
-        });
-
-        // DocumentListener để tìm kiếm
-        txt_Search.getDocument().addDocumentListener(new DocumentListener() {
-            Timer timer = new Timer(300, null);
-
-            {
-                timer.setRepeats(false);
-                timer.addActionListener(e -> {
-                    String text = txt_Search.getText();
-                    if (text.equals("Nhập Tên Sách")) {
-                        text = "";
-                    }
-                    search(text);
-                });
-            }
-
-            @Override
-            public void insertUpdate(DocumentEvent e) {
-                timer.restart();
-            }
-
-            @Override
-            public void removeUpdate(DocumentEvent e) {
-                timer.restart();
-            }
-
-            @Override
-            public void changedUpdate(DocumentEvent e) {
-                timer.restart();
-            }
-
-            private void search(String keyword) {
-                SwingUtilities.invokeLater(() -> {
-                    if (keyword.trim().isEmpty() || keyword.equals("Nhập Tên Sách")) {
-                        bookList = new ArrayList<>(fullBookList);
-                    } else {
-                        bookList = fullBookList.stream()
-                                .filter(s -> s.getTenSach().toLowerCase().contains(keyword.toLowerCase().trim()))
-                                .collect(Collectors.toList());
-                    }
-                    currentBookIndex = 0;
-                    pnl_Content.removeAll();
-                    loadMoreBooks();
-                });
-            }
-        });
-
-        JButton btn_Clear = new JButton("Tìm");
-        btn_Clear.setPreferredSize(new Dimension(60, 40));
-        btn_Clear.addActionListener(e -> {
-            txt_Search.setText("");
-            txt_Search.setForeground(Color.BLACK);
-            bookList = new ArrayList<>(fullBookList);
-            currentBookIndex = 0;
-            pnl_Content.removeAll();
-            loadMoreBooks();
-        });
-
-        JPanel pnl_SearchWrapper = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        pnl_SearchWrapper.setOpaque(false);
-        pnl_SearchWrapper.setBorder(BorderFactory.createEmptyBorder(15, 35, 10, 10));
-        txt_Search.setPreferredSize(new Dimension(300, 40));
-        pnl_SearchWrapper.add(txt_Search);
-        pnl_SearchWrapper.add(btn_Clear);
-
-        JButton btn_Filter = new JButton("Lọc thể loại");
-        btn_Filter.setPreferredSize(new Dimension(120, 40));
-        btn_Filter.setFocusable(false);
-        btn_Filter.addActionListener(e -> openFilterDialog());
-
-        pnl_SearchWrapper.add(btn_Filter);
-
-        JButton btnClearFilter = new JButton("Hủy lọc");
-        btnClearFilter.setPreferredSize(new Dimension(120, 40));
-        btnClearFilter.setFocusable(false);
-        btnClearFilter.addActionListener(e -> clearFilters());
-
-        pnl_SearchWrapper.add(btnClearFilter);
-
-        pnl_Header.add(pnl_TopRow, BorderLayout.NORTH);
-        pnl_Header.add(pnl_SearchWrapper, BorderLayout.CENTER);
-
-        return pnl_Header;
+        setLayout(new BorderLayout());
+        add(contentPane, BorderLayout.CENTER);
     }
 
     private JButton createIconButton(String imagePath, String fallbackText) {
@@ -343,9 +160,9 @@ public class Dashboard extends JFrame {
     }
 
     private void showBookDetails(Sach book) {
-        JDialog detailDialog = new JDialog(this, "Thông tin sách", true);
+        JDialog detailDialog = new JDialog(parentFrame, "Thông tin sách", true);
         detailDialog.setSize(500, 350);
-        detailDialog.setLocationRelativeTo(this);
+        detailDialog.setLocationRelativeTo(parentFrame);
         detailDialog.setLayout(new BorderLayout(15, 15));
         detailDialog.getContentPane().setBackground(Color.WHITE);
         detailDialog.setResizable(false);
@@ -403,10 +220,10 @@ public class Dashboard extends JFrame {
         panel.add(lbl);
     }
 
-    private void openFilterDialog() {
-        JDialog filterDialog = new JDialog(this, "Lọc theo thể loại", true);
+    public void openFilterDialog() {
+        JDialog filterDialog = new JDialog(parentFrame, "Lọc theo thể loại", true);
         filterDialog.setSize(300, 400);
-        filterDialog.setLocationRelativeTo(this);
+        filterDialog.setLocationRelativeTo(parentFrame);
         filterDialog.setLayout(new BorderLayout());
 
         List<TheLoai> allGenres = TheLoaiDao.getInstance().layDanhSach();
@@ -444,7 +261,7 @@ public class Dashboard extends JFrame {
         filterDialog.setVisible(true);
     }
 
-    private void applyGenreFilter(Map<String, JCheckBox> checkBoxMap) {
+    public void applyGenreFilter(Map<String, JCheckBox> checkBoxMap) {
         List<String> selectedGenres = checkBoxMap.entrySet().stream()
                 .filter(entry -> entry.getValue().isSelected())
                 .map(Map.Entry::getKey)
@@ -466,23 +283,25 @@ public class Dashboard extends JFrame {
         loadMoreBooks();
     }
 
-    private void clearFilters() {
-        bookList = new ArrayList<>(fullBookList);
-        currentBookIndex = 0;
-        txt_Search.setText("Nhập Tên Sách");
-        txt_Search.setForeground(Color.GRAY);
-        pnl_Content.removeAll();
-        loadMoreBooks();
+    public void search(String keyword) {
+        SwingUtilities.invokeLater(() -> {
+            if (keyword.trim().isEmpty() || keyword.equals("Nhập Tên Sách")) {
+                bookList = new ArrayList<>(fullBookList);
+            } else {
+                bookList = fullBookList.stream()
+                        .filter(s -> s.getTenSach().toLowerCase().contains(keyword.toLowerCase().trim()))
+                        .collect(Collectors.toList());
+            }
+            currentBookIndex = 0;
+            pnl_Content.removeAll();
+            loadMoreBooks();
+        });
     }
 
-    public static void main(String[] args) {
-        EventQueue.invokeLater(() -> {
-            try {
-                Dashboard frame = new Dashboard();
-                frame.setVisible(true);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        });
+    public void clearFilters() {
+        bookList = new ArrayList<>(fullBookList);
+        currentBookIndex = 0;
+        pnl_Content.removeAll();
+        loadMoreBooks();
     }
 }

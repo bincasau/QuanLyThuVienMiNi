@@ -22,7 +22,7 @@ public class MainFrame extends JFrame {
         } else {
             // Giao diện độc giả
             User user = new User(session.getFullName());
-            user.showUI();
+            //user.showUI();
             setContentPane(user.getContentPane());
         }
 
