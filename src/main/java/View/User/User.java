@@ -10,7 +10,7 @@ import DAO.DocGiaDao;
 import Model.DocGia;
 import View.Login.Login;
 
-public class User extends JFrame {
+public class User extends JPanel {
     private String username;
     private String maDocGia;
     private JPanel pnl_Cards;
@@ -41,22 +41,16 @@ public class User extends JFrame {
     }
 
     private void initializeUI() {
-        setTitle("Thư viện mini");
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(1000, 600);
-        setLocationRelativeTo(null);
+        setLayout(new BorderLayout());  // Use panel layout
+        setBorder(new EmptyBorder(5, 5, 5, 5));
 
         JPanel contentPane = new JPanel(new BorderLayout());
         contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
-        setContentPane(contentPane);
 
         JPanel pnl_Sidebar = createSidebar();
         contentPane.add(pnl_Sidebar, BorderLayout.WEST);
 
         JPanel pnl_Main = new JPanel(new BorderLayout());
-
-        //JPanel pnl_Header = createHeader();
-        //pnl_Main.add(pnl_Header, BorderLayout.NORTH);
 
         cardLayout = new CardLayout();
         pnl_Cards = new JPanel(cardLayout);
@@ -77,7 +71,8 @@ public class User extends JFrame {
 
         pnl_Main.add(pnl_Cards, BorderLayout.CENTER);
         contentPane.add(pnl_Main, BorderLayout.CENTER);
-        setVisible(true);
+
+        add(contentPane);  // Add to this panel
     }
 
     private JPanel createSidebar() {
@@ -122,10 +117,14 @@ public class User extends JFrame {
                             "Xác nhận đăng xuất",
                             JOptionPane.YES_NO_OPTION);
                     if (confirm == JOptionPane.YES_OPTION) {
-                        dispose();
-                        Login loginForm = new Login();
-                        loginForm.setVisible(true);
-                    }
+                        Window window = SwingUtilities.getWindowAncestor(this);
+                if (window != null) {
+                    window.dispose();
+                }
+                SwingUtilities.invokeLater(() -> {
+                    new Login().setVisible(true);
+                });
+            }
                 });
             }
             pnl_ButtonGroup.add(Box.createRigidArea(new Dimension(0, 10)));
@@ -261,9 +260,5 @@ public class User extends JFrame {
         button.setMaximumSize(new Dimension(60, 60));
         button.setFocusable(false);
         return button;
-    }
-
-    public JPanel getContentPane() {
-        return (JPanel) super.getContentPane();
     }
 }

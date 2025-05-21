@@ -16,16 +16,13 @@ public class MainFrame extends JFrame {
 
         LoginSession session = LoginSession.getInstance();
         if (session.isAdmin()) {
-            // Giao diện thủ thư
             Librarian librarian = new Librarian(session.getFullName());
             setContentPane(librarian.getMainPanel());
         } else {
-            // Giao diện độc giả
             User user = new User(session.getFullName());
-            //user.showUI();
-            setContentPane(user.getContentPane());
+            setContentPane(user);  // Set the User panel directly
         }
 
-        //setVisible(true);
+        setVisible(true);
     }
 }

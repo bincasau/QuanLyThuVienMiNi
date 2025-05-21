@@ -274,57 +274,64 @@ public class Dashboard extends JPanel {
     }
 
     private void showBookDetails(Sach book) {
-        JDialog detailDialog = new JDialog(parentFrame, "Thông tin sách", true);
-        detailDialog.setSize(500, 350);
-        detailDialog.setLocationRelativeTo(parentFrame);
-        detailDialog.setLayout(new BorderLayout(15, 15));
-        detailDialog.getContentPane().setBackground(Color.WHITE);
-        detailDialog.setResizable(false);
-
-        JLabel imgLabel = new JLabel();
-        try {
-            ImageIcon icon = new ImageIcon("pictures/" + book.getAnh());
-            Image img = icon.getImage().getScaledInstance(160, 220, Image.SCALE_SMOOTH);
-            imgLabel.setIcon(new ImageIcon(img));
-        } catch (Exception e) {
-            imgLabel.setText("No Image");
-            imgLabel.setHorizontalAlignment(SwingConstants.CENTER);
-        }
-        imgLabel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 10));
-
-        JPanel infoPanel = new JPanel();
-        infoPanel.setLayout(new BoxLayout(infoPanel, BoxLayout.Y_AXIS));
-        infoPanel.setBackground(Color.WHITE);
-        infoPanel.setBorder(BorderFactory.createEmptyBorder(15, 10, 15, 15));
-
-        addInfoLabel(infoPanel, "Tên sách:", book.getTenSach(), 18, true);
-        addInfoLabel(infoPanel, "Mã sách:", book.getMaSach(), 14, false);
-        addInfoLabel(infoPanel, "Nhà xuất bản:", book.getnXB(), 14, false);
-        addInfoLabel(infoPanel, "Năm xuất bản:", String.valueOf(book.getNamXB()), 14, false);
-
-        String theLoai = (book.getDsTheLoai() != null && !book.getDsTheLoai().isEmpty())
-                ? book.getDsTheLoai().stream().map(TheLoai::getTenTheLoai).reduce((a, b) -> a + ", " + b).get()
-                : "Không rõ";
-        addInfoLabel(infoPanel, "Thể loại:", theLoai, 14, false);
-
-        detailDialog.add(imgLabel, BorderLayout.WEST);
-        detailDialog.add(infoPanel, BorderLayout.CENTER);
-
-        JButton closeButton = new JButton("Đóng");
-        closeButton.setBackground(new Color(107, 142, 35));
-        closeButton.setForeground(Color.WHITE);
-        closeButton.setFocusable(false);
-        closeButton.setPreferredSize(new Dimension(80, 35));
-        closeButton.addActionListener(e -> detailDialog.dispose());
-
-        JPanel buttonPanel = new JPanel();
-        buttonPanel.setBackground(Color.WHITE);
-        buttonPanel.add(closeButton);
-
-        detailDialog.add(buttonPanel, BorderLayout.SOUTH);
-
-        detailDialog.setVisible(true);
+    // Use JFrame as the parent if available, otherwise use null
+    Window parent = SwingUtilities.getWindowAncestor(this);
+    JDialog detailDialog;
+    if (parent instanceof Frame) {
+        detailDialog = new JDialog((Frame) parent, "Thông tin sách", true);
+    } else {
+        detailDialog = new JDialog((Frame) null, "Thông tin sách", true);
     }
+    detailDialog.setSize(500, 350);
+    detailDialog.setLocationRelativeTo(parent);
+    detailDialog.setLayout(new BorderLayout(15, 15));
+    detailDialog.getContentPane().setBackground(Color.WHITE);
+    detailDialog.setResizable(false);
+
+    JLabel imgLabel = new JLabel();
+    try {
+        ImageIcon icon = new ImageIcon("pictures/" + book.getAnh());
+        Image img = icon.getImage().getScaledInstance(160, 220, Image.SCALE_SMOOTH);
+        imgLabel.setIcon(new ImageIcon(img));
+    } catch (Exception e) {
+        imgLabel.setText("No Image");
+        imgLabel.setHorizontalAlignment(SwingConstants.CENTER);
+    }
+    imgLabel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 10));
+
+    JPanel infoPanel = new JPanel();
+    infoPanel.setLayout(new BoxLayout(infoPanel, BoxLayout.Y_AXIS));
+    infoPanel.setBackground(Color.WHITE);
+    infoPanel.setBorder(BorderFactory.createEmptyBorder(15, 10, 15, 15));
+
+    addInfoLabel(infoPanel, "Tên sách:", book.getTenSach(), 18, true);
+    addInfoLabel(infoPanel, "Mã sách:", book.getMaSach(), 14, false);
+    addInfoLabel(infoPanel, "Nhà xuất bản:", book.getnXB(), 14, false);
+    addInfoLabel(infoPanel, "Năm xuất bản:", String.valueOf(book.getNamXB()), 14, false);
+
+    String theLoai = (book.getDsTheLoai() != null && !book.getDsTheLoai().isEmpty())
+            ? book.getDsTheLoai().stream().map(TheLoai::getTenTheLoai).reduce((a, b) -> a + ", " + b).get()
+            : "Không rõ";
+    addInfoLabel(infoPanel, "Thể loại:", theLoai, 14, false);
+
+    detailDialog.add(imgLabel, BorderLayout.WEST);
+    detailDialog.add(infoPanel, BorderLayout.CENTER);
+
+    JButton closeButton = new JButton("Đóng");
+    closeButton.setBackground(new Color(107, 142, 35));
+    closeButton.setForeground(Color.WHITE);
+    closeButton.setFocusable(false);
+    closeButton.setPreferredSize(new Dimension(80, 35));
+    closeButton.addActionListener(e -> detailDialog.dispose());
+
+    JPanel buttonPanel = new JPanel();
+    buttonPanel.setBackground(Color.WHITE);
+    buttonPanel.add(closeButton);
+
+    detailDialog.add(buttonPanel, BorderLayout.SOUTH);
+
+    detailDialog.setVisible(true);
+}
 
     private void addInfoLabel(JPanel panel, String title, String content, int fontSize, boolean bold) {
         JLabel lbl = new JLabel("<html><b>" + title + "</b> " + content + "</html>");
@@ -335,45 +342,52 @@ public class Dashboard extends JPanel {
     }
 
     public void openFilterDialog() {
-        JDialog filterDialog = new JDialog(parentFrame, "Lọc theo thể loại", true);
-        filterDialog.setSize(300, 400);
-        filterDialog.setLocationRelativeTo(parentFrame);
-        filterDialog.setLayout(new BorderLayout());
-
-        List<TheLoai> allGenres = TheLoaiDao.getInstance().layDanhSach();
-
-        JPanel genrePanel = new JPanel();
-        genrePanel.setLayout(new BoxLayout(genrePanel, BoxLayout.Y_AXIS));
-        genrePanel.setBorder(new EmptyBorder(10, 10, 10, 10));
-
-        Map<String, JCheckBox> checkBoxMap = new HashMap<>();
-        for (TheLoai genre : allGenres) {
-            JCheckBox cb = new JCheckBox(genre.getTenTheLoai());
-            cb.setAlignmentX(Component.LEFT_ALIGNMENT);
-            genrePanel.add(cb);
-            checkBoxMap.put(genre.getTenTheLoai(), cb);
-        }
-
-        JScrollPane scrollPane = new JScrollPane(genrePanel);
-        filterDialog.add(scrollPane, BorderLayout.CENTER);
-
-        JButton btnApply = new JButton("Áp dụng");
-        btnApply.setBackground(new Color(107, 142, 35));
-        btnApply.setForeground(Color.WHITE);
-        btnApply.setFocusable(false);
-        btnApply.setPreferredSize(new Dimension(100, 30));
-
-        btnApply.addActionListener(e -> {
-            applyGenreFilter(checkBoxMap);
-            filterDialog.dispose();
-        });
-
-        JPanel btnPanel = new JPanel();
-        btnPanel.add(btnApply);
-        filterDialog.add(btnPanel, BorderLayout.SOUTH);
-
-        filterDialog.setVisible(true);
+    // Use JFrame as the parent if available, otherwise use null
+    Window parent = SwingUtilities.getWindowAncestor(this);
+    JDialog filterDialog;
+    if (parent instanceof Frame) {
+        filterDialog = new JDialog((Frame) parent, "Lọc theo thể loại", true);
+    } else {
+        filterDialog = new JDialog((Frame) null, "Lọc theo thể loại", true);
     }
+    filterDialog.setSize(300, 400);
+    filterDialog.setLocationRelativeTo(parent);
+    filterDialog.setLayout(new BorderLayout());
+
+    List<TheLoai> allGenres = TheLoaiDao.getInstance().layDanhSach();
+
+    JPanel genrePanel = new JPanel();
+    genrePanel.setLayout(new BoxLayout(genrePanel, BoxLayout.Y_AXIS));
+    genrePanel.setBorder(new EmptyBorder(10, 10, 10, 10));
+
+    Map<String, JCheckBox> checkBoxMap = new HashMap<>();
+    for (TheLoai genre : allGenres) {
+        JCheckBox cb = new JCheckBox(genre.getTenTheLoai());
+        cb.setAlignmentX(Component.LEFT_ALIGNMENT);
+        genrePanel.add(cb);
+        checkBoxMap.put(genre.getTenTheLoai(), cb);
+    }
+
+    JScrollPane scrollPane = new JScrollPane(genrePanel);
+    filterDialog.add(scrollPane, BorderLayout.CENTER);
+
+    JButton btnApply = new JButton("Áp dụng");
+    btnApply.setBackground(new Color(107, 142, 35));
+    btnApply.setForeground(Color.WHITE);
+    btnApply.setFocusable(false);
+    btnApply.setPreferredSize(new Dimension(100, 30));
+
+    btnApply.addActionListener(e -> {
+        applyGenreFilter(checkBoxMap);
+        filterDialog.dispose();
+    });
+
+    JPanel btnPanel = new JPanel();
+    btnPanel.add(btnApply);
+    filterDialog.add(btnPanel, BorderLayout.SOUTH);
+
+    filterDialog.setVisible(true);
+}
 
     private void applyGenreFilter(Map<String, JCheckBox> checkBoxMap) {
         List<String> selectedGenres = checkBoxMap.entrySet().stream()
