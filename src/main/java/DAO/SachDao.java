@@ -44,64 +44,71 @@ public class SachDao implements InterfaceDao<Sach>{
 
 	@Override
 	public int xoaDoiTuong(Sach t) {
-	    new LichSuMuonSachDao();
-		LichSuMuonSachDao ls = LichSuMuonSachDao.getInstance();
-	    
-	    // Kiểm tra xem sách có đang mượn không
-	    try {
-	        if (ls.isBookCurrentlyBorrowed(t.getMaSach())) {
-	            return 0; // Nếu sách đang mượn, không thể xóa
-	        }
-	    } catch (SQLException e) {
-	        e.printStackTrace();
-	        return 0; // Nếu có lỗi khi kiểm tra trạng thái sách, trả về 0
-	    }
-	
-	    int ketQua = 0;
-	    Connection conn = JDBCUtil.connect();
-	
-	    String sqlXoaTheLoai = "DELETE FROM Sach_TheLoai WHERE maSach = ?";
-	    String sqlXoaSach = "DELETE FROM Sach WHERE maSach = ?";
-	    String sqlCapNhatLichSuMuon = "UPDATE LichSuMuonSach SET maSach = NULL WHERE maSach = ?";
-	    String sqlCapNhatPhieuPhat = "UPDATE PhieuPhat SET maSach = NULL WHERE maSach = ?";
-	
-	    if (conn != null) {
-	        try (PreparedStatement stmt1 = conn.prepareStatement(sqlXoaTheLoai);
-	             PreparedStatement stmt2 = conn.prepareStatement(sqlCapNhatPhieuPhat);
-	             PreparedStatement stmt3 = conn.prepareStatement(sqlCapNhatLichSuMuon);
-	             PreparedStatement stmt4 = conn.prepareStatement(sqlXoaSach);) {
-	
-	            stmt1.setString(1, t.getMaSach());
-	            stmt1.executeUpdate();
-	
-	            stmt2.setString(1,t.getMaSach());
-	            stmt2.executeUpdate();
-	            
-	            stmt3.setString(1, t.getMaSach());
-	            stmt3.executeUpdate();
-	
-	            stmt4.setString(1, t.getMaSach());
-	            ketQua = stmt2.executeUpdate();
-	
-	            // Xóa ảnh
-	            File imageFile = new File("Pictures/" + t.getAnh());
-	            if (imageFile.exists()) {
-	                if (imageFile.delete()) {
-	                    System.out.println("Đã xóa ảnh: " + imageFile.getAbsolutePath());
-	                } else {
-	                    System.err.println("Không thể xóa ảnh: " + imageFile.getAbsolutePath());
-	                }
-	            }
-	
-	        } catch (SQLException e) {
-	            e.printStackTrace();
-	        } finally {
-	            JDBCUtil.closeConnection();
-	        }
-	    }
-	
-	    return ketQua;
-	}
+    LichSuMuonSachDao ls = LichSuMuonSachDao.getInstance();
+
+    // Kiểm tra xem sách có đang mượn không
+    try {
+        if (ls.isBookCurrentlyBorrowed(t.getMaSach())) {
+            return 0; // Nếu sách đang mượn, không thể xóa
+        }
+    } catch (SQLException e) {
+        e.printStackTrace();
+        return 0;
+    }
+
+    int ketQua = 0;
+    Connection conn = JDBCUtil.connect();
+
+    String sqlXoaTheLoai = "DELETE FROM Sach_TheLoai WHERE maSach = ?";
+    String sqlCapNhatPhieuPhat = "UPDATE PhieuPhat SET maSach = NULL WHERE maSach = ?";
+    String sqlCapNhatLichSuMuon = "UPDATE LichSuMuonSach SET maSach = NULL WHERE maSach = ?";
+    String sqlXoaSach = "DELETE FROM Sach WHERE maSach = ?";
+
+    if (conn != null) {
+        try (
+            PreparedStatement stmt1 = conn.prepareStatement(sqlXoaTheLoai);
+            PreparedStatement stmt2 = conn.prepareStatement(sqlCapNhatPhieuPhat);
+            PreparedStatement stmt3 = conn.prepareStatement(sqlCapNhatLichSuMuon);
+            PreparedStatement stmt4 = conn.prepareStatement(sqlXoaSach);
+        ) {
+            // Xóa ở bảng Sach_TheLoai
+            stmt1.setString(1, t.getMaSach());
+            stmt1.executeUpdate();
+
+            // Cập nhật Phiếu Phạt
+            stmt2.setString(1, t.getMaSach());
+            stmt2.executeUpdate();
+
+            // Cập nhật Lịch sử mượn
+            stmt3.setString(1, t.getMaSach());
+            stmt3.executeUpdate();
+
+            // Xóa sách
+            stmt4.setString(1, t.getMaSach());
+            ketQua = stmt4.executeUpdate();
+
+            // Xóa ảnh (nếu có)
+            if (t.getAnh() != null && !t.getAnh().isEmpty()) {
+                File imageFile = new File("Pictures/" + t.getAnh());
+                if (imageFile.exists()) {
+                    if (imageFile.delete()) {
+                        System.out.println("Đã xóa ảnh: " + imageFile.getAbsolutePath());
+                    } else {
+                        System.err.println("Không thể xóa ảnh: " + imageFile.getAbsolutePath());
+                    }
+                }
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            JDBCUtil.closeConnection();
+        }
+    }
+
+    return ketQua;
+}
+
 
 	@Override
 	public int capNhatDoiTuong(Sach t) {
