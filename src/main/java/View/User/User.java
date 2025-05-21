@@ -14,6 +14,7 @@ public class User extends JFrame {
     private String username;
     private String maDocGia;
     private JPanel pnl_Cards;
+    private PenaltyTicket penaltyPanel;
     private UserHistoryPanel historyPanel;
     private Dashboard dashboardPanel;
     private JTextField txt_Search;
@@ -21,6 +22,7 @@ public class User extends JFrame {
 
     private static final String DASHBOARD_CARD = "Dashboard";
     private static final String HISTORY_CARD = "History";
+    private static final String PENALTY_CARD = "Penalty";
 
     public User(String username) {
         this.username = username;
@@ -31,7 +33,7 @@ public class User extends JFrame {
     private String fetchMaDocGia(String username) {
         DocGiaDao docGiaDao = DocGiaDao.getInstance();
         for (DocGia docGia : docGiaDao.layDanhSach()) {
-            if (docGia.getTenNguoiDung().equals(username)) {
+            if (docGia != null && docGia.getTenNguoiDung() != null && docGia.getTenNguoiDung().equals(username)) {
                 return docGia.getMaNguoiDung();
             }
         }
@@ -53,8 +55,8 @@ public class User extends JFrame {
 
         JPanel pnl_Main = new JPanel(new BorderLayout());
 
-        JPanel pnl_Header = createHeader();
-        pnl_Main.add(pnl_Header, BorderLayout.NORTH);
+        //JPanel pnl_Header = createHeader();
+        //pnl_Main.add(pnl_Header, BorderLayout.NORTH);
 
         cardLayout = new CardLayout();
         pnl_Cards = new JPanel(cardLayout);
@@ -67,6 +69,9 @@ public class User extends JFrame {
         historyScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
         historyScrollPane.setBorder(null);
         pnl_Cards.add(historyScrollPane, HISTORY_CARD);
+
+        penaltyPanel = new PenaltyTicket(username, maDocGia);
+        pnl_Cards.add(penaltyPanel, PENALTY_CARD);
 
         cardLayout.show(pnl_Cards, DASHBOARD_CARD);
 
@@ -105,6 +110,10 @@ public class User extends JFrame {
             } else if (text.equals("Lịch sử")) {
                 btn.addActionListener(e -> {
                     cardLayout.show(pnl_Cards, HISTORY_CARD);
+                });
+            } else if (text.equals("Phiếu phạt")) {
+                btn.addActionListener(e -> {
+                    cardLayout.show(pnl_Cards, PENALTY_CARD);
                 });
             } else if (text.equals("Đăng xuất")) {
                 btn.addActionListener(e -> {
@@ -255,6 +264,6 @@ public class User extends JFrame {
     }
 
     public JPanel getContentPane() {
-        return (JPanel) getContentPane();
+        return (JPanel) super.getContentPane();
     }
 }

@@ -26,6 +26,6 @@ public class MainFrame extends JFrame {
             setContentPane(user.getContentPane());
         }
 
-        setVisible(true);
+        //setVisible(true);
     }
 }

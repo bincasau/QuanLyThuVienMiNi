@@ -102,10 +102,10 @@ public class UserHistoryPanel extends JPanel {
 
     private void initializeUI() {
         setLayout(new BorderLayout());
-        setPreferredSize(new Dimension(1000, 600));
+        setPreferredSize(new Dimension(600, 600));
 
-        JPanel pnl_Sidebar = createSidebar();
-        add(pnl_Sidebar, BorderLayout.WEST);
+        //JPanel pnl_Sidebar = createSidebar();
+        //add(pnl_Sidebar, BorderLayout.WEST);
 
         JPanel pnl_Main = new JPanel(new BorderLayout());
 
@@ -499,14 +499,4 @@ public class UserHistoryPanel extends JPanel {
         return itemPanel;
     }
 
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            JFrame frame = new JFrame("Thư viện mini");
-            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            frame.setSize(1000, 600);
-            frame.add(new UserHistoryPanel("DG002"));
-            frame.setLocationRelativeTo(null);
-            frame.setVisible(true);
-        });
-    }
 }

@@ -10,39 +10,45 @@ import java.util.stream.Collectors;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import DAO.SachDao;
 import DAO.TheLoaiDao;
 import Model.Sach;
 import Model.TheLoai;
+import View.Login.Login;
 
 public class Dashboard extends JPanel {
     private static final long serialVersionUID = 1L;
-    private JPanel contentPane;
     private String fullName;
     private List<Sach> bookList;
     private List<Sach> fullBookList;
     private int currentBookIndex = 0;
     private static final int BATCH_SIZE = 20;
     private JPanel pnl_Content;
-    private JFrame parentFrame;
+    private JTextField txt_Search;
+    private User parentFrame;
 
-    public Dashboard(String fullName, JFrame parentFrame) {
+    public Dashboard(String fullName, User parentFrame) {
         this.fullName = fullName;
         this.parentFrame = parentFrame;
         initializeUI();
     }
 
-    public Dashboard(JFrame parentFrame) {
+    public Dashboard(User parentFrame) {
         this.fullName = "Guest";
         this.parentFrame = parentFrame;
         initializeUI();
     }
 
     private void initializeUI() {
-        setSize(1000, 600);
+        setLayout(new BorderLayout());
+        setBorder(new EmptyBorder(5, 5, 5, 5));
 
-        contentPane = new JPanel(new BorderLayout());
-        contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
+        JPanel pnl_Main = new JPanel(new BorderLayout());
+
+        JPanel pnl_Header = createHeader();
+        pnl_Main.add(pnl_Header, BorderLayout.NORTH);
 
         pnl_Content = createContentPanel();
         JScrollPane scrollPane = new JScrollPane(pnl_Content);
@@ -59,10 +65,118 @@ public class Dashboard extends JPanel {
             }
         });
 
-        contentPane.add(scrollPane, BorderLayout.CENTER);
+        pnl_Main.add(scrollPane, BorderLayout.CENTER);
+        add(pnl_Main, BorderLayout.CENTER);
+    }
 
-        setLayout(new BorderLayout());
-        add(contentPane, BorderLayout.CENTER);
+    private JPanel createHeader() {
+        JPanel pnl_Header = new JPanel(new BorderLayout());
+        pnl_Header.setPreferredSize(new Dimension(0, 160));
+        pnl_Header.setBackground(new Color(107, 142, 35));
+
+        JPanel pnl_TopRow = new JPanel();
+        pnl_TopRow.setLayout(new BoxLayout(pnl_TopRow, BoxLayout.X_AXIS));
+        pnl_TopRow.setOpaque(false);
+        pnl_TopRow.setBorder(BorderFactory.createEmptyBorder(10, 35, 0, 20));
+
+        JButton btn_Avatar = createIconButton("pictures/profile.png", "👤");
+        JButton btn_Notification = createIconButton("pictures/bell.png", "🔔");
+
+        JLabel lbl_UserName = new JLabel(fullName);
+        lbl_UserName.setFont(new Font("SansSerif", Font.PLAIN, 14));
+        lbl_UserName.setForeground(Color.WHITE);
+
+        pnl_TopRow.add(btn_Avatar);
+        pnl_TopRow.add(Box.createHorizontalStrut(10));
+        pnl_TopRow.add(lbl_UserName);
+        pnl_TopRow.add(Box.createHorizontalGlue());
+        pnl_TopRow.add(btn_Notification);
+
+        txt_Search = new JTextField("Nhập Tên Sách", 20);
+        txt_Search.setFont(new Font("SansSerif", Font.PLAIN, 14));
+        txt_Search.setForeground(Color.GRAY);
+
+        txt_Search.addFocusListener(new FocusAdapter() {
+            @Override
+            public void focusGained(FocusEvent e) {
+                if (txt_Search.getText().equals("Nhập Tên Sách")) {
+                    txt_Search.setText("");
+                    txt_Search.setForeground(Color.BLACK);
+                }
+            }
+
+            @Override
+            public void focusLost(FocusEvent e) {
+                if (txt_Search.getText().isEmpty()) {
+                    txt_Search.setText("Nhập Tên Sách");
+                    txt_Search.setForeground(Color.GRAY);
+                }
+            }
+        });
+
+        txt_Search.getDocument().addDocumentListener(new DocumentListener() {
+            Timer timer = new Timer(300, null);
+
+            {
+                timer.setRepeats(false);
+                timer.addActionListener(e -> {
+                    String text = txt_Search.getText();
+                    if (text.equals("Nhập Tên Sách")) {
+                        text = "";
+                    }
+                    search(text);
+                });
+            }
+
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                timer.restart();
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                timer.restart();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                timer.restart();
+            }
+        });
+
+        JButton btn_Clear = new JButton("✕");
+        btn_Clear.setPreferredSize(new Dimension(40, 40));
+        btn_Clear.addActionListener(e -> {
+            txt_Search.setText("");
+            txt_Search.setForeground(Color.BLACK);
+            clearFilters();
+        });
+
+        JPanel pnl_SearchWrapper = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        pnl_SearchWrapper.setOpaque(false);
+        pnl_SearchWrapper.setBorder(BorderFactory.createEmptyBorder(15, 35, 10, 10));
+        txt_Search.setPreferredSize(new Dimension(300, 40));
+        pnl_SearchWrapper.add(txt_Search);
+        pnl_SearchWrapper.add(btn_Clear);
+
+        JButton btn_Filter = new JButton("Lọc thể loại");
+        btn_Filter.setPreferredSize(new Dimension(120, 40));
+        btn_Filter.setFocusable(false);
+        btn_Filter.addActionListener(e -> openFilterDialog());
+
+        pnl_SearchWrapper.add(btn_Filter);
+
+        JButton btnClearFilter = new JButton("Hủy lọc");
+        btnClearFilter.setPreferredSize(new Dimension(120, 40));
+        btnClearFilter.setFocusable(false);
+        btnClearFilter.addActionListener(e -> clearFilters());
+
+        pnl_SearchWrapper.add(btnClearFilter);
+
+        pnl_Header.add(pnl_TopRow, BorderLayout.NORTH);
+        pnl_Header.add(pnl_SearchWrapper, BorderLayout.CENTER);
+
+        return pnl_Header;
     }
 
     private JButton createIconButton(String imagePath, String fallbackText) {
@@ -104,7 +218,7 @@ public class Dashboard extends JPanel {
             JPanel card = createBookCard(book);
             rowPanel.add(card);
             count++;
-            if (count % 5 == 0) {
+            if (count % 4 == 0) {
                 pnl_Content.add(rowPanel);
                 rowPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 15));
                 rowPanel.setBackground(Color.WHITE);
@@ -123,13 +237,13 @@ public class Dashboard extends JPanel {
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
         card.setBackground(Color.WHITE);
         card.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
-        card.setPreferredSize(new Dimension(120, 180));
+        card.setPreferredSize(new Dimension(180, 260));
 
         JLabel lblImage = new JLabel();
         lblImage.setHorizontalAlignment(SwingConstants.CENTER);
         try {
             ImageIcon icon = new ImageIcon("pictures/" + book.getAnh());
-            Image scaledImage = icon.getImage().getScaledInstance(80, 120, Image.SCALE_SMOOTH);
+            Image scaledImage = icon.getImage().getScaledInstance(140, 180, Image.SCALE_SMOOTH);
             lblImage.setIcon(new ImageIcon(scaledImage));
         } catch (Exception e) {
             lblImage.setText("No Image");
@@ -261,7 +375,7 @@ public class Dashboard extends JPanel {
         filterDialog.setVisible(true);
     }
 
-    public void applyGenreFilter(Map<String, JCheckBox> checkBoxMap) {
+    private void applyGenreFilter(Map<String, JCheckBox> checkBoxMap) {
         List<String> selectedGenres = checkBoxMap.entrySet().stream()
                 .filter(entry -> entry.getValue().isSelected())
                 .map(Map.Entry::getKey)
@@ -283,6 +397,15 @@ public class Dashboard extends JPanel {
         loadMoreBooks();
     }
 
+    public void clearFilters() {
+        bookList = new ArrayList<>(fullBookList);
+        currentBookIndex = 0;
+        txt_Search.setText("Nhập Tên Sách");
+        txt_Search.setForeground(Color.GRAY);
+        pnl_Content.removeAll();
+        loadMoreBooks();
+    }
+
     public void search(String keyword) {
         SwingUtilities.invokeLater(() -> {
             if (keyword.trim().isEmpty() || keyword.equals("Nhập Tên Sách")) {
@@ -296,12 +419,5 @@ public class Dashboard extends JPanel {
             pnl_Content.removeAll();
             loadMoreBooks();
         });
-    }
-
-    public void clearFilters() {
-        bookList = new ArrayList<>(fullBookList);
-        currentBookIndex = 0;
-        pnl_Content.removeAll();
-        loadMoreBooks();
     }
 }

@@ -18,7 +18,7 @@ import Model.TheLoai;
 import View.Login.Login;
 
 
-public class PenaltyTicket extends JFrame {
+public class PenaltyTicket extends JPanel {
 
 	    private static final long serialVersionUID = 1L;
 	    private String maDG;
@@ -26,7 +26,7 @@ public class PenaltyTicket extends JFrame {
 	    private String fullName;
 	    private JPanel pnl_content;
 
-	    public PenaltyTicket(String fullName,String maDG) {
+	    public PenaltyTicket(String fullName, String maDG) {
 	        this.fullName = fullName;
 	        this.maDG=maDG;
 	        initializeUI();
@@ -39,69 +39,21 @@ public class PenaltyTicket extends JFrame {
 	    }
 
 	    private void initializeUI() {
-	        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-	        setTitle("Thư viện mini");
-	        setSize(1000, 600);
-	        setLocationRelativeTo(null);
+    		setLayout(new BorderLayout()); // Set layout for PenaltyTicket panel
+    		contentPane = new JPanel(new BorderLayout());
+    		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
 
-	        contentPane = new JPanel(new BorderLayout());
-	        contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
-	        setContentPane(contentPane);
+    		JPanel pnl_Main = new JPanel(new BorderLayout());
 
-	        JPanel pnl_Sidebar = createSidebar();
-	        contentPane.add(pnl_Sidebar, BorderLayout.WEST);
+   			JPanel pnl_Header = createHeader();
+    		pnl_Main.add(pnl_Header, BorderLayout.NORTH);
 
-	        JPanel pnl_Main = new JPanel(new BorderLayout());
+    		pnl_content = createContent();
+    		pnl_Main.add(pnl_content, BorderLayout.CENTER);
 
-	        JPanel pnl_Header = createHeader();
-	        pnl_Main.add(pnl_Header, BorderLayout.NORTH);
-	        
-	        pnl_content = createContent();
-	        pnl_Main.add(pnl_content,BorderLayout.CENTER);
-	        
-	        contentPane.add(pnl_Main,BorderLayout.CENTER);
-	    }
-
-	    private JPanel createSidebar() {
-	        JPanel pnl_Sidebar = new JPanel();
-	        pnl_Sidebar.setLayout(new BoxLayout(pnl_Sidebar, BoxLayout.Y_AXIS));
-	        pnl_Sidebar.setPreferredSize(new Dimension(220, 600));
-	        pnl_Sidebar.setBackground(new Color(240, 233, 222));
-
-	        JLabel lbl_Title = new JLabel("Thư viện MINI");
-	        lbl_Title.setFont(new Font("SansSerif", Font.BOLD, 24));
-	        lbl_Title.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-	        pnl_Sidebar.add(lbl_Title);
-
-	        JPanel pnl_ButtonGroup = new JPanel();
-	        pnl_ButtonGroup.setLayout(new BoxLayout(pnl_ButtonGroup, BoxLayout.Y_AXIS));
-	        pnl_ButtonGroup.setBackground(new Color(240, 233, 222));
-	        pnl_ButtonGroup.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 10));
-
-	        String[] btnLabels = {"Trang chủ", "Lịch sử", "Phiếu phạt", "Đăng xuất"};
-	        for (String text : btnLabels) {
-	            JButton btn = new JButton(text);
-	            btn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
-	            btn.setAlignmentX(Component.LEFT_ALIGNMENT);
-	            btn.setHorizontalAlignment(SwingConstants.LEFT);
-	            btn.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
-	            if (text.equals("Phiếu phạt")) {
-	            	btn.setBackground(Color.white);
-	            	btn.setOpaque(true);
-	            }
-	            else if (text.equals("Đăng xuất")) {
-	                btn.addActionListener(e -> {
-	                    dispose();
-	                    SwingUtilities.invokeLater(() -> new Login().setVisible(true));
-	                });
-	            }
-	            pnl_ButtonGroup.add(Box.createRigidArea(new Dimension(0, 10)));
-	            pnl_ButtonGroup.add(btn);
-	        }
-
-	        pnl_Sidebar.add(pnl_ButtonGroup);
-	        return pnl_Sidebar;
-	    }
+    		contentPane.add(pnl_Main, BorderLayout.CENTER);
+    		add(contentPane); // Add contentPane to this panel
+		}
 
 	    private JPanel createHeader() {
 	        JPanel pnl_Header = new JPanel(new BorderLayout());
@@ -552,14 +504,5 @@ public class PenaltyTicket extends JFrame {
 	    }
 
 
-	    public static void main(String[] args) {
-	        EventQueue.invokeLater(() -> {
-	            try {
-	                PenaltyTicket frame = new PenaltyTicket("Nguyễn Văn A","DG158"); //Ví dụ độc giả
-	                frame.setVisible(true);
-	            } catch (Exception e) {
-	                e.printStackTrace();
-	            }
-	        });
-	    }
+	    
 	}
