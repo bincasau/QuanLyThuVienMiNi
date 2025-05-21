@@ -360,6 +360,13 @@ public class ThongTinPhieuPhat extends JPanel {
 
         gbc.gridx = 0;
         gbc.gridy++;
+        addPanel.add(new JLabel("Mã độc giả:"), gbc);
+        gbc.gridx = 1;
+        JTextField txtMaDocGia = new JTextField(20);
+        addPanel.add(txtMaDocGia, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy++;
         addPanel.add(new JLabel("Mã sách:"), gbc);
         gbc.gridx = 1;
         JTextField txtMaSach = new JTextField(20);
@@ -382,11 +389,18 @@ public class ThongTinPhieuPhat extends JPanel {
             try {
                 String loi = txtLoi.getText().trim();
                 String giaTienStr = txtGiaTien.getText().trim();
+                String maDocGia = txtMaDocGia.getText().trim();
                 String maSach = txtMaSach.getText().trim();
                 String ngayPhieuStr = txtNgayPhieu.getText().trim();
 
-                if (loi.isEmpty() || giaTienStr.isEmpty() || maSach.isEmpty()) {
+                if (loi.isEmpty() || giaTienStr.isEmpty() || maDocGia.isEmpty() || maSach.isEmpty()) {
                     JOptionPane.showMessageDialog(this, "Vui lòng nhập đầy đủ thông tin!");
+                    return;
+                }
+
+                // Validate Mã độc giả
+                if (DocGiaDao.getInstance().getTenNguoiDungByMaNguoiDung(maDocGia) == null) {
+                    JOptionPane.showMessageDialog(this, "Mã độc giả không tồn tại!");
                     return;
                 }
 
@@ -405,7 +419,7 @@ public class ThongTinPhieuPhat extends JPanel {
                 SimpleDateFormat sdfParse = new SimpleDateFormat("yyyy-MM-dd");
                 java.sql.Date ngayPhieu = new java.sql.Date(sdfParse.parse(ngayPhieuStr).getTime());
 
-                PhieuPhat pp = new PhieuPhat(maPhieuPhat, loi, giaTien, null, maSach, ngayPhieu);
+                PhieuPhat pp = new PhieuPhat(maPhieuPhat, loi, giaTien, maDocGia, maSach, ngayPhieu);
 
                 int confirm = JOptionPane.showConfirmDialog(
                     this,
@@ -499,6 +513,13 @@ public class ThongTinPhieuPhat extends JPanel {
 
         gbc.gridx = 0;
         gbc.gridy++;
+        editPanel.add(new JLabel("Mã độc giả:"), gbc);
+        gbc.gridx = 1;
+        JTextField txtMaDocGia = new JTextField(phieuPhat.getMaDocGia() != null ? phieuPhat.getMaDocGia() : "", 20);
+        editPanel.add(txtMaDocGia, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy++;
         editPanel.add(new JLabel("Mã sách:"), gbc);
         gbc.gridx = 1;
         JTextField txtMaSach = new JTextField(phieuPhat.getMaSach(), 20);
@@ -521,11 +542,18 @@ public class ThongTinPhieuPhat extends JPanel {
             try {
                 String loi = txtLoi.getText().trim();
                 String giaTienStr = txtGiaTien.getText().trim();
+                String maDocGia = txtMaDocGia.getText().trim();
                 String maSach = txtMaSach.getText().trim();
                 String ngayPhieuStr = txtNgayPhieu.getText().trim();
 
-                if (loi.isEmpty() || giaTienStr.isEmpty() || maSach.isEmpty()) {
+                if (loi.isEmpty() || giaTienStr.isEmpty() || maDocGia.isEmpty() || maSach.isEmpty()) {
                     JOptionPane.showMessageDialog(this, "Vui lòng nhập đầy đủ thông tin!");
+                    return;
+                }
+
+                // Validate Mã độc giả
+                if (DocGiaDao.getInstance().getTenNguoiDungByMaNguoiDung(maDocGia) == null) {
+                    JOptionPane.showMessageDialog(this, "Mã độc giả không tồn tại!");
                     return;
                 }
 
@@ -545,7 +573,7 @@ public class ThongTinPhieuPhat extends JPanel {
                 java.sql.Date ngayPhieu = new java.sql.Date(sdfUpdate.parse(ngayPhieuStr).getTime());
 
                 PhieuPhat ppUpdated = new PhieuPhat(
-                    phieuPhat.getMaPhieuPhat(), loi, giaTien, null, maSach, ngayPhieu
+                    phieuPhat.getMaPhieuPhat(), loi, giaTien, maDocGia, maSach, ngayPhieu
                 );
 
                 int confirm = JOptionPane.showConfirmDialog(
