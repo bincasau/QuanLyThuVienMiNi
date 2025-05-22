@@ -216,19 +216,19 @@ public class UserHistoryPanel extends JPanel {
         JLabel lbl_Name = new JLabel(tenNguoiDung);
         lbl_Name.setFont(new Font("SansSerif", Font.PLAIN, 14));
         lbl_Name.setForeground(Color.WHITE);
-        JLabel lbl_ID = new JLabel("Mã độc giả: " + maDocGia);
-        lbl_ID.setFont(new Font("SansSerif", Font.PLAIN, 12));
-        lbl_ID.setForeground(Color.WHITE);
+        //JLabel lbl_ID = new JLabel("Mã độc giả: " + maDocGia);
+        //lbl_ID.setFont(new Font("SansSerif", Font.PLAIN, 12));
+        //lbl_ID.setForeground(Color.WHITE);
 
         JButton btn_Notification = createIconButton("pictures/bell.png", "🔔");
 
         btn_Avatar.setAlignmentY(Component.CENTER_ALIGNMENT);
         btn_Notification.setAlignmentY(Component.CENTER_ALIGNMENT);
         lbl_Name.setAlignmentY(Component.CENTER_ALIGNMENT);
-        lbl_ID.setAlignmentY(Component.CENTER_ALIGNMENT);
+        //lbl_ID.setAlignmentY(Component.CENTER_ALIGNMENT);
         
         pnl_UserInfo.add(lbl_Name);
-        pnl_UserInfo.add(lbl_ID);
+       //pnl_UserInfo.add(lbl_ID);
 
         pnl_TopRow.add(btn_Avatar);
         pnl_TopRow.add(Box.createHorizontalStrut(10));

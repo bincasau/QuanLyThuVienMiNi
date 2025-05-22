@@ -82,6 +82,8 @@ public class Dashboard extends JPanel {
         JButton btn_Avatar = createIconButton("pictures/profile.png", "👤");
         JButton btn_Notification = createIconButton("pictures/bell.png", "🔔");
 
+        btn_Avatar.setAlignmentY(Component.CENTER_ALIGNMENT);
+
         JLabel lbl_UserName = new JLabel(fullName);
         lbl_UserName.setFont(new Font("SansSerif", Font.PLAIN, 14));
         lbl_UserName.setForeground(Color.WHITE);
@@ -144,8 +146,8 @@ public class Dashboard extends JPanel {
             }
         });
 
-        JButton btn_Clear = new JButton("✕");
-        btn_Clear.setPreferredSize(new Dimension(40, 40));
+        JButton btn_Clear = new JButton("Tìm kiếm");
+        btn_Clear.setPreferredSize(new Dimension(90, 40));
         btn_Clear.addActionListener(e -> {
             txt_Search.setText("");
             txt_Search.setForeground(Color.BLACK);

@@ -28,7 +28,7 @@ public class PenaltyTicket extends JPanel {
 
 	    public PenaltyTicket(String fullName, String maDG) {
 	        this.fullName = fullName;
-	        this.maDG=maDG;
+	        this.maDG = maDG;
 	        initializeUI();
 	    }
 
@@ -67,6 +67,8 @@ public class PenaltyTicket extends JPanel {
 
 	        JButton btn_Avatar = createIconButton("pictures/profile.png", "👤");
 	        JButton btn_Notification = createIconButton("pictures/bell.png", "🔔");
+
+			btn_Avatar.setAlignmentY(Component.CENTER_ALIGNMENT);
 
 	        JLabel lbl_UserName = new JLabel(fullName);
 	        lbl_UserName.setFont(new Font("SansSerif", Font.PLAIN, 14));
@@ -502,7 +504,5 @@ public class PenaltyTicket extends JPanel {
 	        lbl_tag.setPreferredSize(new Dimension(80, 30));
 	        return lbl_tag;
 	    }
-
-
 	    
 	}
