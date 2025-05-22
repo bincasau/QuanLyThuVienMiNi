@@ -104,7 +104,7 @@ Mô hình CD:
 ---
 
 ## 🔗 Tài liệu tham khảo  
-- **Link Figma**: [Thiết kế giao diện]([https://www.figma.com/your-figma-link-here](https://www.figma.com/design/UXfVHhohXxQCz1riNM35tF/Untitled?node-id=7-240&t=r65F2AQ0zgVOcogr-0))  
+- **Link Figma**: [Thiết kế giao diện](https://www.figma.com/design/UXfVHhohXxQCz1riNM35tF/Untitled?node-id=7-240&t=r65F2AQ0zgVOcogr-0).
 - **Link Video tham khảo**: [Video demo hệ thống](https://www.youtube.com/your-video-link-here) 
 
 ---
