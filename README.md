@@ -1,4 +1,4 @@
-# 📚 Quản Lý Mượn – Trả Sách Thư Viện Mini
+📚 Quản Lý Mượn – Trả Sách Thư Viện Mini
 
 ![Quản Lý Mượn Trả Sách Thư Viện Mini](https://i.pinimg.com/736x/cb/64/7e/cb647e178bbccfb7498002aa2d070f18.jpg)
 
@@ -31,6 +31,9 @@ Hệ thống giúp **giảm thiểu sai sót**, **tăng trải nghiệm người
 - **Phân quyền**: Đảm bảo bảo mật, giới hạn quyền truy cập theo vai trò (thủ thư/độc giả).
 
 ---
+Mô hình CD:
+---
+![image](https://github.com/user-attachments/assets/0b461b95-a234-45cf-ae29-08e71b900035)
 
 ## ⚙️ Chức năng chính
 
@@ -101,7 +104,7 @@ Hệ thống giúp **giảm thiểu sai sót**, **tăng trải nghiệm người
 ---
 
 ## 🔗 Tài liệu tham khảo  
-- **Link Figma**: [Thiết kế giao diện](https://www.figma.com/your-figma-link-here)  
+- **Link Figma**: [Thiết kế giao diện](https://www.figma.com/design/UXfVHhohXxQCz1riNM35tF/Untitled?node-id=7-240&t=r65F2AQ0zgVOcogr-0).
 - **Link Video tham khảo**: [Video demo hệ thống](https://www.youtube.com/your-video-link-here) 
 
 ---
