@@ -690,6 +690,10 @@ public class Book extends JPanel {
     gbc.insets = new Insets(5, 5, 5, 5);
     gbc.fill = GridBagConstraints.HORIZONTAL;
 
+    JLabel lblBookId = new JLabel("Mã sách");
+    JTextField txtBookId = new JTextField(book.getMaSach());
+    txtBookId.setEditable(false);
+    
     JLabel lblBookName = new JLabel("Tên sách");
     JTextField txtBookName = new JTextField(book.getTenSach(),20);
 
@@ -712,6 +716,12 @@ public class Book extends JPanel {
     gbc.weightx = 0;
     gbc.anchor = GridBagConstraints.EAST;
 
+    gbc.gridx = 0; gbc.gridy = row;
+    formPanel.add(lblBookId, gbc);
+    gbc.gridx = 1; gbc.weightx = 1.0;
+    formPanel.add(txtBookId, gbc);
+    row++;
+    
     gbc.gridx = 0; gbc.gridy = row;
     formPanel.add(lblBookName, gbc);
     gbc.gridx = 1; gbc.weightx = 1.0;
