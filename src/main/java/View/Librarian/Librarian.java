@@ -38,10 +38,12 @@ import Model.ThongTinThongKe;
 import Model.ThuThu;
 import Session.LoginSession;
 import View.Login.Login;
+import View.User.UserInfoPanel;
 
 public class Librarian extends JFrame {
     private String fullName;
     private JPanel mainPanel;
+    private String maThuThu;
     private boolean isFiltering = false;
     private List<Sach> fullBookList;
     private List<Sach> displayedBooks;
@@ -80,11 +82,13 @@ public class Librarian extends JFrame {
 
     public Librarian(String fullName) {
         this.fullName = fullName;
+        this.maThuThu = getCurrentLibrarianCode();
         this.mainPanel = createMainPanel();
     }
 
     public Librarian() {
         this.fullName = "Admin";
+        this.maThuThu = "UNKNOWN";
         this.mainPanel = createMainPanel();
     }
 
@@ -259,6 +263,7 @@ public class Librarian extends JFrame {
         btn_Profile.setPreferredSize(size);
         btn_Profile.setMinimumSize(size);
         btn_Profile.setMaximumSize(size);
+        btn_Profile.addActionListener(e -> showLibrarianInfoDialog());
         pnl_Header.add(btn_Profile);
 
         return pnl_Header;
@@ -707,6 +712,38 @@ public class Librarian extends JFrame {
 
         return panelMain;
     }
+
+    private void showLibrarianInfoDialog() {
+        Window parent = SwingUtilities.getWindowAncestor(this);
+        JDialog infoDialog;
+        if (parent instanceof Frame) {
+            infoDialog = new JDialog((Frame) parent, "Thông tin người dùng", true);
+        } else {
+            infoDialog = new JDialog((Frame) null, "Thông tin người dùng", true);
+        }
+        infoDialog.setSize(400, 400);
+        infoDialog.setLocationRelativeTo(parent);
+        infoDialog.setLayout(new BorderLayout());
+        infoDialog.setResizable(false);
+
+        LibrarianInfoPanel librarianInfoPanel = new LibrarianInfoPanel(maThuThu);
+        infoDialog.add(librarianInfoPanel, BorderLayout.CENTER);
+
+        JButton closeButton = new JButton("Đóng");
+        closeButton.setBackground(new Color(139, 69, 69));
+        closeButton.setForeground(Color.WHITE);
+        closeButton.setFocusable(false);
+        closeButton.setPreferredSize(new Dimension(80, 35));
+        closeButton.addActionListener(e -> infoDialog.dispose());
+
+        JPanel buttonPanel = new JPanel();
+        buttonPanel.setBackground(Color.WHITE);
+        buttonPanel.add(closeButton);
+
+        infoDialog.add(buttonPanel, BorderLayout.SOUTH);
+        infoDialog.setVisible(true);
+    }
+
 
     private void showAddBorrowForm(JPanel panelMain) {
         JPanel addPanel = new JPanel(new GridBagLayout());
