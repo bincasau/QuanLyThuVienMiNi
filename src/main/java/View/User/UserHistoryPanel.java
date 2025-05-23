@@ -19,6 +19,7 @@ import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
+import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -31,6 +32,9 @@ import javax.swing.border.Border;
 import javax.swing.border.LineBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import java.awt.Frame;
+
+//import com.mysql.cj.x.protobuf.MysqlxNotice.Frame;
 
 import DAO.DocGiaDao;
 import DAO.LichSuMuonSachDao;
@@ -225,6 +229,7 @@ public class UserHistoryPanel extends JPanel {
         btn_Avatar.setAlignmentY(Component.CENTER_ALIGNMENT);
         btn_Notification.setAlignmentY(Component.CENTER_ALIGNMENT);
         lbl_Name.setAlignmentY(Component.CENTER_ALIGNMENT);
+        btn_Avatar.addActionListener(e -> showUserInfoDialog());
         //lbl_ID.setAlignmentY(Component.CENTER_ALIGNMENT);
         
         pnl_UserInfo.add(lbl_Name);
@@ -454,6 +459,37 @@ public class UserHistoryPanel extends JPanel {
 
         pnl_ContentArea.revalidate();
         pnl_ContentArea.repaint();
+    }
+
+    private void showUserInfoDialog() {
+        Window parent = SwingUtilities.getWindowAncestor(this);
+        JDialog infoDialog;
+        if (parent instanceof Frame) {
+            infoDialog = new JDialog((Frame) parent, "Thông tin người dùng", true);
+        } else {
+            infoDialog = new JDialog((Frame) null, "Thông tin người dùng", true);
+        }
+        infoDialog.setSize(400, 400); // Consistent with Dashboard.java
+        infoDialog.setLocationRelativeTo(parent);
+        infoDialog.setLayout(new BorderLayout());
+        infoDialog.setResizable(false);
+
+        UserInfoPanel userInfoPanel = new UserInfoPanel(maDocGia);
+        infoDialog.add(userInfoPanel, BorderLayout.CENTER);
+
+        JButton closeButton = new JButton("Đóng");
+        closeButton.setBackground(new Color(107, 142, 35));
+        closeButton.setForeground(Color.WHITE);
+        closeButton.setFocusable(false);
+        closeButton.setPreferredSize(new Dimension(80, 35));
+        closeButton.addActionListener(e -> infoDialog.dispose());
+
+        JPanel buttonPanel = new JPanel();
+        buttonPanel.setBackground(Color.WHITE);
+        buttonPanel.add(closeButton);
+
+        infoDialog.add(buttonPanel, BorderLayout.SOUTH);
+        infoDialog.setVisible(true);
     }
 
     private JPanel createHistoryItem(String bookTitle, String date, boolean isBorrowing) {

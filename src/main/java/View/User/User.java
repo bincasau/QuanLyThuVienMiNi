@@ -55,7 +55,7 @@ public class User extends JPanel {
         cardLayout = new CardLayout();
         pnl_Cards = new JPanel(cardLayout);
 
-        dashboardPanel = new Dashboard(username, this);
+        dashboardPanel = new Dashboard(username, this, maDocGia);
         pnl_Cards.add(dashboardPanel, DASHBOARD_CARD);
 
         historyPanel = new UserHistoryPanel(maDocGia);

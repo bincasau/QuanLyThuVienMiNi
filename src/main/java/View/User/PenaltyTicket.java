@@ -69,6 +69,7 @@ public class PenaltyTicket extends JPanel {
 	        JButton btn_Notification = createIconButton("pictures/bell.png", "🔔");
 
 			btn_Avatar.setAlignmentY(Component.CENTER_ALIGNMENT);
+			btn_Avatar.addActionListener(e -> showUserInfoDialog());
 
 	        JLabel lbl_UserName = new JLabel(fullName);
 	        lbl_UserName.setFont(new Font("SansSerif", Font.PLAIN, 14));
@@ -493,6 +494,38 @@ public class PenaltyTicket extends JPanel {
 
 	        return pnl_detail;
 	    }
+
+		private void showUserInfoDialog() {
+        Window parent = SwingUtilities.getWindowAncestor(this);
+        JDialog infoDialog;
+        if (parent instanceof Frame) {
+            infoDialog = new JDialog((Frame) parent, "Thông tin người dùng", true);
+        } else {
+            infoDialog = new JDialog((Frame) null, "Thông tin người dùng", true);
+        }
+        infoDialog.setSize(400, 400);
+        infoDialog.setLocationRelativeTo(parent);
+        infoDialog.setLayout(new BorderLayout());
+        infoDialog.setResizable(false);
+
+        UserInfoPanel userInfoPanel = new UserInfoPanel(maDG);
+        infoDialog.add(userInfoPanel, BorderLayout.CENTER);
+
+        JButton closeButton = new JButton("Đóng");
+        closeButton.setBackground(new Color(107, 142, 35));
+        closeButton.setForeground(Color.WHITE);
+        closeButton.setFocusable(false);
+        closeButton.setPreferredSize(new Dimension(80, 35));
+        closeButton.addActionListener(e -> infoDialog.dispose());
+
+        JPanel buttonPanel = new JPanel();
+        buttonPanel.setBackground(Color.WHITE);
+        buttonPanel.add(closeButton);
+
+        infoDialog.add(buttonPanel, BorderLayout.SOUTH);
+        infoDialog.setVisible(true);
+    }
+
 	    
 	    private JLabel createTag(String tagName) {
 	        JLabel lbl_tag = new JLabel(tagName);
