@@ -15,7 +15,7 @@ import java.util.List;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
-public class MuonSach extends JFrame {
+public class MuonSach extends JPanel {
     private JPanel pnl_Content;
     private JTextField txt_Search;
     private JPopupMenu suggestionsPopup;
@@ -31,37 +31,25 @@ public class MuonSach extends JFrame {
     private final String PLACEHOLDER_TEXT = "Tìm mã KH, tên sách";
     private JPanel pnl_ListContent;
 
-    public static void main(String[] args) {
-        EventQueue.invokeLater(() -> {
-            try {
-                MuonSach frame = new MuonSach();
-                frame.setVisible(true);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        });
-    }
-
     public MuonSach() {
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(1000, 600);
-        setTitle("Thư viện mini");
-        setLocationRelativeTo(null);
+        setLayout(new BorderLayout());
+        setBorder(new EmptyBorder(5, 5, 5, 5));
 
         pnl_Content = new JPanel(new BorderLayout());
         pnl_Content.setBorder(new EmptyBorder(5, 5, 5, 5));
-        setContentPane(pnl_Content);
+        add(pnl_Content, BorderLayout.CENTER);
 
-        JPanel pnl_Sidebar = createSidebar();
-        pnl_Content.add(pnl_Sidebar, BorderLayout.WEST);
+        //JPanel pnl_Sidebar = createSidebar();
+        //pnl_Content.add(pnl_Sidebar, BorderLayout.WEST);
 
-        JPanel pnl_Header = createHeader();
-        pnl_Content.add(pnl_Header, BorderLayout.NORTH);
+        //JPanel pnl_Header = createHeader();
+        //pnl_Content.add(pnl_Header, BorderLayout.NORTH);
 
         pnl_ListContent = createContent();
         pnl_Content.add(pnl_ListContent, BorderLayout.CENTER);
     }
 
+    /*
     private JPanel createSidebar() {
         JPanel pnl_Sidebar = new JPanel();
         pnl_Sidebar.setLayout(new BoxLayout(pnl_Sidebar, BoxLayout.Y_AXIS));
@@ -88,7 +76,8 @@ public class MuonSach extends JFrame {
         }
         return pnl_Sidebar;
     }
-
+    */
+    /*
     private JPanel createHeader() {
         JPanel pnl_Header = new JPanel();
         pnl_Header.setLayout(new BoxLayout(pnl_Header, BoxLayout.X_AXIS));
@@ -153,7 +142,7 @@ public class MuonSach extends JFrame {
         pnl_Header.add(btn_Profile);
 
         return pnl_Header;
-    }
+    }*/
 
     private JPanel createContent() {
         JPanel panelMain = new JPanel(new BorderLayout());
@@ -416,8 +405,7 @@ public class MuonSach extends JFrame {
         gbc.gridy++;
         addPanel.add(new JLabel("Mã thủ thư:"), gbc);
         gbc.gridx = 1;
-        JTextField txtMaThuThu = new JTextField(20);
-        txtMaThuThu.setText(Session.LoginSession.getInstance().getFullName());
+        JTextField txtMaThuThu = new JTextField(Session.LoginSession.getInstance().getFullName(), 20);
         txtMaThuThu.setEditable(false);
         addPanel.add(txtMaThuThu, gbc);
 
@@ -504,8 +492,8 @@ public class MuonSach extends JFrame {
                 if (confirm == JOptionPane.YES_OPTION) {
                     int result = LichSuMuonSachDao.getInstance().themDoiTuong(ls);
                     pnl_Content.removeAll();
-                    pnl_Content.add(createSidebar(), BorderLayout.WEST);
-                    pnl_Content.add(createHeader(), BorderLayout.NORTH);
+                    //pnl_Content.add(createSidebar(), BorderLayout.WEST);
+                    //pnl_Content.add(createHeader(), BorderLayout.NORTH);
                     pnl_Content.add(pnl_ListContent, BorderLayout.CENTER);
                     if (result > 0) {
                         ds = Ls_Dg_sachDao.getInstance().layDanhSach();
@@ -529,8 +517,8 @@ public class MuonSach extends JFrame {
         JButton btnCancel = new JButton("Hủy");
         btnCancel.addActionListener(e -> {
             pnl_Content.removeAll();
-            pnl_Content.add(createSidebar(), BorderLayout.WEST);
-            pnl_Content.add(createHeader(), BorderLayout.NORTH);
+            //pnl_Content.add(createSidebar(), BorderLayout.WEST);
+            //pnl_Content.add(createHeader(), BorderLayout.NORTH);
             pnl_Content.add(pnl_ListContent, BorderLayout.CENTER);
             pnl_Content.revalidate();
             pnl_Content.repaint();
@@ -538,8 +526,8 @@ public class MuonSach extends JFrame {
         addPanel.add(btnCancel, gbc);
 
         pnl_Content.removeAll();
-        pnl_Content.add(createSidebar(), BorderLayout.WEST);
-        pnl_Content.add(createHeader(), BorderLayout.NORTH);
+        //pnl_Content.add(createSidebar(), BorderLayout.WEST);
+        //pnl_Content.add(createHeader(), BorderLayout.NORTH);
         pnl_Content.add(addPanel, BorderLayout.CENTER);
         pnl_Content.revalidate();
         pnl_Content.repaint();
@@ -673,8 +661,8 @@ public class MuonSach extends JFrame {
                 if (confirm == JOptionPane.YES_OPTION) {
                     int result = LichSuMuonSachDao.getInstance().capNhatDoiTuong(lsUpdated);
                     pnl_Content.removeAll();
-                    pnl_Content.add(createSidebar(), BorderLayout.WEST);
-                    pnl_Content.add(createHeader(), BorderLayout.NORTH);
+                    //pnl_Content.add(createSidebar(), BorderLayout.WEST);
+                    //pnl_Content.add(createHeader(), BorderLayout.NORTH);
                     pnl_Content.add(pnl_ListContent, BorderLayout.CENTER);
                     if (result > 0) {
                         ds = Ls_Dg_sachDao.getInstance().layDanhSach();
@@ -698,8 +686,8 @@ public class MuonSach extends JFrame {
         JButton btnCancel = new JButton("Hủy");
         btnCancel.addActionListener(e -> {
             pnl_Content.removeAll();
-            pnl_Content.add(createSidebar(), BorderLayout.WEST);
-            pnl_Content.add(createHeader(), BorderLayout.NORTH);
+            //pnl_Content.add(createSidebar(), BorderLayout.WEST);
+            //pnl_Content.add(createHeader(), BorderLayout.NORTH);
             pnl_Content.add(pnl_ListContent, BorderLayout.CENTER);
             pnl_Content.revalidate();
             pnl_Content.repaint();
@@ -707,8 +695,8 @@ public class MuonSach extends JFrame {
         editPanel.add(btnCancel, gbc);
 
         pnl_Content.removeAll();
-        pnl_Content.add(createSidebar(), BorderLayout.WEST);
-        pnl_Content.add(createHeader(), BorderLayout.NORTH);
+        //pnl_Content.add(createSidebar(), BorderLayout.WEST);
+        //pnl_Content.add(createHeader(), BorderLayout.NORTH);
         pnl_Content.add(editPanel, BorderLayout.CENTER);
         pnl_Content.revalidate();
         pnl_Content.repaint();
@@ -755,16 +743,14 @@ public class MuonSach extends JFrame {
         RoundedPanel itemPanel = new RoundedPanel(20);
         itemPanel.setLayout(new BorderLayout());
         itemPanel.setBackground(new Color(182, 162, 162));
-        itemPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 200)); // Tăng chiều cao để chứa tên dài
+        itemPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 200));
         itemPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
         itemPanel.setBorder(new EmptyBorder(5, 10, 5, 15));
 
-        // Sử dụng BorderLayout cho leftPanel để căn giữa dễ dàng hơn
         JPanel leftPanel = new JPanel(new BorderLayout());
         leftPanel.setOpaque(false);
-        leftPanel.setPreferredSize(new Dimension(240, 180)); // Tăng chiều rộng để chứa tên dài
+        leftPanel.setPreferredSize(new Dimension(240, 180));
 
-        // Panel con để chứa hình ảnh, căn giữa
         JPanel imagePanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         imagePanel.setOpaque(false);
         ImageIcon bookIcon = new ImageIcon("Pictures/" + ls.getAnh());
@@ -775,15 +761,13 @@ public class MuonSach extends JFrame {
         }
         leftPanel.add(imagePanel, BorderLayout.NORTH);
 
-        // Tên sách
         String bookName = "<html><div style='text-align: center; width: 220px; overflow-wrap: break-word; white-space: normal;'>" + 
                          ls.getTenSach() + "</div></html>";
         JLabel lblBookName = new JLabel(bookName);
         lblBookName.setFont(itemBoldFont);
         lblBookName.setForeground(Color.BLACK);
-        lblBookName.setHorizontalAlignment(SwingConstants.CENTER); // Căn giữa văn bản
+        lblBookName.setHorizontalAlignment(SwingConstants.CENTER);
         lblBookName.setVerticalAlignment(SwingConstants.TOP);
-        // Đặt tên sách trong panel con để căn giữa
         JPanel namePanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         namePanel.setOpaque(false);
         namePanel.add(lblBookName);
@@ -871,6 +855,7 @@ public class MuonSach extends JFrame {
 
         return itemPanel;
     }
+
     private JPanel createInfoRow(String label, String value, Font itemFont, Font itemBoldFont) {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 3, 0));
         panel.setOpaque(false);

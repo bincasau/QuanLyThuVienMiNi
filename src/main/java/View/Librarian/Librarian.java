@@ -7,12 +7,12 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.security.MessageDigest;
+import java.sql.Date;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.time.Year;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -79,7 +79,6 @@ public class Librarian extends JFrame {
     private static final Pattern PHONE_PATTERN = Pattern.compile("^\\d{10}$");
     private static final Pattern USERNAME_PASSWORD_PATTERN = Pattern.compile("^.{8,}$");
 
-
     public Librarian(String fullName) {
         this.fullName = fullName;
         this.maThuThu = getCurrentLibrarianCode();
@@ -90,6 +89,15 @@ public class Librarian extends JFrame {
         this.fullName = "Admin";
         this.maThuThu = "UNKNOWN";
         this.mainPanel = createMainPanel();
+    }
+
+    private String getCurrentLibrarianCode() {
+        String fullName = LoginSession.getInstance().getFullName();
+        List<ThuThu> librarians = ThuThuDao.getInstance().layDanhSachTheoDK(fullName);
+        if (!librarians.isEmpty()) {
+            return librarians.get(0).getMaNguoiDung();
+        }
+        return "UNKNOWN";
     }
 
     public JPanel getMainPanel() {
@@ -104,7 +112,6 @@ public class Librarian extends JFrame {
         mainPanel.add(pnl_Sidebar, BorderLayout.WEST);
 
         tabbedPane.setBackground(Color.WHITE);
-        // Ẩn thanh tab phía trên
         tabbedPane.setUI(new javax.swing.plaf.basic.BasicTabbedPaneUI() {
             @Override
             protected int calculateTabAreaHeight(int tabPlacement, int horizRunCount, int maxTabHeight) {
@@ -116,7 +123,6 @@ public class Librarian extends JFrame {
             }
         });
 
-        // Add tabs
         tabbedPane.addTab("Sách", createBookPanel());
         tabbedPane.addTab("Độc giả", createUserPanel());
         tabbedPane.addTab("Mượn sách", createBorrowPanel());
@@ -156,7 +162,7 @@ public class Librarian extends JFrame {
                 final int tabIndex = i;
                 btn.addActionListener(e -> tabbedPane.setSelectedIndex(tabIndex));
             }
-            if (i == 0) { // Highlight "Sách" by default
+            if (i == 0) {
                 btn.setBackground(new Color(182, 162, 162));
             }
             pnl_Sidebar.add(btn);
@@ -165,7 +171,6 @@ public class Librarian extends JFrame {
             }
         }
     
-        // Xử lý sự kiện đăng xuất
         buttons[5].addActionListener(e -> {
             int confirm = JOptionPane.showConfirmDialog(this,
                 "Bạn có chắc chắn muốn đăng xuất?",
@@ -174,13 +179,11 @@ public class Librarian extends JFrame {
     
             if (confirm == JOptionPane.YES_OPTION) {
                 LoginSession.getInstance().logout();
-                // Close the current frame
                 JFrame frame = (JFrame) SwingUtilities.getWindowAncestor(pnl_Sidebar);
                 if (frame != null) {
                     frame.setVisible(false);
                     frame.dispose();
                 }
-                // Open the login window
                 SwingUtilities.invokeLater(() -> {
                     Login loginForm = new Login();
                     loginForm.setVisible(true);
@@ -188,7 +191,6 @@ public class Librarian extends JFrame {
             }
         });
     
-        // Update button highlighting when tabs change
         tabbedPane.addChangeListener(e -> {
             int selectedIndex = tabbedPane.getSelectedIndex();
             for (int i = 0; i < 5; i++) {
@@ -248,6 +250,7 @@ public class Librarian extends JFrame {
         btn_Notification.setPreferredSize(size);
         btn_Notification.setMaximumSize(size);
         btn_Notification.setMinimumSize(size);
+        btn_Notification.addActionListener(e -> showOverdueBorrowersDialog());
         pnl_Header.add(btn_Notification);
 
         ImageIcon icon_Profile = new ImageIcon("Pictures/profile.png");
@@ -269,13 +272,82 @@ public class Librarian extends JFrame {
         return pnl_Header;
     }
 
-    // Book Panel
-    private JPanel createBookPanel() {
-    Book bookPanel = new Book(fullName);
-    return bookPanel.getContentPane(); // Thêm phương thức getContentPane() vào lớp Book
-}
+    private void showOverdueBorrowersDialog() {
+        Window parent = SwingUtilities.getWindowAncestor(this);
+        JDialog dialog;
+        if (parent instanceof Frame) {
+            dialog = new JDialog((Frame) parent, "Danh sách mượn sách quá hạn", true);
+        } else {
+            dialog = new JDialog((Frame) null, "Danh sách mượn sách quá hạn", true);
+        }
+        dialog.setSize(600, 400);
+        dialog.setLocationRelativeTo(parent);
+        dialog.setLayout(new BorderLayout());
+        dialog.setResizable(false);
 
-    // User Panel
+        // Create table for overdue borrowers
+        String[] columnNames = {"Mã Độc Giả", "Tên Độc Giả", "Mã Sách", "Ngày Mượn", "Ngày Trả"};
+        DefaultTableModel overdueTableModel = new DefaultTableModel(columnNames, 0);
+        JTable overdueTable = new JTable(overdueTableModel);
+        JScrollPane scrollPane = new JScrollPane(overdueTable);
+        scrollPane.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+        // Load overdue data
+        loadOverdueBorrowersData(overdueTableModel);
+
+        dialog.add(scrollPane, BorderLayout.CENTER);
+
+        // Add close button
+        JButton closeButton = new JButton("Đóng");
+        closeButton.setBackground(new Color(139, 69, 69));
+        closeButton.setForeground(Color.WHITE);
+        closeButton.setFocusable(false);
+        closeButton.setPreferredSize(new Dimension(80, 35));
+        closeButton.addActionListener(e -> dialog.dispose());
+
+        JPanel buttonPanel = new JPanel();
+        buttonPanel.setBackground(Color.WHITE);
+        buttonPanel.add(closeButton);
+
+        dialog.add(buttonPanel, BorderLayout.SOUTH);
+        dialog.setVisible(true);
+    }
+
+    private void loadOverdueBorrowersData(DefaultTableModel tableModel) {
+        tableModel.setRowCount(0);
+        try {
+            LichSuMuonSachDao lichSuDao = LichSuMuonSachDao.getInstance();
+            DocGiaDao docGiaDao = DocGiaDao.getInstance();
+            List<LichSuMuonSach> overdueList = lichSuDao.layDanhSach();
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+            java.sql.Date currentDate = lichSuDao.getCurrentDate();
+
+            for (LichSuMuonSach ls : overdueList) {
+                if ("Chưa trả".equals(ls.getTrangThai()) && ls.getNgayTra() != null && ls.getNgayTra().before(currentDate)) {
+                    String tenNguoiDung = docGiaDao.getTenNguoiDungByMaNguoiDung(ls.getMaDocGia());
+                    if (tenNguoiDung == null) {
+                        tenNguoiDung = "Unknown";
+                    }
+                    Object[] row = {
+                        ls.getMaDocGia(),
+                        tenNguoiDung,
+                        ls.getMaSach(),
+                        sdf.format(ls.getNgayMuon()),
+                        sdf.format(ls.getNgayTra())
+                    };
+                    tableModel.addRow(row);
+                }
+            }
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Lỗi tải danh sách mượn quá hạn: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private JPanel createBookPanel() {
+        Book bookPanel = new Book(fullName);
+        return bookPanel.getContentPane();
+    }
+
     private JPanel createUserPanel() {
         JPanel pnl_Main = new JPanel(new BorderLayout());
         String[] columnNames = {"Mã Người Dùng", "Tên Người Dùng", "Tài Khoản", "Email", "Số Điện Thoại", "Ngày Tạo"};
@@ -311,13 +383,13 @@ public class Librarian extends JFrame {
 
         pnl_top.add(txt_search);
 
-        JButton btn_search = new JButton("Tìm");
-        btn_search.setPreferredSize(new Dimension(80, 40));
-        btn_search.setMaximumSize(new Dimension(80, 40));
-        btn_search.setMinimumSize(new Dimension(80, 40));
+        JButton btn_search = new JButton("Tìm kiếm");
+        btn_search.setPreferredSize(new Dimension(90, 40));
+        btn_search.setMaximumSize(new Dimension(90, 40));
+        btn_search.setMinimumSize(new Dimension(90, 40));
         btn_search.setFont(new Font("Arial", Font.BOLD, 14));
         btn_search.addActionListener(e -> {
-            userCurrentPage = 1; // Reset to page 1 on search
+            userCurrentPage = 1;
             String keyword = txt_search.getText().trim();
             if (keyword.equals("Tìm mã độc giả, tên, tài khoản...")) {
                 keyword = "";
@@ -357,7 +429,6 @@ public class Librarian extends JFrame {
                 String email = emailField.getText().trim();
                 String soDienThoai = soDienThoaiField.getText().trim();
 
-                // Validation
                 if (tenNguoiDung.isEmpty() || taiKhoan.isEmpty() || matKhauGoc.isEmpty()) {
                     JOptionPane.showMessageDialog(this, "Tên, tài khoản và mật khẩu không được để trống!", "Lỗi", JOptionPane.ERROR_MESSAGE);
                     return;
@@ -389,7 +460,6 @@ public class Librarian extends JFrame {
                         throw new Exception("DocGiaDao instance is null");
                     }
 
-                    // Check for duplicate account
                     if (docGiaDao.kiemTraTaiKhoanTonTai(taiKhoan)) {
                         JOptionPane.showMessageDialog(this, "Tài khoản '" + taiKhoan + "' đã tồn tại! Vui lòng chọn tài khoản khác.", "Lỗi", JOptionPane.ERROR_MESSAGE);
                         return;
@@ -399,7 +469,7 @@ public class Librarian extends JFrame {
                     if (maNguoiDung == null) {
                         throw new Exception("Cannot generate new maNguoiDung");
                     }
-                    Date ngayTao = new Date();
+                    java.util.Date ngayTao = new java.util.Date(); // Fixed: Use java.util.Date explicitly
                     String matKhauHash = hashSHA1(matKhauGoc);
 
                     DocGia docGia = new DocGia(maNguoiDung, tenNguoiDung, taiKhoan, matKhauHash, email, soDienThoai, ngayTao);
@@ -451,7 +521,6 @@ public class Librarian extends JFrame {
                             if (keyword.equals("Tìm mã độc giả, tên, tài khoản...")) {
                                 keyword = "";
                             }
-                            // Adjust pagination if current page is empty
                             int totalPages = (int) Math.ceil((double) userTotalRecords / userPageSize);
                             if (userCurrentPage > totalPages && totalPages > 0) {
                                 userCurrentPage = totalPages;
@@ -485,7 +554,7 @@ public class Librarian extends JFrame {
         cmb_pageSize.setPreferredSize(new Dimension(60, 30));
         cmb_pageSize.addActionListener(e -> {
             userPageSize = (Integer) cmb_pageSize.getSelectedItem();
-            userCurrentPage = 1; // Reset to page 1 when changing pageSize
+            userCurrentPage = 1;
             String keyword = txt_search.getText().trim();
             if (keyword.equals("Tìm mã độc giả, tên, tài khoản...")) {
                 keyword = "";
@@ -531,7 +600,6 @@ public class Librarian extends JFrame {
         pnl_Main.add(scrollPane, BorderLayout.CENTER);
         pnl_Main.add(pnl_pagination, BorderLayout.SOUTH);
 
-        // Load table data after all components are initialized
         loadTableData("");
 
         return pnl_Main;
@@ -551,166 +619,9 @@ public class Librarian extends JFrame {
         }
     }
 
-    // Borrow Panel
     private JPanel createBorrowPanel() {
-        JPanel panelMain = new JPanel(new BorderLayout());
-        JTextField txt_Search = new JTextField(25);
-        pnl_MainContent = new JPanel();
-        pnl_MainContent.setLayout(new BoxLayout(pnl_MainContent, BoxLayout.Y_AXIS));
-        pnl_MainContent.setBackground(Color.WHITE);
-        List<Ls_Dg_sach> ds = Ls_Dg_sachDao.getInstance().layDanhSach();
-        filteredDs = ds != null ? new ArrayList<>(ds) : new ArrayList<>();
-
-        // Initialize pagination buttons
-        btn_prev = new JButton("Trước");
-        btn_prev.setPreferredSize(new Dimension(80, 40));
-        btn_prev.setMaximumSize(new Dimension(80, 40));
-        btn_prev.setMinimumSize(new Dimension(80, 40));
-        btn_prev.setVisible(currentPage > 1);
-        btn_prev.addActionListener(e -> {
-            if (currentPage > 1) {
-                currentPage--;
-                updatePageContent();
-            }
-        });
-
-        btn_next = new JButton("Sau");
-        btn_next.setPreferredSize(new Dimension(80, 40));
-        btn_next.setMaximumSize(new Dimension(80, 40));
-        btn_next.setMinimumSize(new Dimension(80, 40));
-        btn_next.setVisible(ds != null && ds.size() > itemsPerPage);
-        btn_next.addActionListener(e -> {
-            if ((currentPage * itemsPerPage) < filteredDs.size()) {
-                currentPage++;
-                updatePageContent();
-            }
-        });
-
-        JPanel pnl_top = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        pnl_top.setBackground(Color.WHITE);
-        txt_Search.setPreferredSize(new Dimension(0, 40));
-        txt_Search.setMaximumSize(new Dimension(300, 40));
-        txt_Search.setText("Tìm mã KH, tên sách");
-        txt_Search.setForeground(Color.GRAY);
-
-        txt_Search.addFocusListener(new FocusAdapter() {
-            @Override
-            public void focusGained(FocusEvent e) {
-                if (txt_Search.getText().equals("Tìm mã KH, tên sách")) {
-                    txt_Search.setText("");
-                    txt_Search.setForeground(Color.BLACK);
-                }
-            }
-
-            @Override
-            public void focusLost(FocusEvent e) {
-                if (txt_Search.getText().isEmpty()) {
-                    txt_Search.setText("Tìm mã KH, tên sách");
-                    txt_Search.setForeground(Color.GRAY);
-                }
-            }
-        });
-
-        pnl_top.add(txt_Search);
-
-        JButton btn_search = new JButton("Tìm");
-        btn_search.setPreferredSize(new Dimension(80, 40));
-        btn_search.setMaximumSize(new Dimension(80, 40));
-        btn_search.setMinimumSize(new Dimension(80, 40));
-        btn_search.addActionListener(e -> {
-            String query = txt_Search.getText().trim();
-            if (query.equals("Tìm mã KH, tên sách") || query.isEmpty()) {
-                filteredDs = new ArrayList<>(ds);
-            } else {
-                filteredDs = new ArrayList<>();
-                String lowerQuery = query.toLowerCase();
-                for (Ls_Dg_sach ls : ds) {
-                    if (ls.getMaNguoiDung().toLowerCase().contains(lowerQuery) ||
-                        ls.getTenSach().toLowerCase().contains(lowerQuery)) {
-                        filteredDs.add(ls);
-                    }
-                }
-            }
-            currentPage = 1;
-            updatePageContent();
-        });
-        pnl_top.add(btn_search);
-
-        JButton btn_add = new JButton("Thêm");
-        btn_add.setPreferredSize(new Dimension(80, 40));
-        btn_add.setMaximumSize(new Dimension(80, 40));
-        btn_add.setMinimumSize(new Dimension(80, 40));
-        btn_add.addActionListener(e -> showAddBorrowForm(panelMain));
-        pnl_top.add(btn_add);
-
-        JButton btn_filter = new JButton("Lọc");
-        btn_filter.setPreferredSize(new Dimension(80, 40));
-        btn_filter.setMaximumSize(new Dimension(80, 40));
-        btn_filter.setMinimumSize(new Dimension(80, 40));
-
-        JPopupMenu filterMenu = new JPopupMenu();
-        JMenuItem itemChuaTra = new JMenuItem("Chưa trả");
-        JMenuItem itemDaTra = new JMenuItem("Đã trả");
-        JMenuItem itemTatCa = new JMenuItem("Tất cả");
-        filterMenu.add(itemChuaTra);
-        filterMenu.add(itemDaTra);
-        filterMenu.add(itemTatCa);
-
-        itemChuaTra.addActionListener(e -> {
-            filteredDs = new ArrayList<>();
-            for (Ls_Dg_sach ls : ds) {
-                if (ls.getTrangThai().equals("Chưa trả")) {
-                    filteredDs.add(ls);
-                }
-            }
-            currentPage = 1;
-            updatePageContent();
-        });
-
-        itemDaTra.addActionListener(e -> {
-            filteredDs = new ArrayList<>();
-            for (Ls_Dg_sach ls : ds) {
-                if (ls.getTrangThai().equals("Đã trả")) {
-                    filteredDs.add(ls);
-                }
-            }
-            currentPage = 1;
-            updatePageContent();
-        });
-
-        itemTatCa.addActionListener(e -> {
-            filteredDs = new ArrayList<>(ds);
-            currentPage = 1;
-            updatePageContent();
-        });
-
-        btn_filter.addActionListener(e -> {
-            filterMenu.show(btn_filter, 0, btn_filter.getHeight());
-        });
-
-        pnl_top.add(btn_filter);
-
-        panelMain.add(pnl_top, BorderLayout.NORTH);
-
-        scrollPane = new JScrollPane(pnl_MainContent);
-        scrollPane.setBorder(null);
-        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-        scrollPane.setPreferredSize(new Dimension(900, 550));
-
-        updatePageContent();
-
-        panelMain.add(scrollPane, BorderLayout.CENTER);
-
-        JPanel pnl_pagination = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        pnl_pagination.setBackground(Color.WHITE);
-        pnl_pagination.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-        pnl_pagination.add(btn_prev);
-        pnl_pagination.add(btn_next);
-
-        panelMain.add(pnl_pagination, BorderLayout.SOUTH);
-
-        return panelMain;
+        MuonSach muonSachPanel = new MuonSach();
+        return muonSachPanel;
     }
 
     private void showLibrarianInfoDialog() {
@@ -744,467 +655,14 @@ public class Librarian extends JFrame {
         infoDialog.setVisible(true);
     }
 
-
-    private void showAddBorrowForm(JPanel panelMain) {
-        JPanel addPanel = new JPanel(new GridBagLayout());
-        addPanel.setBackground(Color.WHITE);
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(10, 10, 10, 10);
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-
-        JLabel lblTitle = new JLabel("Thêm Lịch Sử Mượn Sách");
-        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 18));
-        gbc.gridwidth = 2;
-        gbc.anchor = GridBagConstraints.CENTER;
-        addPanel.add(lblTitle, gbc);
-
-        gbc.gridwidth = 1;
-        gbc.gridy++;
-        gbc.anchor = GridBagConstraints.WEST;
-        addPanel.add(new JLabel("Mã lịch sử:"), gbc);
-        gbc.gridx = 1;
-        String maLichSu = LichSuMuonSachDao.getInstance().generateMaLichSu();
-        JTextField txtMaLichSu = new JTextField(maLichSu, 20);
-        txtMaLichSu.setEditable(false);
-        addPanel.add(txtMaLichSu, gbc);
-
-        gbc.gridx = 0;
-        gbc.gridy++;
-        addPanel.add(new JLabel("Mã sách:"), gbc);
-        gbc.gridx = 1;
-        JTextField txtMaSach = new JTextField(20);
-        addPanel.add(txtMaSach, gbc);
-
-        gbc.gridx = 0;
-        gbc.gridy++;
-        addPanel.add(new JLabel("Mã thủ thư:"), gbc);
-        gbc.gridx = 1;
-        String maThuThu = getCurrentLibrarianCode();
-        JTextField txtMaThuThu = new JTextField(maThuThu, 20);
-        txtMaThuThu.setEditable(false);
-        addPanel.add(txtMaThuThu, gbc);
-
-        gbc.gridx = 0;
-        gbc.gridy++;
-        addPanel.add(new JLabel("Mã độc giả:"), gbc);
-        gbc.gridx = 1;
-        JTextField txtMaDocGia = new JTextField(20);
-        addPanel.add(txtMaDocGia, gbc);
-
-        gbc.gridx = 0;
-        gbc.gridy++;
-        addPanel.add(new JLabel("Ngày mượn (yyyy-MM-dd):"), gbc);
-        gbc.gridx = 1;
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-        JTextField txtNgayMuon = new JTextField(sdf.format(new Date()), 20);
-        addPanel.add(txtNgayMuon, gbc);
-
-        gbc.gridx = 0;
-        gbc.gridy++;
-        addPanel.add(new JLabel("Ngày trả (yyyy-MM-dd, để trống nếu chưa trả):"), gbc);
-        gbc.gridx = 1;
-        JTextField txtNgayTra = new JTextField(20);
-        addPanel.add(txtNgayTra, gbc);
-
-        gbc.gridx = 0;
-        gbc.gridy++;
-        addPanel.add(new JLabel("Trạng thái:"), gbc);
-        gbc.gridx = 1;
-        JTextField txtTrangThai = new JTextField("Chưa trả", 20);
-        txtTrangThai.setEditable(false);
-        addPanel.add(txtTrangThai, gbc);
-
-        gbc.gridx = 0;
-        gbc.gridy++;
-        gbc.gridwidth = 1;
-        JButton btnSave = new JButton("Lưu");
-        btnSave.addActionListener(e -> {
-            try {
-                String maSach = txtMaSach.getText().trim();
-                String maThuThuInput = txtMaThuThu.getText().trim();
-                String maDocGia = txtMaDocGia.getText().trim();
-                String ngayMuonStr = txtNgayMuon.getText().trim();
-                String ngayTraStr = txtNgayTra.getText().trim();
-                String trangThai = txtTrangThai.getText().trim();
-
-                if (maSach.isEmpty() || maThuThuInput.isEmpty() || maDocGia.isEmpty() || ngayMuonStr.isEmpty()) {
-                    JOptionPane.showMessageDialog(this, "Vui lòng nhập đầy đủ mã sách, mã thủ thư, mã độc giả và ngày mượn!");
-                    return;
-                }
-
-                if (maLichSu.length() > 5) {
-                    JOptionPane.showMessageDialog(this, "Mã lịch sử quá dài, tối đa 5 ký tự!");
-                    return;
-                }
-
-                SimpleDateFormat sdfParse = new SimpleDateFormat("yyyy-MM-dd");
-                java.sql.Date ngayMuon;
-                try {
-                    ngayMuon = new java.sql.Date(sdfParse.parse(ngayMuonStr).getTime());
-                } catch (Exception ex) {
-                    JOptionPane.showMessageDialog(this, "Ngày mượn không đúng định dạng (yyyy-MM-dd)!");
-                    return;
-                }
-                java.sql.Date ngayTra = null;
-                if (!ngayTraStr.isEmpty()) {
-                    try {
-                        ngayTra = new java.sql.Date(sdfParse.parse(ngayTraStr).getTime());
-                    } catch (Exception ex) {
-                        JOptionPane.showMessageDialog(this, "Ngày trả không đúng định dạng (yyyy-MM-dd)!");
-                        return;
-                    }
-                }
-
-                LichSuMuonSach ls = new LichSuMuonSach(maLichSu, ngayMuon, ngayTra, trangThai, maSach, maThuThuInput, maDocGia);
-
-                int result = LichSuMuonSachDao.getInstance().themDoiTuong(ls);
-                if (result > 0) {
-                    JOptionPane.showMessageDialog(this, "Thêm lịch sử mượn sách thành công!");
-                    tabbedPane.setComponentAt(2, createBorrowPanel());
-                    tabbedPane.revalidate();
-                    tabbedPane.repaint();
-                } else {
-                    JOptionPane.showMessageDialog(this, "Thêm thất bại! Vui lòng kiểm tra lại dữ liệu.");
-                }
-            } catch (Exception ex) {
-                JOptionPane.showMessageDialog(this, "Lỗi: " + ex.getMessage());
-            }
-        });
-        addPanel.add(btnSave, gbc);
-
-        gbc.gridx = 1;
-        JButton btnCancel = new JButton("Hủy");
-        btnCancel.addActionListener(e -> {
-            tabbedPane.setComponentAt(2, createBorrowPanel());
-            tabbedPane.revalidate();
-            tabbedPane.repaint();
-        });
-        addPanel.add(btnCancel, gbc);
-
-        panelMain.removeAll();
-        panelMain.add(addPanel, BorderLayout.CENTER);
-        panelMain.revalidate();
-        panelMain.repaint();
-    }
-
-    private String getCurrentLibrarianCode() {
-        String fullName = LoginSession.getInstance().getFullName();
-        List<ThuThu> librarians = ThuThuDao.getInstance().layDanhSachTheoDK(fullName);
-        if (!librarians.isEmpty()) {
-            return librarians.get(0).getMaNguoiDung();
-        }
-        return "UNKNOWN";
-    }
-
-    private void showEditBorrowForm(Ls_Dg_sach lsDg, JPanel panelMain) {
-        LichSuMuonSach ls = LichSuMuonSachDao.getInstance().getByMaLichSu(lsDg.getMaLichSu());
-
-        if (ls == null) {
-            JOptionPane.showMessageDialog(this, "Không tìm thấy bản ghi lịch sử mượn sách!");
-            return;
-        }
-
-        JPanel editPanel = new JPanel(new GridBagLayout());
-        editPanel.setBackground(Color.WHITE);
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(10, 10, 10, 10);
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-
-        JLabel lblTitle = new JLabel("Sửa Lịch Sử Mượn Sách");
-        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 18));
-        gbc.gridwidth = 2;
-        gbc.anchor = GridBagConstraints.CENTER;
-        editPanel.add(lblTitle, gbc);
-
-        gbc.gridwidth = 1;
-        gbc.gridy++;
-        gbc.anchor = GridBagConstraints.WEST;
-        editPanel.add(new JLabel("Mã lịch sử:"), gbc);
-        gbc.gridx = 1;
-        JTextField txtMaLichSu = new JTextField(ls.getMaLichSu(), 20);
-        txtMaLichSu.setEditable(false);
-        editPanel.add(txtMaLichSu, gbc);
-
-        gbc.gridx = 0;
-        gbc.gridy++;
-        editPanel.add(new JLabel("Mã sách:"), gbc);
-        gbc.gridx = 1;
-        JTextField txtMaSach = new JTextField(ls.getMaSach(), 20);
-        editPanel.add(txtMaSach, gbc);
-
-        gbc.gridx = 0;
-        gbc.gridy++;
-        editPanel.add(new JLabel("Mã thủ thư:"), gbc);
-        gbc.gridx = 1;
-        JTextField txtMaThuThu = new JTextField(ls.getMaThuThu(), 20);
-        editPanel.add(txtMaThuThu, gbc);
-
-        gbc.gridx = 0;
-        gbc.gridy++;
-        editPanel.add(new JLabel("Mã độc giả:"), gbc);
-        gbc.gridx = 1;
-        JTextField txtMaDocGia = new JTextField(ls.getMaDocGia(), 20);
-        editPanel.add(txtMaDocGia, gbc);
-
-        gbc.gridx = 0;
-        gbc.gridy++;
-        editPanel.add(new JLabel("Ngày mượn (yyyy-MM-dd):"), gbc);
-        gbc.gridx = 1;
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-        JTextField txtNgayMuon = new JTextField(sdf.format(ls.getNgayMuon()), 20);
-        editPanel.add(txtNgayMuon, gbc);
-
-        gbc.gridx = 0;
-        gbc.gridy++;
-        editPanel.add(new JLabel("Ngày trả (yyyy-MM-dd, để trống nếu chưa trả):"), gbc);
-        gbc.gridx = 1;
-        JTextField txtNgayTra = new JTextField(ls.getNgayTra() != null ? sdf.format(ls.getNgayTra()) : "", 20);
-        editPanel.add(txtNgayTra, gbc);
-
-        gbc.gridx = 0;
-        gbc.gridy++;
-        editPanel.add(new JLabel("Trạng thái:"), gbc);
-        gbc.gridx = 1;
-        String[] trangThaiOptions = {"Chưa trả", "Đã trả"};
-        JComboBox<String> cbTrangThai = new JComboBox<>(trangThaiOptions);
-        cbTrangThai.setSelectedItem(ls.getTrangThai());
-        cbTrangThai.setPreferredSize(new Dimension(200, 25));
-        editPanel.add(cbTrangThai, gbc);
-
-        gbc.gridx = 0;
-        gbc.gridy++;
-        gbc.gridwidth = 1;
-        JButton btnSave = new JButton("Lưu");
-        btnSave.addActionListener(e -> {
-            try {
-                String maSach = txtMaSach.getText().trim();
-                String maThuThu = txtMaThuThu.getText().trim();
-                String maDocGia = txtMaDocGia.getText().trim();
-                String ngayMuonStr = txtNgayMuon.getText().trim();
-                String ngayTraStr = txtNgayTra.getText().trim();
-                String trangThai = (String) cbTrangThai.getSelectedItem();
-
-                if (maSach.isEmpty() || maThuThu.isEmpty() || maDocGia.isEmpty() || ngayMuonStr.isEmpty()) {
-                    JOptionPane.showMessageDialog(this, "Vui lòng nhập đầy đủ mã sách, mã thủ thư, mã độc giả và ngày mượn!");
-                    return;
-                }
-
-                SimpleDateFormat sdfUpdate = new SimpleDateFormat("yyyy-MM-dd");
-                java.sql.Date ngayMuon;
-                try {
-                    ngayMuon = new java.sql.Date(sdfUpdate.parse(ngayMuonStr).getTime());
-                } catch (Exception ex) {
-                    JOptionPane.showMessageDialog(this, "Ngày mượn không đúng định dạng (yyyy-MM-dd)!");
-                    return;
-                }
-                java.sql.Date ngayTra = null;
-                if (!ngayTraStr.isEmpty()) {
-                    try {
-                        ngayTra = new java.sql.Date(sdfUpdate.parse(ngayTraStr).getTime());
-                    } catch (Exception ex) {
-                        JOptionPane.showMessageDialog(this, "Ngày trả không đúng định dạng (yyyy-MM-dd)!");
-                        return;
-                    }
-                }
-
-                LichSuMuonSach lsUpdated = new LichSuMuonSach(
-                    ls.getMaLichSu(), ngayMuon, ngayTra, trangThai, maSach, maThuThu, maDocGia
-                );
-
-                int result = LichSuMuonSachDao.getInstance().capNhatDoiTuong(lsUpdated);
-                if (result > 0) {
-                    JOptionPane.showMessageDialog(this, "Cập nhật lịch sử mượn sách thành công!");
-                    tabbedPane.setComponentAt(2, createBorrowPanel());
-                    tabbedPane.revalidate();
-                    tabbedPane.repaint();
-                } else {
-                    JOptionPane.showMessageDialog(this, "Cập nhật thất bại! Vui lòng kiểm tra lại dữ liệu.");
-                }
-            } catch (Exception ex) {
-                JOptionPane.showMessageDialog(this, "Lỗi: " + ex.getMessage());
-            }
-        });
-        editPanel.add(btnSave, gbc);
-
-        gbc.gridx = 1;
-        JButton btnCancel = new JButton("Hủy");
-        btnCancel.addActionListener(e -> {
-            tabbedPane.setComponentAt(2, createBorrowPanel());
-            tabbedPane.revalidate();
-            tabbedPane.repaint();
-        });
-        editPanel.add(btnCancel, gbc);
-
-        panelMain.removeAll();
-        panelMain.add(editPanel, BorderLayout.CENTER);
-        panelMain.revalidate();
-        panelMain.repaint();
-    }
-
-    private JPanel createBookItem(Ls_Dg_sach ls, Font itemFont, Font itemBoldFont, JPanel panelMain) {
-        RoundedPanel itemPanel = new RoundedPanel(20);
-        itemPanel.setLayout(new BorderLayout());
-        itemPanel.setBackground(new Color(182, 162, 162));
-        itemPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 180));
-        itemPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        itemPanel.setBorder(new EmptyBorder(5, 10, 5, 15));
-
-        JPanel leftPanel = new JPanel();
-        leftPanel.setLayout(new BoxLayout(leftPanel, BoxLayout.Y_AXIS));
-        leftPanel.setOpaque(false);
-        leftPanel.setPreferredSize(new Dimension(150, 140));
-
-        leftPanel.add(Box.createVerticalStrut(10));
-
-        ImageIcon bookIcon = new ImageIcon("Pictures/" + ls.getAnh());
-        if (bookIcon.getIconWidth() != -1) {
-            Image scaledBook = bookIcon.getImage().getScaledInstance(80, 100, Image.SCALE_SMOOTH);
-            JLabel lblBook = new JLabel(new ImageIcon(scaledBook));
-            lblBook.setAlignmentX(Component.CENTER_ALIGNMENT);
-            leftPanel.add(lblBook);
-        }
-
-        String bookName = "<html><div style='text-align: center; width: 140px;'>" + ls.getTenSach() + "</div></html>";
-        JLabel lblBookName = new JLabel(bookName);
-        lblBookName.setFont(itemBoldFont);
-        lblBookName.setAlignmentX(Component.CENTER_ALIGNMENT);
-        lblBookName.setForeground(Color.BLACK);
-
-        leftPanel.add(Box.createVerticalStrut(5));
-        leftPanel.add(lblBookName);
-
-        leftPanel.add(Box.createVerticalStrut(10));
-
-        itemPanel.add(leftPanel, BorderLayout.WEST);
-
-        JPanel rightPanel = new JPanel(new GridBagLayout());
-        rightPanel.setOpaque(false);
-
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(1, 5, 1, 5);
-        gbc.anchor = GridBagConstraints.WEST;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.weightx = 1;
-
-        rightPanel.add(createInfoRow("Tên:", ls.getTenNguoiDung(), itemFont, itemBoldFont), gbc);
-        gbc.gridy++;
-        rightPanel.add(createInfoRow("Mã KH:", ls.getMaNguoiDung(), itemFont, itemBoldFont), gbc);
-        gbc.gridy++;
-        rightPanel.add(createInfoRow("Ngày mượn:", ls.getNgayMuon().toString(), itemFont, itemBoldFont), gbc);
-        gbc.gridy++;
-        rightPanel.add(createInfoRow("Ngày trả:", ls.getNgayTra() == null ? "Chưa có" : ls.getNgayTra().toString(), itemFont, itemBoldFont), gbc);
-        gbc.gridy++;
-        rightPanel.add(createStatusRow("Trạng thái:", ls.getTrangThai(), itemFont, itemBoldFont), gbc);
-
-        gbc.gridy++;
-        gbc.insets = new Insets(5, 5, 1, 5);
-        JPanel actionPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
-        actionPanel.setOpaque(false);
-
-        JButton btnEdit = new JButton("Sửa");
-        btnEdit.setPreferredSize(new Dimension(70, 30));
-        btnEdit.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        btnEdit.setBackground(new Color(204, 204, 204));
-        btnEdit.setOpaque(true);
-        btnEdit.setBorderPainted(true);
-        btnEdit.addActionListener(e -> showEditBorrowForm(ls, panelMain));
-        actionPanel.add(btnEdit);
-
-        JButton btnDelete = new JButton("Xóa");
-        btnDelete.setPreferredSize(new Dimension(70, 30));
-        btnDelete.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        btnDelete.setBackground(new Color(204, 204, 204));
-        btnDelete.setOpaque(true);
-        btnDelete.setBorderPainted(true);
-        btnDelete.addActionListener(e -> {
-            int confirm = JOptionPane.showConfirmDialog(
-                this,
-                "Bạn có chắc muốn xóa lịch sử mượn sách với mã " + ls.getMaLichSu() + "?",
-                "Xác nhận xóa",
-                JOptionPane.YES_NO_OPTION
-            );
-            if (confirm == JOptionPane.YES_OPTION) {
-                LichSuMuonSach lsToDelete = new LichSuMuonSach(
-                    ls.getMaLichSu(),
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null
-                );
-                int result = LichSuMuonSachDao.getInstance().xoaDoiTuong(lsToDelete);
-                if (result > 0) {
-                    JOptionPane.showMessageDialog(this, "Xóa lịch sử mượn sách thành công!");
-                    tabbedPane.setComponentAt(2, createBorrowPanel());
-                    tabbedPane.revalidate();
-                    tabbedPane.repaint();
-                } else {
-                    JOptionPane.showMessageDialog(this, "Xóa thất bại! Vui lòng thử lại.");
-                }
-            }
-        });
-        actionPanel.add(btnDelete);
-
-        rightPanel.add(actionPanel, gbc);
-
-        itemPanel.add(rightPanel, BorderLayout.CENTER);
-
-        return itemPanel;
-    }
-
-    private JPanel createInfoRow(String label, String value, Font itemFont, Font itemBoldFont) {
-        JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 3, 0));
-        panel.setOpaque(false);
-
-        JLabel lblLabel = new JLabel(label);
-        lblLabel.setFont(itemBoldFont);
-        lblLabel.setForeground(Color.BLACK);
-
-        JLabel lblValue = new JLabel(value);
-        lblValue.setFont(itemFont);
-        lblValue.setForeground(Color.BLACK);
-
-        panel.add(lblLabel);
-        panel.add(lblValue);
-        return panel;
-    }
-
-    private JPanel createStatusRow(String label, String status, Font itemFont, Font itemBoldFont) {
-        JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 3, 0));
-        panel.setOpaque(false);
-
-        JLabel lblLabel = new JLabel(label);
-        lblLabel.setFont(itemBoldFont);
-        lblLabel.setForeground(Color.BLACK);
-
-        JLabel lblStatus = new JLabel(status);
-        lblStatus.setFont(itemBoldFont);
-        lblStatus.setForeground(status.equals("Chưa trả") ? Color.RED : Color.GREEN);
-
-        panel.add(lblLabel);
-        panel.add(lblStatus);
-        return panel;
-    }
-
-    // Penalty Ticket Info Panel (Placeholder)
     private JPanel createPenaltyTicketInfoPanel() {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(Color.WHITE);
-        //JLabel label = new JLabel("Chức năng Thông tin phiếu phạt chưa được triển khai", SwingConstants.CENTER);
-        //label.setFont(new Font("Arial", Font.PLAIN, 16));
         JPanel phieuPhat = new ThongTinPhieuPhat();
         panel.add(phieuPhat, BorderLayout.CENTER);
         return panel;
     }
 
-    // Statistics Panel
     private JPanel createStatisticsPanel() {
         JPanel pnl_Main = new JPanel(new BorderLayout());
         pnl_cards = new JPanel();
@@ -1384,20 +842,17 @@ public class Librarian extends JFrame {
                 throw new Exception("DocGia list is null");
             }
 
-            // Reverse list to show newest users first
             Collections.reverse(docGiaList);
 
             userTotalRecords = docGiaList.size();
             int totalPages = (int) Math.ceil((double) userTotalRecords / userPageSize);
 
-            // Adjust currentPage if it exceeds totalPages
             if (userCurrentPage > totalPages && totalPages > 0) {
                 userCurrentPage = totalPages;
             } else if (userCurrentPage < 1) {
                 userCurrentPage = 1;
             }
 
-            // Paginate the list
             int start = (userCurrentPage - 1) * userPageSize;
             int end = Math.min(start + userPageSize, userTotalRecords);
             List<DocGia> paginatedList = new ArrayList<>();
@@ -1405,7 +860,6 @@ public class Librarian extends JFrame {
                 paginatedList.add(docGiaList.get(i));
             }
 
-            // Update table
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
             for (DocGia docGia : paginatedList) {
                 Object[] row = {
@@ -1419,7 +873,6 @@ public class Librarian extends JFrame {
                 tableModel.addRow(row);
             }
 
-            // Update pagination controls
             lbl_pageInfo.setText("Trang " + userCurrentPage + "/" + (totalPages == 0 ? 1 : totalPages));
             user_btn_previous.setEnabled(userCurrentPage > 1);
             user_btn_next.setEnabled(userCurrentPage < totalPages);
@@ -1427,25 +880,6 @@ public class Librarian extends JFrame {
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, "Lỗi tải dữ liệu bảng: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
-    }
-
-    private void updatePageContent() {
-        pnl_MainContent.removeAll();
-        int startIndex = (currentPage - 1) * itemsPerPage;
-        int endIndex = Math.min(startIndex + itemsPerPage, filteredDs.size());
-        
-        for (int i = startIndex; i < endIndex; i++) {
-            Ls_Dg_sach ls = filteredDs.get(i);
-            JPanel itemPanel = createBookItem(ls, itemFont, itemBoldFont, pnl_MainContent);
-            pnl_MainContent.add(itemPanel);
-        }
-        
-        pnl_MainContent.revalidate();
-        pnl_MainContent.repaint();
-
-        scrollPane.getVerticalScrollBar().setValue(0);
-        btn_prev.setVisible(currentPage > 1);
-        btn_next.setVisible((currentPage * itemsPerPage) < filteredDs.size());
     }
 
     private void updateStatisticsPanel(int year) {
