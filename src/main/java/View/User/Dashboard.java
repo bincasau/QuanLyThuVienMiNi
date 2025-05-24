@@ -2,6 +2,7 @@ package View.User;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -12,8 +13,11 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+
+import DAO.LichSuMuonSachDao;
 import DAO.SachDao;
 import DAO.TheLoaiDao;
+import Model.LichSuMuonSach;
 import Model.Sach;
 import Model.TheLoai;
 import View.Login.Login;
@@ -86,6 +90,9 @@ public class Dashboard extends JPanel {
 
         btn_Avatar.setAlignmentY(Component.CENTER_ALIGNMENT);
         btn_Avatar.addActionListener(e -> showUserInfoDialog());
+
+        btn_Notification.setAlignmentY(Component.CENTER_ALIGNMENT);
+        btn_Notification.addActionListener(e -> showNotificationDialog());
 
         JLabel lbl_UserName = new JLabel(fullName);
         lbl_UserName.setFont(new Font("SansSerif", Font.PLAIN, 14));
@@ -182,6 +189,112 @@ public class Dashboard extends JPanel {
         pnl_Header.add(pnl_SearchWrapper, BorderLayout.CENTER);
 
         return pnl_Header;
+    }
+
+    private void showNotificationDialog() {
+        Window parent = SwingUtilities.getWindowAncestor(this);
+        JDialog notificationDialog;
+        if (parent instanceof Frame) {
+            notificationDialog = new JDialog((Frame) parent, "Thông báo mượn sách", true);
+        } else {
+            notificationDialog = new JDialog((Frame) null, "Thông báo mượn sách", true);
+        }
+        notificationDialog.setSize(600, 400);
+        notificationDialog.setLocationRelativeTo(parent);
+        notificationDialog.setLayout(new BorderLayout());
+        notificationDialog.setResizable(false);
+
+        JPanel notificationPanel = createNotificationPanel();
+        notificationDialog.add(notificationPanel, BorderLayout.CENTER);
+
+        JButton closeButton = new JButton("Đóng");
+        closeButton.setBackground(new Color(107, 142, 35));
+        closeButton.setForeground(Color.WHITE);
+        closeButton.setFocusable(false);
+        closeButton.setPreferredSize(new Dimension(80, 35));
+        closeButton.addActionListener(e -> notificationDialog.dispose());
+
+        JPanel buttonPanel = new JPanel();
+        buttonPanel.setBackground(Color.WHITE);
+        buttonPanel.add(closeButton);
+
+        notificationDialog.add(buttonPanel, BorderLayout.SOUTH);
+        notificationDialog.setVisible(true);
+    }
+
+    private JPanel createNotificationPanel() {
+    JPanel panel = new JPanel();
+    panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+    panel.setBackground(Color.WHITE);
+    panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+    LichSuMuonSachDao lichSuDao = LichSuMuonSachDao.getInstance();
+    List<LichSuMuonSach> borrowList = lichSuDao.layDanhSachTheoDK(maDocGia);
+    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+    java.util.Date today = new java.util.Date();
+    long oneDayMillis = 24 * 60 * 60 * 1000;
+
+    List<LichSuMuonSach> notifications = borrowList.stream()
+            .filter(ls -> ls.getTrangThai().equals("Chưa trả"))
+            .filter(ls -> {
+                if (ls.getNgayTra() == null) return false;
+                long dueDateMillis = ls.getNgayTra().getTime();
+                long diff = dueDateMillis - today.getTime();
+                return diff < oneDayMillis; // Include overdue and due within one day
+            })
+            .collect(Collectors.toList());
+
+    if (notifications.isEmpty()) {
+        JLabel lblNoNotifications = new JLabel("Không có thông báo nào về sách sắp đến hạn hoặc quá hạn.");
+        lblNoNotifications.setFont(new Font("SansSerif", Font.PLAIN, 16));
+        lblNoNotifications.setAlignmentX(Component.CENTER_ALIGNMENT);
+        panel.add(Box.createVerticalGlue());
+        panel.add(lblNoNotifications);
+        panel.add(Box.createVerticalGlue());
+    } else {
+        JLabel lblHeader = new JLabel("Thông báo sách sắp đến hạn hoặc quá hạn");
+        lblHeader.setFont(new Font("SansSerif", Font.BOLD, 18));
+        lblHeader.setAlignmentX(Component.CENTER_ALIGNMENT);
+        panel.add(lblHeader);
+        panel.add(Box.createVerticalStrut(10));
+
+        JPanel headerRow = new JPanel(new GridLayout(1, 4, 5, 5));
+        headerRow.setBackground(Color.WHITE);
+        addHeaderLabel(headerRow, "Mã sách", true);
+        addHeaderLabel(headerRow, "Ngày mượn", true);
+        addHeaderLabel(headerRow, "Ngày trả", true);
+        addHeaderLabel(headerRow, "Trạng thái", true);
+        panel.add(headerRow);
+
+        for (LichSuMuonSach ls : notifications) {
+            JPanel row = new JPanel(new GridLayout(1, 4, 5, 5));
+            row.setBackground(Color.WHITE);
+            row.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
+            addLabel(row, ls.getMaSach(), false);
+            addLabel(row, ls.getNgayMuon() != null ? sdf.format(ls.getNgayMuon()) : "N/A", false);
+            addLabel(row, ls.getNgayTra() != null ? sdf.format(ls.getNgayTra()) : "N/A", false);
+            String status = ls.getNgayTra().getTime() < today.getTime() ? "Quá hạn" : "Sắp đến hạn";
+            addLabel(row, status, false);
+            panel.add(row);
+            panel.add(Box.createVerticalStrut(5));
+        }
+    }
+
+    return panel;
+}
+    
+    private void addHeaderLabel(JPanel panel, String text, boolean bold) {
+        JLabel lbl = new JLabel(text);
+        lbl.setFont(new Font("SansSerif", bold ? Font.BOLD : Font.PLAIN, 14));
+        lbl.setHorizontalAlignment(SwingConstants.CENTER);
+        panel.add(lbl);
+    }
+
+    private void addLabel(JPanel panel, String text, boolean bold) {
+        JLabel lbl = new JLabel(text);
+        lbl.setFont(new Font("SansSerif", bold ? Font.BOLD : Font.PLAIN, 12));
+        lbl.setHorizontalAlignment(SwingConstants.CENTER);
+        panel.add(lbl);
     }
 
     private JButton createIconButton(String imagePath, String fallbackText) {
