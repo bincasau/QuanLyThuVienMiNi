@@ -245,8 +245,8 @@ public class MuonSach extends JPanel {
 
         pnl_top.add(txt_Search);
 
-        JButton btn_search = new JButton("🔍");
-        btn_search.setPreferredSize(new Dimension(40, 40));
+        JButton btn_search = new JButton("Tìm Kiếm");
+        btn_search.setPreferredSize(new Dimension(120, 40));
         btn_search.addActionListener(e -> {
             String keyword = txt_Search.getText().trim();
             if (keyword.equals(PLACEHOLDER_TEXT) || keyword.isEmpty()) {

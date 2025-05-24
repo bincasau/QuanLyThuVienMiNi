@@ -2,12 +2,7 @@ package View.Librarian;
 
 import java.awt.*;
 import java.awt.event.*;
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
 import java.security.MessageDigest;
-import java.sql.Date;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.time.Year;
@@ -17,53 +12,29 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableModel;
 
 import Controller.PdfController;
 import DAO.DocGiaDao;
 import DAO.LichSuMuonSachDao;
-import DAO.Ls_Dg_sachDao;
-import DAO.SachDao;
-import DAO.TheLoaiDao;
 import DAO.ThuThuDao;
 import Model.DocGia;
 import Model.LichSuMuonSach;
-import Model.Ls_Dg_sach;
-import Model.Sach;
-import Model.TheLoai;
 import Model.ThongTinThongKe;
 import Model.ThuThu;
 import Session.LoginSession;
 import View.Login.Login;
-import View.User.UserInfoPanel;
 
 public class Librarian extends JFrame {
     private String fullName;
     private JPanel mainPanel;
     private String maThuThu;
-    private boolean isFiltering = false;
-    private List<Sach> fullBookList;
-    private List<Sach> displayedBooks;
-    private JPanel pnl_center;
-    private static final int BOOKS_PER_LOAD = 20;
     private DefaultTableModel tableModel;
     private JTable table;
-    private int currentPage = 1;
-    private int itemsPerPage = 10;
-    private List<Ls_Dg_sach> filteredDs;
     private JPanel pnl_cards;
     private JTabbedPane tabbedPane = new JTabbedPane();
-    private Font itemFont = new Font("Segoe UI", Font.PLAIN, 12);
-    private Font itemBoldFont = new Font("Segoe UI", Font.BOLD, 12);
     private PdfController pdfExportController = new PdfController();
     private DecimalFormat currencyFormat;
-    private JPanel pnl_MainContent;
-    private JScrollPane scrollPane;
-    private JButton btn_prev;
-    private JButton btn_next;
 
     private int userCurrentPage = 1;
     private int userPageSize = 20;
@@ -285,19 +256,16 @@ public class Librarian extends JFrame {
         dialog.setLayout(new BorderLayout());
         dialog.setResizable(false);
 
-        // Create table for overdue borrowers
         String[] columnNames = {"Mã Độc Giả", "Tên Độc Giả", "Mã Sách", "Ngày Mượn", "Ngày Trả"};
         DefaultTableModel overdueTableModel = new DefaultTableModel(columnNames, 0);
         JTable overdueTable = new JTable(overdueTableModel);
         JScrollPane scrollPane = new JScrollPane(overdueTable);
         scrollPane.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        // Load overdue data
         loadOverdueBorrowersData(overdueTableModel);
 
         dialog.add(scrollPane, BorderLayout.CENTER);
 
-        // Add close button
         JButton closeButton = new JButton("Đóng");
         closeButton.setBackground(new Color(139, 69, 69));
         closeButton.setForeground(Color.WHITE);
@@ -383,10 +351,10 @@ public class Librarian extends JFrame {
 
         pnl_top.add(txt_search);
 
-        JButton btn_search = new JButton("Tìm kiếm");
-        btn_search.setPreferredSize(new Dimension(90, 40));
-        btn_search.setMaximumSize(new Dimension(90, 40));
-        btn_search.setMinimumSize(new Dimension(90, 40));
+        JButton btn_search = new JButton("Tìm Kiếm");
+        btn_search.setPreferredSize(new Dimension(120, 40)); // Extended width to 120
+        btn_search.setMaximumSize(new Dimension(120, 40));   // Extended width to 120
+        btn_search.setMinimumSize(new Dimension(120, 40));   // Extended width to 120
         btn_search.setFont(new Font("Arial", Font.BOLD, 14));
         btn_search.addActionListener(e -> {
             userCurrentPage = 1;
@@ -469,7 +437,7 @@ public class Librarian extends JFrame {
                     if (maNguoiDung == null) {
                         throw new Exception("Cannot generate new maNguoiDung");
                     }
-                    java.util.Date ngayTao = new java.util.Date(); // Fixed: Use java.util.Date explicitly
+                    java.util.Date ngayTao = new java.util.Date();
                     String matKhauHash = hashSHA1(matKhauGoc);
 
                     DocGia docGia = new DocGia(maNguoiDung, tenNguoiDung, taiKhoan, matKhauHash, email, soDienThoai, ngayTao);
@@ -893,22 +861,5 @@ public class Librarian extends JFrame {
         
         pnl_cards.revalidate();
         pnl_cards.repaint();
-    }
-
-    private class RoundedPanel extends JPanel {
-        private int radius;
-
-        public RoundedPanel(int radius) {
-            this.radius = radius;
-            setOpaque(false);
-        }
-
-        @Override
-        protected void paintComponent(Graphics g) {
-            Graphics2D g2d = (Graphics2D) g;
-            g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            g2d.setColor(getBackground());
-            g2d.fillRoundRect(0, 0, getWidth(), getHeight(), radius, radius);
-        }
     }
 }
