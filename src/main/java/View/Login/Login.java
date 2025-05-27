@@ -211,8 +211,8 @@ public class Login extends JFrame {
             try {
                 loginController.login(username, password, new LoginController.LoginCallBack() {
                     @Override
-                    public void onSuccess(String username, boolean isAdmin) {
-                        LoginSession.getInstance().login(username, isAdmin);
+                    public void onSuccess(String username, String maNguoiDung, boolean isAdmin) {
+                        LoginSession.getInstance().login(username, maNguoiDung, isAdmin);
                         dispose();
                         SwingUtilities.invokeLater(() -> {
                             new MainFrame().setVisible(true);

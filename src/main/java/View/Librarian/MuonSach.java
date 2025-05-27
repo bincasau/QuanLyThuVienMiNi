@@ -34,7 +34,8 @@ public class MuonSach extends JPanel {
     public MuonSach() {
         setLayout(new BorderLayout());
         setBorder(new EmptyBorder(5, 5, 5, 5));
-
+        String dbg = LichSuMuonSachDao.getInstance().generateMaLichSu();
+        System.out.println(dbg);
         pnl_Content = new JPanel(new BorderLayout());
         pnl_Content.setBorder(new EmptyBorder(5, 5, 5, 5));
         add(pnl_Content, BorderLayout.CENTER);
@@ -405,7 +406,7 @@ public class MuonSach extends JPanel {
         gbc.gridy++;
         addPanel.add(new JLabel("Mã thủ thư:"), gbc);
         gbc.gridx = 1;
-        JTextField txtMaThuThu = new JTextField(Session.LoginSession.getInstance().getFullName(), 20);
+        JTextField txtMaThuThu = new JTextField(Session.LoginSession.getInstance().getMaNguoiDung(), 20);
         txtMaThuThu.setEditable(false);
         addPanel.add(txtMaThuThu, gbc);
 

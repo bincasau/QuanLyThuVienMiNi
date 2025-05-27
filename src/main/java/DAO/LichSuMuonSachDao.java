@@ -123,7 +123,7 @@ public class LichSuMuonSachDao implements InterfaceDao<LichSuMuonSach> {
 }
 
     public LichSuMuonSach getByMaLichSu(String maLichSu) {
-        String sql = "SELECT * FROM lichsumuonsach WHERE maLichSu = ?";
+        String sql = "SELECT * FROM LichSuMuonSach WHERE maLichSu = ?";
         try (Connection conn = JDBCUtil.connect();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, maLichSu);
@@ -154,7 +154,7 @@ public class LichSuMuonSachDao implements InterfaceDao<LichSuMuonSach> {
         try (Connection conn = JDBCUtil.connect()) {
             for (int i = startNumber; i <= 999; i++) {
                 maLichSu = String.format("%s%03d", prefix, i);
-                String sql = "SELECT COUNT(*) FROM lichsumuonsach WHERE maLichSu = ?";
+                String sql = "SELECT COUNT(*) FROM LichSuMuonSach WHERE maLichSu = ?";
                 try (PreparedStatement stmt = conn.prepareStatement(sql)) {
                     stmt.setString(1, maLichSu);
                     ResultSet rs = stmt.executeQuery();

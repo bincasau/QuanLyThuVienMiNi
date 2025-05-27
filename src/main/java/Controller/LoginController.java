@@ -11,10 +11,11 @@ import DAO.ThuThuDao;
 import Model.DocGia;
 import Model.ThuThu;
 import Util.JDBCUtil; 
+import Session.LoginSession;
 
 public class LoginController {
     public interface LoginCallBack {
-        void onSuccess(String fullName, boolean isAdmin);
+        void onSuccess(String fullName, String maNguoiDung, boolean isAdmin);
         void onFailure(String message);
         void onError(String errorMessage);
     }
@@ -41,6 +42,7 @@ public class LoginController {
             conn = JDBCUtil.connect();
             System.out.println("Database connection established");
 
+            // Kiểm tra bảng thuthu
             String sql = "SELECT * FROM thuthu WHERE taiKhoan = ? AND matKhau = ?";
             stmt = conn.prepareStatement(sql);
             stmt.setString(1, username);
@@ -52,7 +54,9 @@ public class LoginController {
             if (rs.next()) {
                 System.out.println("Found in ThuThu table");
                 String fullName = rs.getString("tenNguoiDung");
-                callBack.onSuccess(fullName, true);
+                String maNguoiDung = rs.getString("maNguoiDung");
+                LoginSession.getInstance().login(fullName, maNguoiDung, true);
+                callBack.onSuccess(fullName, maNguoiDung, true);
             } else {
                 System.out.println("Not found in thuthu table, checking docgia table");
                 sql = "SELECT * FROM docgia WHERE taiKhoan = ? AND matKhau = ?";
@@ -64,7 +68,9 @@ public class LoginController {
                 if (rs.next()) {
                     System.out.println("Found in docgia table");
                     String fullName = rs.getString("tenNguoiDung");
-                    callBack.onSuccess(fullName, false);
+                    String maNguoiDung = rs.getString("maNguoiDung");
+                    LoginSession.getInstance().login(fullName, maNguoiDung, false);
+                    callBack.onSuccess(fullName, maNguoiDung, false);
                 } else {
                     System.out.println("Not found in either table");
                     callBack.onFailure("Tên đăng nhập hoặc mật khẩu không đúng");
@@ -91,14 +97,14 @@ public class LoginController {
         }
     }
 
-    public boolean checkUserExists(String username) throws Exception { // Kiểm tra khi thủ thư tạo tk mới cho độc giả, hoặc sửa username
+    public boolean checkUserExists(String username) throws Exception {
         Connection conn = null;
         PreparedStatement stmt = null;
         ResultSet rs = null;
 
         try {
             Class.forName("com.mysql.jdbc.Driver");
-            conn = Util.JDBCUtil.connect();
+            conn = JDBCUtil.connect();
 
             String sql = "SELECT * FROM DocGia WHERE taiKhoan = ?";
             stmt = conn.prepareStatement(sql);
