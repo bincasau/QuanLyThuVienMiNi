@@ -156,8 +156,8 @@ public class Dashboard extends JPanel {
             }
         });
 
-        JButton btn_Clear = new JButton("Tìm kiếm");
-        btn_Clear.setPreferredSize(new Dimension(90, 40));
+        JButton btn_Clear = new JButton("Xóa tìm kiếm");
+        btn_Clear.setPreferredSize(new Dimension(120, 40));
         btn_Clear.addActionListener(e -> {
             txt_Search.setText("");
             txt_Search.setForeground(Color.BLACK);
