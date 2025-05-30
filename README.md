@@ -58,7 +58,7 @@ Mô hình CD:
 
 ### 🙋‍♂️ Vai trò: Độc giả  
 - **Đăng nhập/Đăng xuất**  
-- **Quản lý thông tin cá nhân**: Cập nhật thông tin.  
+- **Quản lý thông tin cá nhân**: Xem thông tin thông tin.  
 - **Tra cứu sách**: Tìm kiếm theo tên, mã, thể loại, hoặc trạng thái.  
 - **Xem lịch sử mượn**:  
   - Danh sách sách đã mượn.  
