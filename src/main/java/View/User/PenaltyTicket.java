@@ -65,8 +65,8 @@ public class PenaltyTicket extends JPanel {
 	        pnl_TopRow.setOpaque(false);
 	        pnl_TopRow.setBorder(BorderFactory.createEmptyBorder(10, 35, 0, 20));
 
-	        JButton btn_Avatar = createIconButton("pictures/profile.png", "👤");
-	        JButton btn_Notification = createIconButton("pictures/bell.png", "🔔");
+	        JButton btn_Avatar = createIconButton("/Pictures/profile.png", "👤");
+	        JButton btn_Notification = createIconButton("/Pictures/bell.png", "🔔");
 
 			btn_Avatar.setAlignmentY(Component.CENTER_ALIGNMENT);
 			btn_Avatar.addActionListener(e -> showUserInfoDialog());

@@ -203,7 +203,7 @@ public class UserHistoryPanel extends JPanel {
         pnl_TopRow.setOpaque(false);
         pnl_TopRow.setBorder(BorderFactory.createEmptyBorder(10, 35, 0, 20));
 
-        JButton btn_Avatar = createIconButton("pictures/profile.png", "👤");
+        JButton btn_Avatar = createIconButton("/Pictures/profile.png", "👤");
         JPanel pnl_UserInfo = new JPanel();
         pnl_UserInfo.setLayout(new BoxLayout(pnl_UserInfo, BoxLayout.Y_AXIS));
         pnl_UserInfo.setOpaque(false);
@@ -224,7 +224,7 @@ public class UserHistoryPanel extends JPanel {
         //lbl_ID.setFont(new Font("SansSerif", Font.PLAIN, 12));
         //lbl_ID.setForeground(Color.WHITE);
 
-        JButton btn_Notification = createIconButton("pictures/bell.png", "🔔");
+        JButton btn_Notification = createIconButton("/Pictures/bell.png", "🔔");
 
         btn_Avatar.setAlignmentY(Component.CENTER_ALIGNMENT);
         btn_Notification.setAlignmentY(Component.CENTER_ALIGNMENT);

@@ -45,7 +45,7 @@ public class PdfController {
             PDPage page = new PDPage(PDRectangle.A4);
             document.addPage(page);
 
-            PDType0Font font = PDType0Font.load(document, new File("font/font-times-new-roman.ttf"));
+            PDType0Font font = PDType0Font.load(document, getClass().getResourceAsStream("/font/font-times-new-roman.ttf"));
             PDPageContentStream content = new PDPageContentStream(document, page);
 
             float pageWidth = PDRectangle.A4.getWidth();

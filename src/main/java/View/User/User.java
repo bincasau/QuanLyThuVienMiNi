@@ -145,8 +145,8 @@ public class User extends JPanel {
         pnl_TopRow.setOpaque(false);
         pnl_TopRow.setBorder(BorderFactory.createEmptyBorder(10, 35, 0, 20));
 
-        JButton btn_Avatar = createIconButton("pictures/profile.png", "👤");
-        JButton btn_Notification = createIconButton("pictures/bell.png", "🔔");
+        JButton btn_Avatar = createIconButton("/Pictures/profile.png", "👤");
+        JButton btn_Notification = createIconButton("/Pictures/bell.png", "🔔");
 
         JLabel lbl_UserName = new JLabel(username);
         lbl_UserName.setFont(new Font("SansSerif", Font.PLAIN, 14));

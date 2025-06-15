@@ -178,7 +178,7 @@ public class Librarian extends JFrame {
         pnl_Header.setPreferredSize(new Dimension(0, 100));
         pnl_Header.setBackground(new Color(106, 85, 85));
 
-        ImageIcon icon_Book = new ImageIcon("Pictures/book.png");
+        ImageIcon icon_Book =  new ImageIcon(getClass().getResource("/Pictures/book.png"));
         if (icon_Book.getIconWidth() == -1) {
             JLabel lbl_icon = new JLabel("BOOK");
             lbl_icon.setFont(new Font("Arial", Font.BOLD, 20));
@@ -208,7 +208,7 @@ public class Librarian extends JFrame {
 
         Dimension size = new Dimension(50, 50);
 
-        ImageIcon icon_Bell = new ImageIcon("Pictures/bell.png");
+        ImageIcon icon_Bell = new ImageIcon(getClass().getResource("/Pictures/bell.png"));
         JButton btn_Notification;
         if (icon_Bell.getIconWidth() != -1) {
             Image scaledImage = icon_Bell.getImage().getScaledInstance(30, 30, Image.SCALE_SMOOTH);
@@ -224,7 +224,7 @@ public class Librarian extends JFrame {
         btn_Notification.addActionListener(e -> showOverdueBorrowersDialog());
         pnl_Header.add(btn_Notification);
 
-        ImageIcon icon_Profile = new ImageIcon("Pictures/profile.png");
+        ImageIcon icon_Profile = new ImageIcon(getClass().getResource("/Pictures/profile.png"));
         JButton btn_Profile;
         if (icon_Profile.getIconWidth() != -1) {
             Image scaledImage = icon_Profile.getImage().getScaledInstance(30, 30, Image.SCALE_SMOOTH);
@@ -458,7 +458,124 @@ public class Librarian extends JFrame {
             }
         });
         pnl_top.add(btn_add);
+        
+        JButton btn_edit = new JButton("Sửa");
+        btn_edit.setPreferredSize(new Dimension(80, 40));
+        btn_edit.setMaximumSize(new Dimension(80, 40));
+        btn_edit.setMinimumSize(new Dimension(80, 40));
+        btn_edit.addActionListener(e -> {
+            int selectedRow = table.getSelectedRow();
+            if (selectedRow >= 0) {
+                String maNguoiDung = (String) tableModel.getValueAt(selectedRow, 0);
+                String tenNguoiDung = (String) tableModel.getValueAt(selectedRow, 1);
+                String taiKhoan = (String) tableModel.getValueAt(selectedRow, 2);
+                String email = (String) tableModel.getValueAt(selectedRow, 3);
+                String soDienThoai = (String) tableModel.getValueAt(selectedRow, 4);
+                String ngayTaoStr = (String) tableModel.getValueAt(selectedRow, 5);
 
+                JTextField tenNguoiDungField = new JTextField(tenNguoiDung, 10);
+                JTextField taiKhoanField = new JTextField(taiKhoan, 10);
+                JTextField matKhauField = new JTextField(10);
+                JTextField emailField = new JTextField(email, 10);
+                JTextField soDienThoaiField = new JTextField(soDienThoai, 10);
+
+                JPanel panel = new JPanel(new GridLayout(5, 2));
+                panel.add(new JLabel("Tên Người Dùng:"));
+                panel.add(tenNguoiDungField);
+                panel.add(new JLabel("Tài Khoản:"));
+                panel.add(taiKhoanField);
+                panel.add(new JLabel("Mật Khẩu Mới (để trống nếu không đổi):"));
+                panel.add(matKhauField);
+                panel.add(new JLabel("Email:"));
+                panel.add(emailField);
+                panel.add(new JLabel("Số Điện Thoại:"));
+                panel.add(soDienThoaiField);
+
+                int result = JOptionPane.showConfirmDialog(this, panel, "Sửa Độc Giả", JOptionPane.OK_CANCEL_OPTION);
+                if (result == JOptionPane.OK_OPTION) {
+                    String newTenNguoiDung = tenNguoiDungField.getText().trim();
+                    String newTaiKhoan = taiKhoanField.getText().trim();
+                    String matKhauGoc = matKhauField.getText().trim();
+                    String newEmail = emailField.getText().trim();
+                    String newSoDienThoai = soDienThoaiField.getText().trim();
+
+                    if (newTenNguoiDung.isEmpty() || newTaiKhoan.isEmpty()) {
+                        JOptionPane.showMessageDialog(this, "Tên và tài khoản không được để trống!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                        return;
+                    }
+
+                    if (!USERNAME_PASSWORD_PATTERN.matcher(newTaiKhoan).matches()) {
+                        JOptionPane.showMessageDialog(this, "Tài khoản phải có ít nhất 8 ký tự!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                        return;
+                    }
+
+                    if (!matKhauGoc.isEmpty() && !USERNAME_PASSWORD_PATTERN.matcher(matKhauGoc).matches()) {
+                        JOptionPane.showMessageDialog(this, "Mật khẩu mới phải có ít nhất 8 ký tự!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                        return;
+                    }
+
+                    if (!newEmail.isEmpty() && !EMAIL_PATTERN.matcher(newEmail).matches()) {
+                        JOptionPane.showMessageDialog(this, "Email phải có định dạng hợp lệ (ví dụ: user@gmail.com)!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                        return;
+                    }
+
+                    if (!newSoDienThoai.isEmpty() && !PHONE_PATTERN.matcher(newSoDienThoai).matches()) {
+                        JOptionPane.showMessageDialog(this, "Số điện thoại phải có đúng 10 chữ số (ví dụ: 0123456789)!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                        return;
+                    }
+
+                    try {
+                        DocGiaDao docGiaDao = DocGiaDao.getInstance();
+                        if (docGiaDao == null) {
+                            throw new Exception("DocGiaDao instance is null");
+                        }
+
+                        // Check if new username exists (excluding current user)
+                        if (!newTaiKhoan.equals(taiKhoan) && docGiaDao.kiemTraTaiKhoanTonTai(newTaiKhoan)) {
+                            JOptionPane.showMessageDialog(this, "Tài khoản '" + newTaiKhoan + "' đã tồn tại! Vui lòng chọn tài khoản khác.", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                            return;
+                        }
+
+                        // Get existing reader
+                        List<DocGia> existingReaders = docGiaDao.layDanhSachTheoMa(maNguoiDung);
+                        if (existingReaders.isEmpty()) {
+                            throw new Exception("Không tìm thấy độc giả với mã: " + maNguoiDung);
+                        }
+                        DocGia existingDocGia = existingReaders.get(0);
+
+                        // Update reader info
+                        existingDocGia.setTenNguoiDung(tenNguoiDung);
+                        existingDocGia.setTaiKhoan(newTaiKhoan);
+                        if (!matKhauGoc.isEmpty()) {
+                            existingDocGia.setMatKhau(hashSHA1(matKhauGoc));
+                        }
+                        existingDocGia.setEmail(newEmail);
+                        existingDocGia.setSoDienThoai(newSoDienThoai);
+                        // Keep original creation date
+                        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+                        existingDocGia.setNgayTao(sdf.parse(ngayTaoStr));
+
+                        int rowsAffected = docGiaDao.capNhatDoiTuong(existingDocGia);
+                        if (rowsAffected > 0) {
+                            JOptionPane.showMessageDialog(this, "Cập nhật độc giả thành công!");
+                            String keyword = txt_search.getText().trim();
+                            if (keyword.equals("Tìm mã độc giả, tên, tài khoản...")) {
+                                keyword = "";
+                            }
+                            loadTableData(keyword);
+                        } else {
+                            JOptionPane.showMessageDialog(this, "Cập nhật độc giả thất bại!");
+                        }
+                    } catch (Exception ex) {
+                        JOptionPane.showMessageDialog(this, "Lỗi khi cập nhật độc giả: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    }
+                }
+            } else {
+                JOptionPane.showMessageDialog(this, "Vui lòng chọn một độc giả để sửa!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            }
+        });
+        pnl_top.add(btn_edit);
+        
         JButton btn_delete = new JButton("Xóa");
         btn_delete.setPreferredSize(new Dimension(80, 40));
         btn_delete.setMaximumSize(new Dimension(80, 40));
@@ -505,6 +622,7 @@ public class Librarian extends JFrame {
                 JOptionPane.showMessageDialog(this, "Vui lòng chọn một độc giả để xóa!", "Lỗi", JOptionPane.ERROR_MESSAGE);
             }
         });
+        
         pnl_top.add(btn_delete);
 
         JScrollPane scrollPane = new JScrollPane(table);

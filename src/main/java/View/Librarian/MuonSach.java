@@ -754,7 +754,7 @@ public class MuonSach extends JPanel {
 
         JPanel imagePanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         imagePanel.setOpaque(false);
-        ImageIcon bookIcon = new ImageIcon("Pictures/" + ls.getAnh());
+        ImageIcon bookIcon = new ImageIcon(getClass().getResource("/Pictures/" + ls.getAnh()));
         if (bookIcon.getIconWidth() != -1) {
             Image scaledBook = bookIcon.getImage().getScaledInstance(80, 100, Image.SCALE_SMOOTH);
             JLabel lblBook = new JLabel(new ImageIcon(scaledBook));

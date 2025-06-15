@@ -36,6 +36,26 @@ public class DocGia {
         return maNguoiDung;
     }
 
+	public void setTenNguoiDung(String tenNguoiDung) {
+		this.tenNguoiDung = tenNguoiDung;
+	}
+
+	public void setTaiKhoan(String taiKhoan) {
+		this.taiKhoan = taiKhoan;
+	}
+
+	public void setMatKhau(String matKhau) {
+		this.matKhau = matKhau;
+	}
+
+	public void setEmail(String email) {
+		this.email = email;
+	}
+
+	public void setSoDienThoai(String soDienThoai) {
+		this.soDienThoai = soDienThoai;
+	}
+
 	public void setNgayTao(Date ngayTao) {
 		this.ngayTao = ngayTao;
 	}

@@ -360,7 +360,7 @@ public class Dashboard extends JPanel {
         JLabel lblImage = new JLabel();
         lblImage.setHorizontalAlignment(SwingConstants.CENTER);
         try {
-            ImageIcon icon = new ImageIcon("pictures/" + book.getAnh());
+            ImageIcon icon = new ImageIcon(getClass().getResource("/Pictures/" + book.getAnh()));
             Image scaledImage = icon.getImage().getScaledInstance(140, 180, Image.SCALE_SMOOTH);
             lblImage.setIcon(new ImageIcon(scaledImage));
         } catch (Exception e) {
@@ -408,7 +408,7 @@ public class Dashboard extends JPanel {
 
     JLabel imgLabel = new JLabel();
     try {
-        ImageIcon icon = new ImageIcon("pictures/" + book.getAnh());
+        ImageIcon icon =  new ImageIcon(getClass().getResource("/Pictures/" + book.getAnh()));
         Image img = icon.getImage().getScaledInstance(160, 220, Image.SCALE_SMOOTH);
         imgLabel.setIcon(new ImageIcon(img));
     } catch (Exception e) {

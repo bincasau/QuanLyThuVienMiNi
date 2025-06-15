@@ -134,8 +134,8 @@ public class Book extends JPanel {
         pnl_Header.setLayout(new BoxLayout(pnl_Header, BoxLayout.X_AXIS));
         pnl_Header.setPreferredSize(new Dimension(0, 100));
         pnl_Header.setBackground(new Color(106, 85, 85));
-
-        ImageIcon icon_Book = new ImageIcon("Pictures/book.png");
+        
+        ImageIcon icon_Book =  new ImageIcon(getClass().getResource("/Pictures/book.png"));
         if (icon_Book.getIconWidth() == -1) {
             JLabel lbl_icon = new JLabel("BOOK");
             lbl_icon.setFont(new Font("Arial", Font.BOLD, 20));
@@ -165,7 +165,7 @@ public class Book extends JPanel {
 
         Dimension size = new Dimension(50, 50);
 
-        ImageIcon icon_Bell = new ImageIcon("Pictures/bell.png");
+        ImageIcon icon_Bell = new ImageIcon(getClass().getResource("/Pictures/bell.png"));
         JButton btn_Notification;
         if (icon_Bell.getIconWidth() != -1) {
             Image scaledImage = icon_Bell.getImage().getScaledInstance(30, 30, Image.SCALE_SMOOTH);
@@ -179,8 +179,7 @@ public class Book extends JPanel {
         btn_Notification.setMaximumSize(size);
         btn_Notification.setMinimumSize(size);
         pnl_Header.add(btn_Notification);
-
-        ImageIcon icon_Profile = new ImageIcon("Pictures/profile.png");
+        ImageIcon icon_Profile = new ImageIcon(getClass().getResource("/Pictures/profile.png"));
         JButton btn_Profile;
         if (icon_Profile.getIconWidth() != -1) {
             Image scaledImage = icon_Profile.getImage().getScaledInstance(30, 30, Image.SCALE_SMOOTH);
@@ -428,7 +427,7 @@ public class Book extends JPanel {
         
         JLabel lbl_image = new JLabel();
         try {
-            ImageIcon icon = new ImageIcon("pictures/" + book.getAnh());
+            ImageIcon icon = new ImageIcon(getClass().getResource("/Pictures/" + book.getAnh()));
             Image scaledImage = icon.getImage().getScaledInstance(100, 130, Image.SCALE_SMOOTH);
             lbl_image.setIcon(new ImageIcon(scaledImage));
         } catch (Exception e) {
@@ -628,7 +627,7 @@ public class Book extends JPanel {
             // Lưu ảnh
             if (selectedImagePath[0] != null) {
                 File src = new File(selectedImagePath[0]);
-                File dest = new File("Pictures/" + maSach + ".png");
+                File dest = new File("/Pictures/" + maSach + ".png");
                 try {
                     Files.copy(src.toPath(), dest.toPath(), StandardCopyOption.REPLACE_EXISTING);
                 } catch (IOException ex) {
@@ -664,7 +663,7 @@ public class Book extends JPanel {
     imagePreview.setHorizontalAlignment(SwingConstants.CENTER);
     imagePreview.setVerticalAlignment(SwingConstants.CENTER);
     try {
-        ImageIcon icon = new ImageIcon("Pictures/" + book.getAnh());
+        ImageIcon icon = new ImageIcon(getClass().getResource("/Pictures/" + book.getAnh()));
         Image scaled = icon.getImage().getScaledInstance(120, 160, Image.SCALE_SMOOTH);
         imagePreview.setIcon(new ImageIcon(scaled));
     } catch (Exception ex) {
@@ -842,7 +841,7 @@ public class Book extends JPanel {
         if (selectedImagePath[0] != null) {
             try {
                 Files.copy(new File(selectedImagePath[0]).toPath(),
-                        new File("Pictures/" + book.getAnh()).toPath(),
+                        new File("/Pictures/" + book.getAnh()).toPath(),
                         StandardCopyOption.REPLACE_EXISTING);
             } catch (IOException ex) {
                 ex.printStackTrace();
