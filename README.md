@@ -103,6 +103,24 @@ Mô hình CD:
 
 ---
 
+Để chạy ứng dụng dễ dàng mà không cần IDE, bạn có thể **xuất dự án thành file `.jar`** theo các bước sau:
+
+### 🧭 Hướng dẫn xuất file `.jar`:
+
+1. **Clone/kéo** dự án về máy.
+2. Mở dự án bằng **Eclipse** hoặc IDE bạn đang dùng.
+3. Nhấn **chuột phải vào tên dự án** trong Project Explorer.
+4. Chọn **Export**.
+5. Trong danh sách, chọn: `Java > Runnable JAR file`, nhấn **Next**.
+6. Tại mục **Launch configuration**, chọn file  `Login.java`.
+7. Chọn vị trí lưu file và đặt tên file `.jar`.
+8. Nhấn **Finish** để hoàn tất quá trình xuất file.
+
+### 🔗 Video hướng dẫn:
+👉 [VIDEO](https://drive.google.com/drive/folders/1ufSr9gBxuO0K4BeWPTLMulJ5lvkKRTSz)
+
+---
+
 ## 🔗 Tài liệu tham khảo  
 - **Link Figma**: [Thiết kế giao diện](https://www.figma.com/design/UXfVHhohXxQCz1riNM35tF/Untitled?node-id=7-240&t=r65F2AQ0zgVOcogr-0).
 - **Link Video tham khảo**: [Video demo hệ thống](https://drive.google.com/drive/folders/1Fuiq-FGBMh1aqQg26tKUfAEKtaoWraFm) 
